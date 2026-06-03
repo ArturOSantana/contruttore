@@ -3,12 +3,7 @@ name: Firebase App Distribution
 on:
   push:
     branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+      - '**'  # Qualquer branch
   workflow_dispatch:
     inputs:
       release_notes:
@@ -79,13 +74,9 @@ jobs:
           storeFile=keystore.jks
           EOF
 
-      - name: Build APK (Debug)
-        if: github.event_name == 'pull_request'
-        run: flutter build apk --debug --flavor development
-
-      - name: Build APK (Release)
-        if: github.ref == 'refs/heads/develop'
-        run: flutter build apk --release --flavor staging
+      - name: Build APK (Development)
+        if: github.ref != 'refs/heads/main'
+        run: flutter build apk --release --flavor development
 
       - name: Build APK (Production)
         if: github.ref == 'refs/heads/main'
@@ -103,7 +94,6 @@ jobs:
     name: Distribute to Firebase
     needs: build-android
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     
     steps:
       - name: Checkout code
@@ -121,18 +111,19 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "notes=${{ github.event.inputs.release_notes }}" >> $GITHUB_OUTPUT
           else
+            BRANCH_NAME="${{ github.ref_name }}"
             COMMIT_MSG=$(git log -1 --pretty=%B)
-            echo "notes=Build from commit: $COMMIT_MSG" >> $GITHUB_OUTPUT
+            echo "notes=Branch: $BRANCH_NAME - $COMMIT_MSG" >> $GITHUB_OUTPUT
           fi
 
-      - name: Distribute to Firebase App Distribution (Staging)
-        if: github.ref == 'refs/heads/develop'
+      - name: Distribute to Firebase App Distribution (Development)
+        if: github.ref != 'refs/heads/main'
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
-          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID_STAGING }}
+          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID_DEVELOPMENT }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: testers-staging
-          file: build/app/outputs/flutter-apk/app-staging-release.apk
+          groups: testers-development
+          file: build/app/outputs/flutter-apk/app-development-release.apk
           releaseNotes: ${{ steps.release_notes.outputs.notes }}
 
       - name: Distribute to Firebase App Distribution (Production)

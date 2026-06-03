@@ -31,8 +31,8 @@ Este guia explica como configurar o CI/CD para distribuir automaticamente o app 
 #### 1.3 Criar Grupos de Testadores
 ```bash
 # Crie os seguintes grupos:
-- testers-staging: Para builds de desenvolvimento
-- testers-production: Para builds de produção
+- testers-development: Para builds de desenvolvimento (todas as branches exceto main)
+- testers-production: Para builds de produção (apenas branch main)
 ```
 
 ### 2. Service Account
@@ -95,7 +95,7 @@ Configure os seguintes secrets no GitHub:
 | `KEY_PASSWORD` | Senha da chave | Usado ao criar keystore |
 | `STORE_PASSWORD` | Senha do keystore | Usado ao criar keystore |
 | `FIREBASE_SERVICE_ACCOUNT` | Service Account JSON | Conteúdo completo do JSON |
-| `FIREBASE_APP_ID_ANDROID_STAGING` | App ID Staging | Firebase Console > Project Settings |
+| `FIREBASE_APP_ID_ANDROID_DEVELOPMENT` | App ID Development | Firebase Console > Project Settings |
 | `FIREBASE_APP_ID_ANDROID_PRODUCTION` | App ID Production | Firebase Console > Project Settings |
 
 #### Como Adicionar Secrets:
@@ -145,10 +145,14 @@ android {
 
 | Branch | Ambiente | Distribuição | Testadores |
 |--------|----------|--------------|------------|
-| `develop` | Staging | Automática | testers-staging |
 | `main` | Production | Automática | testers-production |
-| `feature/*` | - | Não distribui | - |
-| Pull Requests | Debug | Não distribui | - |
+| Qualquer outra | Development | Automática | testers-development |
+
+**Exemplos:**
+- `develop` → Development
+- `feature/nova-funcionalidade` → Development
+- `hotfix/correcao` → Development
+- `main` → Production
 
 ### Triggers
 

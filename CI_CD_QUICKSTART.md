@@ -20,7 +20,7 @@ Acesse: `Settings > Secrets and variables > Actions`
 | `KEY_PASSWORD` | Senha da chave do keystore |
 | `STORE_PASSWORD` | Senha do keystore |
 | `FIREBASE_SERVICE_ACCOUNT` | Google Cloud Console > Service Accounts |
-| `FIREBASE_APP_ID_ANDROID_STAGING` | Firebase Console > Project Settings |
+| `FIREBASE_APP_ID_ANDROID_DEVELOPMENT` | Firebase Console > Project Settings |
 | `FIREBASE_APP_ID_ANDROID_PRODUCTION` | Firebase Console > Project Settings |
 
 ### 3. Configure Firebase Console
@@ -28,8 +28,8 @@ Acesse: `Settings > Secrets and variables > Actions`
 1. Acesse [Firebase Console](https://console.firebase.google.com)
 2. Vá em `App Distribution`
 3. Crie grupos de testadores:
-   - `testers-staging`
-   - `testers-production`
+   - `testers-development` (para todas as branches exceto main)
+   - `testers-production` (apenas para main)
 
 ### 4. Teste o Workflow
 
@@ -81,10 +81,15 @@ base64 -i android/app/keystore.jks > keystore.base64.txt
 
 | Ação | Resultado |
 |------|-----------|
-| Push para `main` | Build production + Firebase Distribution |
-| Push para `develop` | Build staging + Firebase Distribution |
-| Pull Request | Build debug (sem distribuição) |
+| Push para `main` | Build **production** + Firebase Distribution (testers-production) |
+| Push para qualquer outra branch | Build **development** + Firebase Distribution (testers-development) |
 | Manual trigger | Build conforme branch selecionada |
+
+**Exemplos:**
+- `git push origin main` → Production
+- `git push origin develop` → Development
+- `git push origin feature/nova-funcionalidade` → Development
+- `git push origin hotfix/correcao` → Development
 
 ## 🔒 Checklist de Segurança
 
