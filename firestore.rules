@@ -1,0 +1,241 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // FUNÇÕES AUXILIARES
+    // ============================================
+    
+    // Verifica se o usuário está autenticado
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Verifica se o usuário é o dono do recurso
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // Verifica se o usuário é dono do projeto
+    function ownsProject(projectId) {
+      return isAuth() &&
+        get(/databases/$(database)/documents/projects/$(projectId))
+          .data.userId == request.auth.uid;
+    }
+
+    // Verifica se os dados têm o userId correto
+    function hasCorrectUserId() {
+      return request.resource.data.userId == request.auth.uid;
+    }
+
+    // Verifica se os dados têm o projectId correto
+    function hasCorrectProjectId(projectId) {
+      return request.resource.data.projectId == projectId;
+    }
+
+    // ============================================
+    // USUÁRIOS
+    // ============================================
+    
+    // Apenas o próprio usuário pode ler/escrever seus dados
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && hasCorrectUserId();
+      allow update, delete: if isOwner(userId);
+
+      // Configurações do usuário
+      match /settings/{settingId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ============================================
+    // PROJETOS
+    // ============================================
+    
+    match /projects/{projectId} {
+      // Leitura: apenas o dono
+      allow read: if isAuth() && resource.data.userId == request.auth.uid;
+      
+      // Criação: apenas com userId correto
+      allow create: if isAuth() && hasCorrectUserId();
+      
+      // Atualização e deleção: apenas o dono
+      allow update, delete: if isAuth() && resource.data.userId == request.auth.uid;
+
+      // ============================================
+      // CATEGORIAS FINANCEIRAS
+      // ============================================
+      
+      match /categories/{categoryId} {
+        allow read, write: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // FASES DO PROJETO
+      // ============================================
+      
+      match /phases/{phaseId} {
+        allow read, write: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // DESPESAS
+      // ============================================
+      
+      match /expenses/{expenseId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // FORNECEDORES
+      // ============================================
+      
+      match /suppliers/{supplierId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+
+        // Orçamentos do fornecedor (subcoleção - DEPRECATED)
+        match /quotes/{quoteId} {
+          allow read, write: if ownsProject(projectId);
+        }
+      }
+
+      // ============================================
+      // ORÇAMENTOS (Coleção direta no projeto)
+      // ============================================
+      
+      match /quotes/{quoteId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // PARCELAS (DEPRECATED - usar payments)
+      // ============================================
+      
+      match /installments/{installmentId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // PAYMENTS (Sistema unificado de parcelas)
+      // ============================================
+      
+      match /payments/{paymentId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // TRANSACTIONS (Sistema de transações financeiras)
+      // ============================================
+      
+      match /transactions/{transactionId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // DIÁRIO DE OBRA
+      // ============================================
+      
+      match /diary/{entryId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // LISTA DE COMPRAS
+      // ============================================
+      
+      match /shopping/{itemId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // LISTA DE DESEJOS
+      // ============================================
+      
+      match /wishlist/{itemId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // DOCUMENTOS
+      // ============================================
+      
+      match /documents/{docId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // ALERTAS
+      // ============================================
+      
+      match /alerts/{alertId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // TAREFAS
+      // ============================================
+      
+      match /tasks/{taskId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // NOTAS
+      // ============================================
+      
+      match /notes/{noteId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+    }
+
+    // ============================================
+    // GLOSSÁRIO
+    // ============================================
+    
+    // Leitura pública para usuários autenticados
+    // Escrita apenas via Firebase Console (admin)
+    match /glossary/{termId} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+
+    // ============================================
+    // CONFIGURAÇÕES GLOBAIS
+    // ============================================
+    
+    // Apenas leitura para usuários autenticados
+    match /config/{configId} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+  }
+}
+
+// Made with Bob
