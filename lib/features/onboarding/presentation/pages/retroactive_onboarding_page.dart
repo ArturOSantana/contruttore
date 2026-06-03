@@ -284,7 +284,9 @@ class _PhaseCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? phaseColor.withValues(alpha: 0.1) : AppColors.surface,
+          color: isSelected
+              ? phaseColor.withValues(alpha: 0.1)
+              : AppColors.surface,
           border: Border.all(
             color: isSelected ? phaseColor : AppColors.border,
             width: isSelected ? 2 : 1,

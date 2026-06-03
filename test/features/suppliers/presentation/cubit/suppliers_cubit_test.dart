@@ -15,11 +15,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockGetSuppliersUseCase extends Mock implements GetSuppliersUseCase {}
+
 class MockAddSupplierUseCase extends Mock implements AddSupplierUseCase {}
+
 class MockUpdateSupplierUseCase extends Mock implements UpdateSupplierUseCase {}
+
 class MockGetQuotesUseCase extends Mock implements GetQuotesUseCase {}
+
 class MockAddQuoteUseCase extends Mock implements AddQuoteUseCase {}
+
 class MockAcceptQuoteUseCase extends Mock implements AcceptQuoteUseCase {}
+
 class MockCompareQuotesUseCase extends Mock implements CompareQuotesUseCase {}
 
 void main() {
@@ -85,7 +91,6 @@ void main() {
   ];
 
   group('SuppliersCubit - Gestão de Fornecedores e Orçamentos', () {
-    
     // Teste 1: Cálculo do Orçamento Mais Barato
     // O que ele faz: Testa a lógica interna do Cubit para encontrar o menor valor entre orçamentos.
     // Isso é essencial para o recurso de "Comparador de Orçamentos" do app.
@@ -101,17 +106,22 @@ void main() {
     blocTest<SuppliersCubit, SuppliersState>(
       'Deve aceitar um orçamento e emitir sucesso',
       build: () {
-        when(() => mockAcceptQuoteUseCase(
-              projectId: any(named: 'projectId'),
-              quoteId: any(named: 'quoteId'),
-            )).thenAnswer((_) async => const Right(null));
-        
-        when(() => mockGetSuppliersUseCase(any()))
-            .thenAnswer((_) async => Right([tSupplier]));
-        when(() => mockGetQuotesUseCase(
-              projectId: any(named: 'projectId'),
-              supplierId: any(named: 'supplierId'),
-            )).thenAnswer((_) async => Right(tQuotes));
+        when(
+          () => mockAcceptQuoteUseCase(
+            projectId: any(named: 'projectId'),
+            quoteId: any(named: 'quoteId'),
+          ),
+        ).thenAnswer((_) async => const Right(null));
+
+        when(
+          () => mockGetSuppliersUseCase(any()),
+        ).thenAnswer((_) async => Right([tSupplier]));
+        when(
+          () => mockGetQuotesUseCase(
+            projectId: any(named: 'projectId'),
+            supplierId: any(named: 'supplierId'),
+          ),
+        ).thenAnswer((_) async => Right(tQuotes));
 
         return suppliersCubit;
       },
@@ -129,14 +139,21 @@ void main() {
     blocTest<SuppliersCubit, SuppliersState>(
       'Deve emitir SuppliersError se o CNPJ do fornecedor for inválido (Integração BrasilAPI)',
       build: () {
-        when(() => mockAddSupplierUseCase(any()))
-            .thenAnswer((_) async => const Left(ServerFailure('CNPJ não encontrado ou inválido na base da Receita.')));
+        when(() => mockAddSupplierUseCase(any())).thenAnswer(
+          (_) async => const Left(
+            ServerFailure(
+              'CNPJ não encontrado ou inválido na base da Receita.',
+            ),
+          ),
+        );
         return suppliersCubit;
       },
       act: (cubit) => cubit.addSupplier(tSupplier),
       expect: () => [
         SuppliersLoading(),
-        const SuppliersError('CNPJ não encontrado ou inválido na base da Receita.'),
+        const SuppliersError(
+          'CNPJ não encontrado ou inválido na base da Receita.',
+        ),
       ],
     );
   });

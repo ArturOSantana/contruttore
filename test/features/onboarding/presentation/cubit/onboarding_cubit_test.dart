@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockCreateProjectUseCase extends Mock implements CreateProjectUseCase {}
+
 class MockGeneratePhasesUseCase extends Mock implements GeneratePhasesUseCase {}
 
 void main() {
@@ -18,28 +19,32 @@ void main() {
   late MockGeneratePhasesUseCase mockGeneratePhasesUseCase;
 
   setUpAll(() {
-    registerFallbackValue(ProjectEntity(
-      id: '1',
-      userId: '1',
-      name: 'Test',
-      address: 'Addr',
-      constructorName: 'Const',
-      area: 100,
-      deliveryDate: DateTime.now(),
-      contractDate: DateTime.now(),
-      currentSituation: 'a',
-      createdAt: DateTime.now(),
-    ));
+    registerFallbackValue(
+      ProjectEntity(
+        id: '1',
+        userId: '1',
+        name: 'Test',
+        address: 'Addr',
+        constructorName: 'Const',
+        area: 100,
+        deliveryDate: DateTime.now(),
+        contractDate: DateTime.now(),
+        currentSituation: 'a',
+        createdAt: DateTime.now(),
+      ),
+    );
   });
 
   setUp(() {
     mockCreateProjectUseCase = MockCreateProjectUseCase();
     mockGeneratePhasesUseCase = MockGeneratePhasesUseCase();
-    onboardingCubit = OnboardingCubit(mockCreateProjectUseCase, mockGeneratePhasesUseCase);
+    onboardingCubit = OnboardingCubit(
+      mockCreateProjectUseCase,
+      mockGeneratePhasesUseCase,
+    );
   });
 
   group('OnboardingCubit - Fluxo de Criação de Projeto', () {
-    
     // Teste 1: Fluxo de navegação entre os steps
     // O que ele faz: Garante que ao chamar nextStep, o estado mude para o próximo passo mantendo os dados
     blocTest<OnboardingCubit, OnboardingState>(
@@ -51,35 +56,43 @@ void main() {
       },
       expect: () => [
         OnboardingInProgress(currentStep: 1, data: const {}),
-        OnboardingInProgress(currentStep: 2, data: const {'projectName': 'Apt 101'}),
+        OnboardingInProgress(
+          currentStep: 2,
+          data: const {'projectName': 'Apt 101'},
+        ),
       ],
     );
 
     // Teste 2: Entrada Retroativa (Ponto Crítico do Documento Mestre)
-    // O que ele faz: Verifica se ao finalizar o onboarding com a situação "Obra em andamento", 
+    // O que ele faz: Verifica se ao finalizar o onboarding com a situação "Obra em andamento",
     // o UseCase de geração de fases é chamado corretamente para regularizar o passado.
     blocTest<OnboardingCubit, OnboardingState>(
       'Deve gerar fases corretamente para usuários que já possuem obra em andamento',
       build: () {
-        when(() => mockCreateProjectUseCase(any()))
-            .thenAnswer((_) async => Right(ProjectEntity(
-                  id: 'project_123',
-                  userId: 'user_123',
-                  name: 'Reforma Ativa',
-                  address: 'Rua X',
-                  constructorName: 'C1',
-                  area: 50,
-                  deliveryDate: DateTime.now(),
-                  contractDate: DateTime.now(),
-                  currentSituation: 'd', // Reforma em andamento
-                  createdAt: DateTime.now(),
-                )));
-        
-        when(() => mockGeneratePhasesUseCase(
-              projectId: any(named: 'projectId'),
-              currentSituation: 'd',
-            )).thenAnswer((_) async => const Right(null));
-            
+        when(() => mockCreateProjectUseCase(any())).thenAnswer(
+          (_) async => Right(
+            ProjectEntity(
+              id: 'project_123',
+              userId: 'user_123',
+              name: 'Reforma Ativa',
+              address: 'Rua X',
+              constructorName: 'C1',
+              area: 50,
+              deliveryDate: DateTime.now(),
+              contractDate: DateTime.now(),
+              currentSituation: 'd', // Reforma em andamento
+              createdAt: DateTime.now(),
+            ),
+          ),
+        );
+
+        when(
+          () => mockGeneratePhasesUseCase(
+            projectId: any(named: 'projectId'),
+            currentSituation: 'd',
+          ),
+        ).thenAnswer((_) async => const Right(null));
+
         return onboardingCubit;
       },
       act: (cubit) {
@@ -94,10 +107,10 @@ void main() {
           'contractDate': DateTime.now(),
           'currentSituation': 'd', // CASO RETROATIVO
         });
-        // Mocking user is authenticated would be needed in real integration, 
+        // Mocking user is authenticated would be needed in real integration,
         // here we test the Cubit logic flow.
       },
-      // Nota: O completeOnboarding depende de FirebaseAuth.instance, 
+      // Nota: O completeOnboarding depende de FirebaseAuth.instance,
       // em testes de unidade puros você mockaria o FirebaseAuth ou usaria um wrapper.
     );
   });

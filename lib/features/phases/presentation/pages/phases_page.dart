@@ -110,7 +110,9 @@ class _PhaseCard extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: _getPhaseColor(phase.number).withValues(alpha: 0.1),
+                      color: _getPhaseColor(
+                        phase.number,
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     ),
                     child: Center(

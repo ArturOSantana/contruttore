@@ -13,9 +13,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
+
 class MockRegisterUseCase extends Mock implements RegisterUseCase {}
+
 class MockLogoutUseCase extends Mock implements LogoutUseCase {}
+
 class MockForgotPasswordUseCase extends Mock implements ForgotPasswordUseCase {}
+
 class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
 
 void main() {
@@ -59,15 +63,13 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'Deve emitir [AuthLoading, AuthAuthenticated] quando o login for bem sucedido',
       build: () {
-        when(() => mockLoginUseCase(any(), any()))
-            .thenAnswer((_) async => const Right(tUser));
+        when(
+          () => mockLoginUseCase(any(), any()),
+        ).thenAnswer((_) async => const Right(tUser));
         return authCubit;
       },
       act: (cubit) => cubit.login('test@example.com', 'password'),
-      expect: () => [
-        const AuthLoading(),
-        const AuthAuthenticated(tUser),
-      ],
+      expect: () => [const AuthLoading(), const AuthAuthenticated(tUser)],
     );
 
     // Teste 3: Testa o fluxo de login com erro
@@ -75,15 +77,13 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'Deve emitir [AuthLoading, AuthError] quando o login falhar',
       build: () {
-        when(() => mockLoginUseCase(any(), any()))
-            .thenAnswer((_) async => const Left(ServerFailure('Erro de conexão')));
+        when(
+          () => mockLoginUseCase(any(), any()),
+        ).thenAnswer((_) async => const Left(ServerFailure('Erro de conexão')));
         return authCubit;
       },
       act: (cubit) => cubit.login('test@example.com', 'wrong_password'),
-      expect: () => [
-        const AuthLoading(),
-        const AuthError('Erro de conexão'),
-      ],
+      expect: () => [const AuthLoading(), const AuthError('Erro de conexão')],
     );
 
     // Teste 4: Testa o logout
@@ -91,15 +91,13 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'Deve emitir [AuthLoading, AuthUnauthenticated] quando o logout for bem sucedido',
       build: () {
-        when(() => mockLogoutUseCase())
-            .thenAnswer((_) async => const Right(null));
+        when(
+          () => mockLogoutUseCase(),
+        ).thenAnswer((_) async => const Right(null));
         return authCubit;
       },
       act: (cubit) => cubit.logout(),
-      expect: () => [
-        const AuthLoading(),
-        const AuthUnauthenticated(),
-      ],
+      expect: () => [const AuthLoading(), const AuthUnauthenticated()],
     );
   });
 }

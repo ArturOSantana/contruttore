@@ -105,14 +105,14 @@ android/key.properties
 !**/ios/**/Info.plist
 !**/ios/**/Runner.xcodeproj/project.pbxproj
 !**/ios/Podfile
-!**/ios/GoogleService-Info.plist
 !**/android/app/build.gradle.kts
-!**/android/app/google-services.json
 !**/android/build.gradle.kts
 !**/android/settings.gradle.kts
 
-# Firebase
-# Keep Firebase config files but ignore emulator data
+# Firebase - IMPORTANT: Never commit these files!
+# They contain API keys and should be kept secret
+**/android/app/google-services.json
+**/ios/GoogleService-Info.plist
 .firebase/
 firebase-debug.log
 firestore-debug.log

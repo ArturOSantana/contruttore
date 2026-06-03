@@ -298,7 +298,9 @@ class _AddInstallmentPageState extends State<AddInstallmentPage> {
                 decoration: BoxDecoration(
                   color: AppColors.successLight,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +340,9 @@ class _AddInstallmentPageState extends State<AddInstallmentPage> {
               decoration: BoxDecoration(
                 color: AppColors.infoLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.info.withValues(alpha: 0.3),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

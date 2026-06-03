@@ -8,7 +8,9 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockGetDiaryEntriesUseCase extends Mock implements GetDiaryEntriesUseCase {}
+class MockGetDiaryEntriesUseCase extends Mock
+    implements GetDiaryEntriesUseCase {}
+
 class MockAddDiaryEntryUseCase extends Mock implements AddDiaryEntryUseCase {}
 
 void main() {
@@ -19,7 +21,10 @@ void main() {
   setUp(() {
     mockGetDiaryEntriesUseCase = MockGetDiaryEntriesUseCase();
     mockAddDiaryEntryUseCase = MockAddDiaryEntryUseCase();
-    diaryCubit = DiaryCubit(mockGetDiaryEntriesUseCase, mockAddDiaryEntryUseCase);
+    diaryCubit = DiaryCubit(
+      mockGetDiaryEntriesUseCase,
+      mockAddDiaryEntryUseCase,
+    );
   });
 
   final tEntry = DiaryEntryEntity(
@@ -33,14 +38,17 @@ void main() {
   );
 
   group('DiaryCubit - Diário de Obra e Vistoria', () {
-    
     // Teste 1: Registro de Visita com Sucesso
     // O que ele faz: Garante que o usuário consiga salvar um relato da obra e que a timeline seja atualizada.
     blocTest<DiaryCubit, DiaryState>(
       'Deve emitir [DiaryLoading, DiaryLoaded] ao adicionar uma entrada com sucesso',
       build: () {
-        when(() => mockAddDiaryEntryUseCase(any())).thenAnswer((_) async => const Right(null));
-        when(() => mockGetDiaryEntriesUseCase(any())).thenAnswer((_) async => Right([tEntry]));
+        when(
+          () => mockAddDiaryEntryUseCase(any()),
+        ).thenAnswer((_) async => const Right(null));
+        when(
+          () => mockGetDiaryEntriesUseCase(any()),
+        ).thenAnswer((_) async => Right([tEntry]));
         return diaryCubit;
       },
       act: (cubit) => cubit.addEntry(tEntry),
@@ -53,19 +61,22 @@ void main() {
     // Teste 2: Modo Vistoria (Ponto Crítico de Proteção Legal)
     // O que ele faz: Verifica se uma entrada do tipo 'problem' é salva com os metadados necessários (severidade).
     // Isso é o que vai gerar o PDF de prova legal contra a construtora no futuro.
-    test('Deve validar que uma entrada de PROBLEMA possui severidade definida', () {
-      final problemEntry = DiaryEntryEntity(
-        id: '2',
-        projectId: 'p1',
-        type: DiaryEntryType.problem,
-        title: 'Infiltração Parede Sala',
-        description: 'Mancha úmida detectada na vistoria',
-        problemSeverity: ProblemSeverity.high, // Gravidade Alta
-        date: DateTime.now(),
-        createdAt: DateTime.now(),
-      );
-      
-      expect(problemEntry.problemSeverity, equals(ProblemSeverity.high));
-    });
+    test(
+      'Deve validar que uma entrada de PROBLEMA possui severidade definida',
+      () {
+        final problemEntry = DiaryEntryEntity(
+          id: '2',
+          projectId: 'p1',
+          type: DiaryEntryType.problem,
+          title: 'Infiltração Parede Sala',
+          description: 'Mancha úmida detectada na vistoria',
+          problemSeverity: ProblemSeverity.high, // Gravidade Alta
+          date: DateTime.now(),
+          createdAt: DateTime.now(),
+        );
+
+        expect(problemEntry.problemSeverity, equals(ProblemSeverity.high));
+      },
+    );
   });
 }

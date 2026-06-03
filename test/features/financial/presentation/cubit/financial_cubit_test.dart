@@ -11,9 +11,13 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockGetFinancialSummaryUseCase extends Mock implements GetFinancialSummaryUseCase {}
+class MockGetFinancialSummaryUseCase extends Mock
+    implements GetFinancialSummaryUseCase {}
+
 class MockGetExpensesUseCase extends Mock implements GetExpensesUseCase {}
+
 class MockAddExpenseUseCase extends Mock implements AddExpenseUseCase {}
+
 class MockUpdateExpenseUseCase extends Mock implements UpdateExpenseUseCase {}
 
 void main() {
@@ -69,22 +73,27 @@ void main() {
   ];
 
   group('FinancialCubit - Gestão de Gastos', () {
-    
     // Teste 1: Carregamento de dados financeiros
     // O que ele faz: Garante que o resumo e a lista de despesas são carregados juntos, emitindo o estado de Loaded.
     blocTest<FinancialCubit, FinancialState>(
       'Deve emitir [FinancialLoading, FinancialLoaded] quando os dados forem carregados com sucesso',
       build: () {
-        when(() => mockGetFinancialSummaryUseCase(any()))
-            .thenAnswer((_) async => const Right(tSummary));
-        when(() => mockGetExpensesUseCase(any()))
-            .thenAnswer((_) async => Right(tExpenses));
+        when(
+          () => mockGetFinancialSummaryUseCase(any()),
+        ).thenAnswer((_) async => const Right(tSummary));
+        when(
+          () => mockGetExpensesUseCase(any()),
+        ).thenAnswer((_) async => Right(tExpenses));
         return financialCubit;
       },
       act: (cubit) => cubit.loadFinancialData('p1'),
       expect: () => [
         FinancialLoading(),
-        FinancialLoaded(summary: tSummary, expenses: tExpenses, categories: const []),
+        FinancialLoaded(
+          summary: tSummary,
+          expenses: tExpenses,
+          categories: const [],
+        ),
       ],
     );
 
@@ -95,13 +104,20 @@ void main() {
       'Deve filtrar a lista de despesas para mostrar apenas as ESTIMADAS',
       build: () {
         // Primeiro carrega o estado com dados
-        financialCubit.emit(FinancialLoaded(summary: tSummary, expenses: tExpenses, categories: const []));
+        financialCubit.emit(
+          FinancialLoaded(
+            summary: tSummary,
+            expenses: tExpenses,
+            categories: const [],
+          ),
+        );
         return financialCubit;
       },
       act: (cubit) => cubit.filterByStatus(ExpenseStatus.estimated),
       expect: () => [
-        isA<FinancialLoaded>().having((s) => s.expenses.length, 'length', 1)
-                                .having((s) => s.expenses.first.description, 'item', 'Torneira'),
+        isA<FinancialLoaded>()
+            .having((s) => s.expenses.length, 'length', 1)
+            .having((s) => s.expenses.first.description, 'item', 'Torneira'),
       ],
     );
 
@@ -110,12 +126,15 @@ void main() {
     blocTest<FinancialCubit, FinancialState>(
       'Deve recarregar os dados financeiros após adicionar uma nova despesa',
       build: () {
-        when(() => mockAddExpenseUseCase(any()))
-            .thenAnswer((_) async => const Right(null));
-        when(() => mockGetFinancialSummaryUseCase(any()))
-            .thenAnswer((_) async => const Right(tSummary));
-        when(() => mockGetExpensesUseCase(any()))
-            .thenAnswer((_) async => Right(tExpenses));
+        when(
+          () => mockAddExpenseUseCase(any()),
+        ).thenAnswer((_) async => const Right(null));
+        when(
+          () => mockGetFinancialSummaryUseCase(any()),
+        ).thenAnswer((_) async => const Right(tSummary));
+        when(
+          () => mockGetExpensesUseCase(any()),
+        ).thenAnswer((_) async => Right(tExpenses));
         return financialCubit;
       },
       act: (cubit) => cubit.addExpense(tExpenses.first),

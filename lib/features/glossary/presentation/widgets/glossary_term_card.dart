@@ -43,7 +43,10 @@ class GlossaryTermCard extends StatelessWidget {
       shadowColor: AppColors.shadowLight,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.border.withValues(alpha: 0.5), width: 1),
+        side: BorderSide(
+          color: AppColors.border.withValues(alpha: 0.5),
+          width: 1,
+        ),
       ),
       child: InkWell(
         onTap: onTap,
