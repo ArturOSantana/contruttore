@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "721464031041",
+    "project_id": "contrutore",
+    "storage_bucket": "contrutore.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:721464031041:android:edd98fc3ce3f81a2b053c0",
+        "android_client_info": {
+          "package_name": "com.example.contruttore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOSJvvfakZXGbxDi4rQZCojC5KxeknOMs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
