@@ -61,18 +61,18 @@ jobs:
 
       - name: Upload to Firebase App Distribution
         run: |
-          # Usar secret se disponível, senão usar valor padrão
-          APP_ID="${{ secrets.FIREBASE_APP_ID }}"
-          if [ -z "$APP_ID" ]; then
-            APP_ID="1:721464031041:android:edd98fc3ce3f81a2b053c0"
-            echo "⚠️ Usando App ID padrão (secret não configurado)"
-          else
-            echo "✅ Usando App ID do secret"
+          # Verificar se o secret FIREBASE_APP_ID está configurado
+          if [ -z "${{ secrets.FIREBASE_APP_ID }}" ]; then
+            echo "❌ ERRO: Secret FIREBASE_APP_ID não está configurado!"
+            echo "Configure o secret no GitHub com o valor: 1:721464031041:android:edd98fc3ce3f81a2b053c0"
+            exit 1
           fi
           
+          echo "✅ Usando FIREBASE_APP_ID do secret"
+          
           firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
-            --app "$APP_ID" \
+            --app "${{ secrets.FIREBASE_APP_ID }}" \
             --groups "tester-production" \
-            --release-notes "Build ${{ github.run_number }} - Tutorial implementado"
+            --release-notes "Build ${{ github.run_number }} - ${{ github.event.inputs.release_notes || 'New build from CI/CD' }}"
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

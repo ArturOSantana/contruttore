@@ -30,8 +30,22 @@ void main() async {
     ),
   );
 
-  // Inicializa o Firebase
-  await Firebase.initializeApp();
+  // Inicializa o Firebase com opções específicas
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyAOSJvvfakZXGbxDi4rQZCojC5KxeknOMs',
+        appId: '1:721464031041:android:edd98fc3ce3f81a2b053c0',
+        messagingSenderId: '721464031041',
+        projectId: 'contrutore',
+        storageBucket: 'contrutore.firebasestorage.app',
+      ),
+    );
+    debugPrint('✅ Firebase inicializado com sucesso');
+  } catch (e) {
+    debugPrint('❌ Erro ao inicializar Firebase: $e');
+    // Continua a execução mesmo com erro no Firebase
+  }
 
   // Inicializa o Hive para cache local
   await Hive.initFlutter();

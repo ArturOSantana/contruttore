@@ -20,14 +20,18 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Application ID deve corresponder ao package_name no google-services.json
         applicationId = "com.example.contruttore"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21  // Android 5.0 - Compatível com 99% dos dispositivos
+        minSdk = flutter.minSdkVersion  // Android 5.0 - Compatível com 99% dos dispositivos
         targetSdk = 33  // Android 13 - Versão estável e amplamente testada
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        
+        // Version code dinâmico baseado no pubspec.yaml
+        // Formato: MAJOR * 10000 + MINOR * 100 + PATCH
+        // Exemplo: 1.1.0 = 10100
+        versionCode = flutter.versionCode ?: 10100
+        versionName = flutter.versionName ?: "1.1.0"
     }
 
     signingConfigs {
