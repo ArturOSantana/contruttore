@@ -52,15 +52,9 @@ jobs:
           retention-days: 7
 
       - name: Upload to Firebase App Distribution
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        uses: firebase/firebase-tools-action@v1
         with:
-          appId: ${{ secrets.FIREBASE_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: testers
-          file: build/app/outputs/flutter-apk/app-release.apk
-          releaseNotes: |
-            ${{ github.event.inputs.release_notes || format('Build {0} - {1}', github.run_number, github.event.head_commit.message) }}
-            
-            Commit: ${{ github.sha }}
-            Branch: ${{ github.ref_name }}
-            Author: ${{ github.actor }}
+          args: appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk --app ${{ secrets.FIREBASE_APP_ID }} --groups "testers" --release-notes "Build ${{ github.run_number }} - ${{ github.event.head_commit.message }}"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
