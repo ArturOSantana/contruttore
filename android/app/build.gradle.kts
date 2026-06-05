@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.contruttore"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion  // Android 5.0 - Compatível com 99% dos dispositivos
+        minSdk = 21  // Android 5.0 - Compatível com 99% dos dispositivos
         targetSdk = 33  // Android 13 - Versão estável e amplamente testada
         
         // Version code dinâmico baseado no pubspec.yaml
