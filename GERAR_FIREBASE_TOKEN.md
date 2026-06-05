@@ -118,4 +118,4 @@ Se preferir usar Service Account em vez de token:
 2. Mantenha o `FIREBASE_SERVICE_ACCOUNT` (JSON completo)
 3. Use a action `wzieba/Firebase-Distribution-Github-Action@v1`
 
-Mas o método com token é **mais simples e recomendado**!
+Mas o método com token é **mais simples e recomendado**
