@@ -51,10 +51,19 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
           retention-days: 7
 
-      - name: Upload to Firebase App Distribution
-        uses: firebase/firebase-tools-action@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          args: appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk --app ${{ secrets.FIREBASE_APP_ID }} --groups "testers" --release-notes "Build ${{ github.run_number }} - ${{ github.event.head_commit.message }}"
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Upload to Firebase App Distribution
+        run: |
+          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
+            --app ${{ secrets.FIREBASE_APP_ID }} \
+            --groups "testers" \
+            --release-notes "Build ${{ github.run_number }} - ${{ github.event.head_commit.message || 'Manual build' }}"
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
