@@ -72,7 +72,7 @@ jobs:
           
           firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
             --app "${{ secrets.FIREBASE_APP_ID }}" \
-            --groups "tester-production" \
+            --groups "testers-staging" \
             --release-notes "Build ${{ github.run_number }} - ${{ github.event.inputs.release_notes || 'New build from CI/CD' }}"
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
