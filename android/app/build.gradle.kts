@@ -32,6 +32,9 @@ android {
         // Exemplo: 1.1.0 = 10100
         versionCode = flutter.versionCode ?: 10100
         versionName = flutter.versionName ?: "1.1.0"
+        
+        // Configurações adicionais para garantir compatibilidade
+        multiDexEnabled = true
     }
 
     signingConfigs {
@@ -72,17 +75,28 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
             
-            isMinifyEnabled = true
+            // Desabilitar minify para evitar problemas de inicialização
+            isMinifyEnabled = false
+            isShrinkResources = false
+            
+            // Manter nomes de classes para debug
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        
+        debug {
+            // Debug sempre sem assinatura
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    implementation("androidx.multidex:multidex:2.0.1")
 }
 
 flutter {
