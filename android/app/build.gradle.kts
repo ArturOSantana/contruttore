@@ -38,6 +38,13 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+        
         create("release") {
             val keystorePropertiesFile = rootProject.file("key.properties")
             if (keystorePropertiesFile.exists()) {
@@ -53,27 +60,27 @@ android {
                     storePassword = keystoreProperties.getProperty("storePassword")
                     keyAlias = keystoreProperties.getProperty("keyAlias")
                     keyPassword = keystoreProperties.getProperty("keyPassword")
+                } else {
+                    // Fallback para debug keystore se release não existir
+                    storeFile = file("debug.keystore")
+                    storePassword = "android"
+                    keyAlias = "androiddebugkey"
+                    keyPassword = "android"
                 }
+            } else {
+                // Fallback para debug keystore se key.properties não existir
+                storeFile = file("debug.keystore")
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
             }
         }
     }
 
     buildTypes {
         release {
-            // Só assina se o keystore existir
-            val keystorePropertiesFile = rootProject.file("key.properties")
-            var shouldSign = false
-            
-            if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = Properties()
-                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-                val keystorePath = keystoreProperties.getProperty("storeFile")
-                shouldSign = file(keystorePath).exists()
-            }
-            
-            if (shouldSign) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            // Sempre assinar com algum keystore (release ou debug)
+            signingConfig = signingConfigs.getByName("release")
             
             // Desabilitar minify para evitar problemas de inicialização
             isMinifyEnabled = false
@@ -87,7 +94,8 @@ android {
         }
         
         debug {
-            // Debug sempre sem assinatura
+            // Debug com assinatura debug
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             isShrinkResources = false
         }
