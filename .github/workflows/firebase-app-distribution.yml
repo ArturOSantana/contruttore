@@ -59,15 +59,20 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Debug - Check secrets
-        run: |
-          echo "FIREBASE_APP_ID length: ${#FIREBASE_APP_ID}"
-          echo "FIREBASE_APP_ID (masked): ${FIREBASE_APP_ID:0:10}..."
-        env:
-          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
-
       - name: Upload to Firebase App Distribution
-        run: firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk --app "$FIREBASE_APP_ID" --groups "tester-production" --release-notes "Build ${{ github.run_number }} - Tutorial implementado"
+        run: |
+          # Usar secret se disponível, senão usar valor padrão
+          APP_ID="${{ secrets.FIREBASE_APP_ID }}"
+          if [ -z "$APP_ID" ]; then
+            APP_ID="1:721464031041:android:edd98fc3ce3f81a2b053c0"
+            echo "⚠️ Usando App ID padrão (secret não configurado)"
+          else
+            echo "✅ Usando App ID do secret"
+          fi
+          
+          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
+            --app "$APP_ID" \
+            --groups "tester-production" \
+            --release-notes "Build ${{ github.run_number }} - Tutorial implementado"
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
