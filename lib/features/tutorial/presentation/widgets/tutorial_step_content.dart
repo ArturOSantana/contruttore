@@ -64,7 +64,7 @@ class TutorialStepContent extends StatelessWidget {
   }
 
   Widget _buildIllustration() {
-    // Como não temos imagens reais, vamos usar ícones grandes e coloridos
+    // Usa ícones grandes e coloridos
     final IconData icon = _getIconFromString(step.iconData);
     final Color iconColor = _getColorForStep();
 

@@ -19,15 +19,15 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
     
-    // Force all subprojects to use compileSdk 36
+    // Force all subprojects to use compileSdk 34
     pluginManager.withPlugin("com.android.library") {
         extensions.configure<com.android.build.api.dsl.LibraryExtension> {
-            compileSdk = 36
+            compileSdk = 34
         }
     }
     pluginManager.withPlugin("com.android.application") {
         extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
-            compileSdk = 36
+            compileSdk = 34
         }
     }
 }
