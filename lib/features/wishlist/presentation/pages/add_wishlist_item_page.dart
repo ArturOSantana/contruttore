@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' as html_parser;
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_text_styles.dart';
@@ -29,6 +31,8 @@ class _AddWishlistItemPageState extends State<AddWishlistItemPage> {
 
   WishlistCategory _selectedCategory = WishlistCategory.other;
   bool _isLoading = false;
+  bool _isLoadingImage = false;
+  String? _extractedImageUrl;
 
   @override
   void initState() {
@@ -58,10 +62,55 @@ class _AddWishlistItemPageState extends State<AddWishlistItemPage> {
     super.dispose();
   }
 
+  // Extrair imagem do link
+  Future<String?> _extractImageFromUrl(String url) async {
+    try {
+      setState(() => _isLoadingImage = true);
+
+      final response =
+          await http.get(Uri.parse(url)).timeout(Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final document = html_parser.parse(response.body);
+
+        // Tentar Open Graph image
+        final ogImage = document.querySelector('meta[property="og:image"]');
+        if (ogImage != null && ogImage.attributes['content'] != null) {
+          return ogImage.attributes['content'];
+        }
+
+        // Tentar Twitter image
+        final twitterImage =
+            document.querySelector('meta[name="twitter:image"]');
+        if (twitterImage != null &&
+            twitterImage.attributes['content'] != null) {
+          return twitterImage.attributes['content'];
+        }
+
+        // Tentar meta image
+        final metaImage = document.querySelector('meta[name="image"]');
+        if (metaImage != null && metaImage.attributes['content'] != null) {
+          return metaImage.attributes['content'];
+        }
+      }
+    } catch (e) {
+      print('Erro ao extrair imagem: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingImage = false);
+    }
+    return null;
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+
+    // Extrair imagem do URL se não tiver
+    String? imageUrl = widget.item?.imageUrl ?? _extractedImageUrl;
+    if (imageUrl == null && _urlController.text.trim().isNotEmpty) {
+      imageUrl = await _extractImageFromUrl(_urlController.text.trim());
+    }
 
     final item = WishlistItemEntity(
       id: widget.item?.id ?? const Uuid().v4(),
@@ -79,7 +128,7 @@ class _AddWishlistItemPageState extends State<AddWishlistItemPage> {
           : _notesController.text.trim(),
       category: _selectedCategory,
       isSelected: widget.item?.isSelected ?? false,
-      imageUrl: widget.item?.imageUrl,
+      imageUrl: imageUrl,
       createdAt: widget.item?.createdAt ?? DateTime.now(),
     );
 

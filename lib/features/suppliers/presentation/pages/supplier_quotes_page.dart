@@ -38,9 +38,9 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
     super.initState();
     // Carregar orçamentos do fornecedor
     context.read<SuppliersCubit>().loadQuotes(
-      widget.projectId,
-      widget.supplierId,
-    );
+          widget.projectId,
+          widget.supplierId,
+        );
   }
 
   @override
@@ -68,8 +68,7 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
       child: BlocBuilder<SuppliersCubit, SuppliersState>(
         builder: (context, state) {
           // Conta quantos orçamentos pendentes existem
-          final canCompare =
-              state is QuotesLoaded &&
+          final canCompare = state is QuotesLoaded &&
               state.quotes
                       .where((q) => q.status == QuoteStatus.pending)
                       .length >=
@@ -105,9 +104,9 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
                   return custom.ErrorWidgetCustom(
                     message: state.message,
                     onRetry: () => context.read<SuppliersCubit>().loadQuotes(
-                      widget.projectId,
-                      widget.supplierId,
-                    ),
+                          widget.projectId,
+                          widget.supplierId,
+                        ),
                   );
                 }
 
@@ -293,8 +292,8 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
     final items = <QuoteItemEntity>[];
     int installments = 1;
     final selectedPaymentMethods = <PaymentMethod>[];
-    final cubit = context
-        .read<SuppliersCubit>(); // Captura o cubit antes do modal
+    final cubit =
+        context.read<SuppliersCubit>(); // Captura o cubit antes do modal
 
     showModalBottomSheet(
       context: context,
@@ -436,15 +435,15 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
                             spacing: AppSpacing.s,
                             runSpacing: AppSpacing.s,
                             children: PaymentMethod.values.map((method) {
-                              final isSelected = selectedPaymentMethods
-                                  .contains(method);
+                              final isSelected =
+                                  selectedPaymentMethods.contains(method);
                               return FilterChip(
                                 label: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(
+                                    Icon(
                                       method.icon,
-                                      style: const TextStyle(fontSize: 16),
+                                      size: 16,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(method.displayName),
@@ -642,9 +641,9 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
                             paymentMethods: selectedPaymentMethods,
                             downPayment:
                                 double.tryParse(downPaymentController.text) ??
-                                0,
-                            warrantyMonths:
-                                warrantyMonthsController.text.isEmpty
+                                    0,
+                            warrantyMonths: warrantyMonthsController
+                                    .text.isEmpty
                                 ? null
                                 : int.tryParse(warrantyMonthsController.text),
                             shippingCost: shippingCostController.text.isEmpty
@@ -865,9 +864,8 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
 
   void _compareQuotes(List<QuoteEntity> allQuotes) {
     // Filtra apenas orçamentos pendentes
-    final pendingQuotes = allQuotes
-        .where((q) => q.status == QuoteStatus.pending)
-        .toList();
+    final pendingQuotes =
+        allQuotes.where((q) => q.status == QuoteStatus.pending).toList();
 
     if (pendingQuotes.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -901,12 +899,12 @@ class _SupplierQuotesPageState extends State<SupplierQuotesPage> {
         supplierId: widget.supplierId,
         onAccept: (installments, firstPaymentDate) {
           context.read<SuppliersCubit>().acceptQuote(
-            projectId: widget.projectId,
-            quoteId: quote.id,
-            supplierId: widget.supplierId,
-            installments: installments,
-            firstPaymentDate: firstPaymentDate,
-          );
+                projectId: widget.projectId,
+                quoteId: quote.id,
+                supplierId: widget.supplierId,
+                installments: installments,
+                firstPaymentDate: firstPaymentDate,
+              );
         },
       ),
     );

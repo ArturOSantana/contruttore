@@ -102,9 +102,8 @@ class DiaryPage extends StatelessWidget {
                 );
               }
 
-              final groupedEntries = context
-                  .read<DiaryCubit>()
-                  .groupEntriesByDate(state.entries);
+              final groupedEntries =
+                  context.read<DiaryCubit>().groupEntriesByDate(state.entries);
 
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
@@ -157,7 +156,7 @@ class DiaryPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(entry.type.icon, style: const TextStyle(fontSize: 24)),
+                  Icon(entry.type.icon, size: 24),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -190,8 +189,8 @@ class DiaryPage extends StatelessWidget {
 
                         if (context.mounted) {
                           context.read<DiaryCubit>().loadDiaryEntries(
-                            projectId,
-                          );
+                                projectId,
+                              );
                         }
                       } else if (value == 'delete') {
                         final confirmed = await ConfirmationDialog.show(
@@ -206,9 +205,9 @@ class DiaryPage extends StatelessWidget {
 
                         if (confirmed && context.mounted) {
                           await context.read<DiaryCubit>().deleteDiaryEntry(
-                            projectId,
-                            entry.id,
-                          );
+                                projectId,
+                                entry.id,
+                              );
 
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -337,9 +336,9 @@ class DiaryPage extends StatelessWidget {
               final state = context.read<DiaryCubit>().state;
               if (state is DiaryLoaded) {
                 context.read<DiaryCubit>().generatePdf(
-                  projectName: projectName,
-                  entries: state.entries,
-                );
+                      projectName: projectName,
+                      entries: state.entries,
+                    );
               }
             },
             child: const Text('Gerar'),

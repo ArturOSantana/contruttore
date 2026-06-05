@@ -99,6 +99,11 @@ android/key.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 *.jks
+*.keystore
+android/app/debug.keystore
+android/app/upload-keystore.jks
+android/app/*.keystore
+android/app/*.jks
 
 # Exceptions to above rules - keep these files
 !**/ios/**/AppDelegate.swift
@@ -113,6 +118,7 @@ android/key.properties
 # They contain API keys and should be kept secret
 **/android/app/google-services.json
 **/ios/GoogleService-Info.plist
+lib/firebase_options.dart
 .firebase/
 firebase-debug.log
 firestore-debug.log

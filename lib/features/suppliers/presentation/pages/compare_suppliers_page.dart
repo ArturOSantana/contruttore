@@ -73,8 +73,8 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
             return ErrorWidgetCustom(
               message: state.message,
               onRetry: () => context.read<SuppliersCubit>().loadSuppliers(
-                widget.projectId,
-              ),
+                    widget.projectId,
+                  ),
             );
           }
 
@@ -139,9 +139,9 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
             ),
             child: Row(
               children: [
-                Text(
+                Icon(
                   suppliers.first.type.icon,
-                  style: const TextStyle(fontSize: 32),
+                  size: 32,
                 ),
                 const SizedBox(width: AppSpacing.m),
                 Expanded(
@@ -188,15 +188,14 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
     List<SupplierEntity> allSuppliers,
   ) {
     // Determinar se é o melhor avaliado
-    final bestRated = allSuppliers
-        .where((s) => s.rating != null)
-        .fold<SupplierEntity?>(
-          null,
-          (best, current) =>
-              best == null || (current.rating ?? 0) > (best.rating ?? 0)
-              ? current
-              : best,
-        );
+    final bestRated =
+        allSuppliers.where((s) => s.rating != null).fold<SupplierEntity?>(
+              null,
+              (best, current) =>
+                  best == null || (current.rating ?? 0) > (best.rating ?? 0)
+                      ? current
+                      : best,
+            );
 
     final isBestRated = bestRated?.id == supplier.id && supplier.rating != null;
 
@@ -205,9 +204,8 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.m),
-        border: isBestRated
-            ? Border.all(color: AppColors.success, width: 2)
-            : null,
+        border:
+            isBestRated ? Border.all(color: AppColors.success, width: 2) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -349,9 +347,9 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
+                          Icon(
                             method.icon,
-                            style: const TextStyle(fontSize: 12),
+                            size: 12,
                           ),
                           const SizedBox(width: AppSpacing.xxs),
                           Text(
@@ -384,7 +382,7 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
                 if (quotes.isEmpty) return 'Sem orçamentos';
                 final avgDays =
                     quotes.map((q) => q.deliveryDays).reduce((a, b) => a + b) ~/
-                    quotes.length;
+                        quotes.length;
                 return '$avgDays dias';
               }),
             ),
@@ -399,7 +397,7 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
                 if (quotes.isEmpty) return 'Sem orçamentos';
                 final avgDown =
                     quotes.map((q) => q.downPayment).reduce((a, b) => a + b) /
-                    quotes.length;
+                        quotes.length;
                 return CurrencyUtils.format(avgDown);
               }),
             ),
@@ -416,8 +414,7 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
                   (q) => q.warrantyMonths != null,
                 );
                 if (withWarranty.isEmpty) return 'Sem garantia';
-                final avgWarranty =
-                    withWarranty
+                final avgWarranty = withWarranty
                         .map((q) => q.warrantyMonths!)
                         .reduce((a, b) => a + b) ~/
                     withWarranty.length;
@@ -437,8 +434,7 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
                   (q) => q.shippingCost != null,
                 );
                 if (withShipping.isEmpty) return 'Grátis';
-                final avgShipping =
-                    withShipping
+                final avgShipping = withShipping
                         .map((q) => q.shippingCost!)
                         .reduce((a, b) => a + b) /
                     withShipping.length;
@@ -571,7 +567,7 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
     final avgRating = withRating.isEmpty
         ? 0.0
         : withRating.fold<double>(0, (sum, s) => sum + s.rating!) /
-              withRating.length;
+            withRating.length;
 
     final withValue = suppliers.where((s) => s.totalValue != null).toList();
     final minValue = withValue.isEmpty
@@ -583,7 +579,7 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
     final avgValue = withValue.isEmpty
         ? null
         : withValue.fold<double>(0, (sum, s) => sum + s.totalValue!) /
-              withValue.length;
+            withValue.length;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.m),
@@ -771,17 +767,15 @@ class _CompareSuppliersPageState extends State<CompareSuppliersPage> {
                   Icon(
                     Icons.calendar_today,
                     size: 12,
-                    color: isExpired
-                        ? AppColors.error
-                        : AppColors.textSecondary,
+                    color:
+                        isExpired ? AppColors.error : AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppSpacing.xxs),
                   Text(
                     'Válido até: ${_formatDate(quote.validUntil)}',
                     style: AppTextStyles.caption.copyWith(
-                      color: isExpired
-                          ? AppColors.error
-                          : AppColors.textSecondary,
+                      color:
+                          isExpired ? AppColors.error : AppColors.textSecondary,
                     ),
                   ),
                 ],

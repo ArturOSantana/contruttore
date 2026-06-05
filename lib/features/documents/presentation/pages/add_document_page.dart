@@ -83,9 +83,9 @@ class _AddDocumentPageState extends State<AddDocumentPage> {
                         value: type,
                         child: Row(
                           children: [
-                            Text(
+                            Icon(
                               type.icon,
-                              style: const TextStyle(fontSize: 20),
+                              size: 20,
                             ),
                             const SizedBox(width: 8),
                             Text(type.displayName),
@@ -263,13 +263,13 @@ class _AddDocumentPageState extends State<AddDocumentPage> {
     }
 
     context.read<DocumentsCubit>().addDocument(
-      projectId: widget.projectId,
-      type: _selectedType,
-      name: _nameController.text,
-      filePath: _filePath!,
-      expiryDate: _expiryDate,
-      notes: _notesController.text.isEmpty ? null : _notesController.text,
-    );
+          projectId: widget.projectId,
+          type: _selectedType,
+          name: _nameController.text,
+          filePath: _filePath!,
+          expiryDate: _expiryDate,
+          notes: _notesController.text.isEmpty ? null : _notesController.text,
+        );
   }
 }
 

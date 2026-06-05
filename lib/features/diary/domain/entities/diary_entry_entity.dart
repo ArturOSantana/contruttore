@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:contruttore/core/constants/app_icons.dart';
 
 class DiaryEntryEntity extends Equatable {
   final String id;
@@ -33,20 +35,20 @@ class DiaryEntryEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    projectId,
-    type,
-    phaseId,
-    title,
-    description,
-    photoUrls,
-    date,
-    supplierId,
-    visitType,
-    problemSeverity,
-    isResolved,
-    createdAt,
-  ];
+        id,
+        projectId,
+        type,
+        phaseId,
+        title,
+        description,
+        photoUrls,
+        date,
+        supplierId,
+        visitType,
+        problemSeverity,
+        isResolved,
+        createdAt,
+      ];
 }
 
 enum DiaryEntryType { daily, visit, problem, delivery }
@@ -65,16 +67,16 @@ extension DiaryEntryTypeExtension on DiaryEntryType {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case DiaryEntryType.daily:
-        return '📝';
+        return AppIcons.dailyEntry;
       case DiaryEntryType.visit:
-        return '👷';
+        return AppIcons.visit;
       case DiaryEntryType.problem:
-        return '⚠️';
+        return AppIcons.problem;
       case DiaryEntryType.delivery:
-        return '📦';
+        return AppIcons.delivery;
     }
   }
 }

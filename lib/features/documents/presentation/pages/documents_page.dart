@@ -92,9 +92,9 @@ class DocumentsPage extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            Text(
+                            Icon(
                               type.icon,
-                              style: const TextStyle(fontSize: 24),
+                              size: 24,
                             ),
                             const SizedBox(width: AppSpacing.sm),
                             Text(
@@ -145,7 +145,7 @@ class _DocumentCard extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-          child: Text(document.type.icon, style: const TextStyle(fontSize: 20)),
+          child: Icon(document.type.icon, size: 20),
         ),
         title: Text(document.name),
         subtitle: Column(
@@ -162,14 +162,14 @@ class _DocumentCard extends StatelessWidget {
                     document.isExpired
                         ? Icons.error
                         : document.isExpiringSoon
-                        ? Icons.warning
-                        : Icons.check_circle,
+                            ? Icons.warning
+                            : Icons.check_circle,
                     size: 16,
                     color: document.isExpired
                         ? Colors.red
                         : document.isExpiringSoon
-                        ? Colors.orange
-                        : Colors.green,
+                            ? Colors.orange
+                            : Colors.green,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -180,8 +180,8 @@ class _DocumentCard extends StatelessWidget {
                       color: document.isExpired
                           ? Colors.red
                           : document.isExpiringSoon
-                          ? Colors.orange
-                          : Colors.green,
+                              ? Colors.orange
+                              : Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

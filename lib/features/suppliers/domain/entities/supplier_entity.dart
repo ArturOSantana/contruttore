@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:contruttore/core/constants/app_icons.dart';
 
 class SupplierEntity extends Equatable {
   final String id;
@@ -90,24 +92,24 @@ class SupplierEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    projectId,
-    name,
-    type,
-    phone,
-    email,
-    cnpj,
-    cpf,
-    rating,
-    notes,
-    phaseId,
-    status,
-    totalValue,
-    installments,
-    firstPaymentDate,
-    paymentMethods,
-    createdAt,
-  ];
+        id,
+        projectId,
+        name,
+        type,
+        phone,
+        email,
+        cnpj,
+        cpf,
+        rating,
+        notes,
+        phaseId,
+        status,
+        totalValue,
+        installments,
+        firstPaymentDate,
+        paymentMethods,
+        createdAt,
+      ];
 }
 
 enum SupplierType {
@@ -169,40 +171,40 @@ extension SupplierTypeExtension on SupplierType {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case SupplierType.engineer:
-        return '👷';
+        return AppIcons.engineer;
       case SupplierType.architect:
-        return '📐';
+        return AppIcons.architect;
       case SupplierType.interiorDesigner:
-        return '🎨';
+        return AppIcons.interiorDesigner;
       case SupplierType.constructionManager:
-        return '👨‍🔧';
+        return AppIcons.constructionManager;
       case SupplierType.generalContractor:
-        return '🏗️';
+        return AppIcons.generalContractor;
       case SupplierType.mason:
-        return '🧱';
+        return AppIcons.mason;
       case SupplierType.electrician:
-        return '⚡';
+        return AppIcons.electrician;
       case SupplierType.plumber:
-        return '🔧';
+        return AppIcons.plumber;
       case SupplierType.painter:
-        return '🎨';
+        return AppIcons.painter;
       case SupplierType.plasterer:
-        return '🏠';
+        return AppIcons.plasterer;
       case SupplierType.carpenter:
-        return '🪚';
+        return AppIcons.carpenter;
       case SupplierType.marbleWorker:
-        return '💎';
+        return AppIcons.marbleWorker;
       case SupplierType.metalWorker:
-        return '🔩';
+        return AppIcons.metalWorker;
       case SupplierType.materialsStore:
-        return '🏪';
+        return AppIcons.materialsStore;
       case SupplierType.furnitureStore:
-        return '🛋️';
+        return AppIcons.furnitureStore;
       case SupplierType.other:
-        return '👤';
+        return AppIcons.otherSupplier;
     }
   }
 }
@@ -262,22 +264,22 @@ extension PaymentMethodExtension on PaymentMethod {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case PaymentMethod.cash:
-        return '💵';
+        return AppIcons.cash;
       case PaymentMethod.debit:
-        return '💳';
+        return AppIcons.debit;
       case PaymentMethod.credit:
-        return '💳';
+        return AppIcons.credit;
       case PaymentMethod.pix:
-        return '📱';
+        return AppIcons.pix;
       case PaymentMethod.bankTransfer:
-        return '🏦';
+        return AppIcons.bankTransfer;
       case PaymentMethod.check:
-        return '📝';
+        return AppIcons.check;
       case PaymentMethod.installmentPlan:
-        return '📊';
+        return AppIcons.installmentPlan;
     }
   }
 }

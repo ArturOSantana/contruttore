@@ -142,12 +142,12 @@ class _AddDiaryEntryPageState extends State<AddDiaryEntryPage> {
     try {
       if (widget.entry == null) {
         await context.read<DiaryCubit>().addDiaryEntry(
-          projectId: widget.projectId,
-          type: _selectedType,
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          photoPaths: _photoUrls,
-        );
+              projectId: widget.projectId,
+              type: _selectedType,
+              title: _titleController.text.trim(),
+              description: _descriptionController.text.trim(),
+              photoPaths: _photoUrls,
+            );
       } else {
         // Modo edição - atualizar entrada existente
         final updatedEntry = DiaryEntryModel(
@@ -369,13 +369,13 @@ class _AddDiaryEntryPageState extends State<AddDiaryEntryPage> {
   String _getTypeLabel(DiaryEntryType type) {
     switch (type) {
       case DiaryEntryType.daily:
-        return '📝 Registro Diário';
+        return 'Registro Diário';
       case DiaryEntryType.visit:
-        return '👷 Visita Técnica';
+        return 'Visita Técnica';
       case DiaryEntryType.problem:
-        return '⚠️ Problema';
+        return 'Problema';
       case DiaryEntryType.delivery:
-        return '📦 Entrega de Material';
+        return 'Entrega de Material';
     }
   }
 }

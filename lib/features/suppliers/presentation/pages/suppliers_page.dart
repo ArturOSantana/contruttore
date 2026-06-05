@@ -93,8 +93,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
             return ErrorWidgetCustom(
               message: state.message,
               onRetry: () => context.read<SuppliersCubit>().loadSuppliers(
-                widget.projectId,
-              ),
+                    widget.projectId,
+                  ),
             );
           }
 
@@ -104,8 +104,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
             return RefreshIndicator(
               onRefresh: () async {
                 await context.read<SuppliersCubit>().loadSuppliers(
-                  widget.projectId,
-                );
+                      widget.projectId,
+                    );
               },
               child: filteredSuppliers.isEmpty
                   ? _buildEmptyState()
@@ -146,16 +146,16 @@ class _SuppliersPageState extends State<SuppliersPage> {
 
     if (_selectedTypeFilter != null) {
       filtered = context.read<SuppliersCubit>().filterSuppliersByType(
-        filtered,
-        _selectedTypeFilter,
-      );
+            filtered,
+            _selectedTypeFilter,
+          );
     }
 
     if (_selectedStatusFilter != null) {
       filtered = context.read<SuppliersCubit>().filterSuppliersByStatus(
-        filtered,
-        _selectedStatusFilter,
-      );
+            filtered,
+            _selectedStatusFilter,
+          );
     }
 
     return filtered;
@@ -253,7 +253,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
               ),
               child: Row(
                 children: [
-                  Text(type.icon, style: const TextStyle(fontSize: 20)),
+                  Icon(type.icon, size: 20),
                   const SizedBox(width: AppSpacing.s),
                   Text(
                     type.displayName,
@@ -291,8 +291,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
 
   Widget _buildSupplierCard(SupplierEntity supplier) {
     final isSelected = _selectedSupplierIds.contains(supplier.id);
-    final canSelect =
-        !_isComparisonMode ||
+    final canSelect = !_isComparisonMode ||
         _selectedTypeFilter == null ||
         supplier.type == _selectedTypeFilter;
 
@@ -301,9 +300,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.m),
-        border: isSelected
-            ? Border.all(color: AppColors.primary, width: 2)
-            : null,
+        border:
+            isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -380,8 +378,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
 
                             if (mounted) {
                               context.read<SuppliersCubit>().loadSuppliers(
-                                widget.projectId,
-                              );
+                                    widget.projectId,
+                                  );
                             }
                           } else if (value == 'delete') {
                             final confirmed = await ConfirmationDialog.show(
@@ -538,7 +536,14 @@ class _SuppliersPageState extends State<SuppliersPage> {
                 runSpacing: 8,
                 children: SupplierType.values.map((type) {
                   return FilterChip(
-                    label: Text('${type.icon} ${type.displayName}'),
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(type.icon, size: 16),
+                        const SizedBox(width: 4),
+                        Text(type.displayName),
+                      ],
+                    ),
                     selected: _selectedTypeFilter == type,
                     onSelected: (selected) {
                       setState(() {
@@ -624,7 +629,13 @@ class _SuppliersPageState extends State<SuppliersPage> {
                   items: SupplierType.values.map((type) {
                     return DropdownMenuItem(
                       value: type,
-                      child: Text('${type.icon} ${type.displayName}'),
+                      child: Row(
+                        children: [
+                          Icon(type.icon, size: 20),
+                          const SizedBox(width: 8),
+                          Text(type.displayName),
+                        ],
+                      ),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -689,9 +700,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
                   email: emailController.text.isEmpty
                       ? null
                       : emailController.text,
-                  cnpj: cnpjController.text.isEmpty
-                      ? null
-                      : cnpjController.text,
+                  cnpj:
+                      cnpjController.text.isEmpty ? null : cnpjController.text,
                   status: SupplierStatus.active,
                   createdAt: DateTime.now(),
                 );
@@ -723,9 +733,9 @@ class _SuppliersPageState extends State<SuppliersPage> {
             children: [
               Row(
                 children: [
-                  Text(
+                  Icon(
                     supplier.type.icon,
-                    style: const TextStyle(fontSize: 32),
+                    size: 32,
                   ),
                   const SizedBox(width: AppSpacing.m),
                   Expanded(
@@ -880,9 +890,9 @@ class _SuppliersPageState extends State<SuppliersPage> {
             FilledButton(
               onPressed: () {
                 context.read<SuppliersCubit>().updateSupplierRating(
-                  supplier,
-                  rating,
-                );
+                      supplier,
+                      rating,
+                    );
                 Navigator.pop(dialogContext);
               },
               child: const Text('Salvar'),

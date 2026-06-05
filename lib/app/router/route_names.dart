@@ -17,7 +17,10 @@ class RouteNames {
   // Main Navigation
   static const String home = '/home';
 
-  // Phases
+  // Reform Map (substitui Phases)
+  static const String reformMap = '/reform-map';
+
+  // Phases (mantido para compatibilidade)
   static const String phases = '/phases';
   static const String phaseDetail = '/phases/:id';
   static const String phaseCreate = '/phases/create';

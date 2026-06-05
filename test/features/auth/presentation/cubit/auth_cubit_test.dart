@@ -30,10 +30,11 @@ void main() {
   late MockForgotPasswordUseCase mockForgotPasswordUseCase;
   late MockGetCurrentUserUseCase mockGetCurrentUserUseCase;
 
-  const tUser = UserEntity(
+  final tUser = UserEntity(
     id: '1',
     name: 'Test User',
     email: 'test@example.com',
+    createdAt: DateTime.now(),
   );
 
   setUp(() {
@@ -65,11 +66,11 @@ void main() {
       build: () {
         when(
           () => mockLoginUseCase(any(), any()),
-        ).thenAnswer((_) async => const Right(tUser));
+        ).thenAnswer((_) async => Right(tUser));
         return authCubit;
       },
       act: (cubit) => cubit.login('test@example.com', 'password'),
-      expect: () => [const AuthLoading(), const AuthAuthenticated(tUser)],
+      expect: () => [const AuthLoading(), AuthAuthenticated(tUser)],
     );
 
     // Teste 3: Testa o fluxo de login com erro

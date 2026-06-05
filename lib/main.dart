@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app/app.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
+import 'firebase_options.dart';
 import 'injection_container.dart';
 
 void main() async {
@@ -30,16 +31,10 @@ void main() async {
     ),
   );
 
-  // Inicializa o Firebase com opções específicas
+  // Inicializa o Firebase usando configurações seguras
   try {
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'AIzaSyAOSJvvfakZXGbxDi4rQZCojC5KxeknOMs',
-        appId: '1:721464031041:android:edd98fc3ce3f81a2b053c0',
-        messagingSenderId: '721464031041',
-        projectId: 'contrutore',
-        storageBucket: 'contrutore.firebasestorage.app',
-      ),
+      options: DefaultFirebaseOptions.currentPlatform,
     );
     debugPrint('✅ Firebase inicializado com sucesso');
   } catch (e) {

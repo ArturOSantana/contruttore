@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:contruttore/core/constants/app_icons.dart';
 
 class AlertEntity extends Equatable {
   final String id;
@@ -34,16 +36,16 @@ class AlertEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    projectId,
-    type,
-    title,
-    message,
-    isRead,
-    actionRoute,
-    snoozeUntil,
-    createdAt,
-  ];
+        id,
+        projectId,
+        type,
+        title,
+        message,
+        isRead,
+        actionRoute,
+        snoozeUntil,
+        createdAt,
+      ];
 }
 
 enum AlertType { critical, preventive, info, educational }
@@ -62,16 +64,16 @@ extension AlertTypeExtension on AlertType {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case AlertType.critical:
-        return '🔴';
+        return AppIcons.criticalAlert;
       case AlertType.preventive:
-        return '⚠️';
+        return AppIcons.preventiveAlert;
       case AlertType.info:
-        return 'ℹ️';
+        return AppIcons.warningAlert;
       case AlertType.educational:
-        return '💡';
+        return AppIcons.educationalAlert;
     }
   }
 

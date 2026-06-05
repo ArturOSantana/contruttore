@@ -14,6 +14,8 @@ import '../../features/onboarding/presentation/pages/retroactive_onboarding_page
 import '../../features/onboarding/presentation/cubit/retroactive_cubit.dart';
 import '../../features/phases/presentation/pages/phases_page.dart';
 import '../../features/phases/presentation/cubit/phases_cubit.dart';
+import '../../features/reform_map/presentation/pages/reform_map_page.dart';
+import '../../features/reform_map/presentation/cubit/reform_map_cubit.dart';
 import '../../features/alerts/presentation/cubit/alerts_cubit.dart';
 import '../../features/shopping/presentation/cubit/shopping_cubit.dart';
 import '../../features/suppliers/presentation/cubit/suppliers_cubit.dart';
@@ -134,7 +136,14 @@ class AppRouter {
         },
       ),
 
-      // Phases
+      // Reform Map (GPS da Reforma)
+      GoRoute(
+        path: RouteNames.reformMap,
+        name: 'reform-map',
+        builder: (context, state) => const _ReformMapPageWrapper(),
+      ),
+
+      // Phases (mantido para compatibilidade)
       GoRoute(
         path: RouteNames.phases,
         name: 'phases',
@@ -252,10 +261,8 @@ class AppRouter {
                 getIt<SuppliersCubit>()..loadSuppliers(projectId),
             child: CompareQuotesPage(
               projectId: projectId,
-              quoteIds: quoteIds
-                  .split(',')
-                  .where((id) => id.isNotEmpty)
-                  .toList(),
+              quoteIds:
+                  quoteIds.split(',').where((id) => id.isNotEmpty).toList(),
             ),
           );
         },
@@ -271,10 +278,8 @@ class AppRouter {
                 getIt<SuppliersCubit>()..loadSuppliers(projectId),
             child: CompareSuppliersPage(
               projectId: projectId,
-              supplierIds: supplierIds
-                  .split(',')
-                  .where((id) => id.isNotEmpty)
-                  .toList(),
+              supplierIds:
+                  supplierIds.split(',').where((id) => id.isNotEmpty).toList(),
             ),
           );
         },
@@ -357,10 +362,7 @@ class AppRouter {
       GoRoute(
         path: RouteNames.wishlist,
         name: 'wishlist',
-        builder: (context, state) {
-          final projectId = state.uri.queryParameters['projectId'] ?? '';
-          return WishlistPage(projectId: projectId);
-        },
+        builder: (context, state) => const _WishlistPageWrapper(),
       ),
       GoRoute(
         path: RouteNames.wishlistCreate,
@@ -597,8 +599,7 @@ class _PhasesPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?.fold(
+        final projectId = snapshot.data?.fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -628,8 +629,7 @@ class _AlertsPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?.fold(
+        final projectId = snapshot.data?.fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -659,8 +659,7 @@ class _ShoppingPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?.fold(
+        final projectId = snapshot.data?.fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -691,8 +690,7 @@ class _SuppliersPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?.fold(
+        final projectId = snapshot.data?.fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -723,8 +721,7 @@ class _PaymentsPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?.fold(
+        final projectId = snapshot.data?.fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -765,8 +762,7 @@ class _DiaryPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?[0].fold(
+        final projectId = snapshot.data?[0].fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -782,8 +778,7 @@ class _DiaryPageWrapper extends StatelessWidget {
               );
             }
 
-            final projectName =
-                projectSnapshot.data?.fold(
+            final projectName = projectSnapshot.data?.fold(
                   (failure) => 'Meu Projeto',
                   (project) => project.name ?? 'Meu Projeto',
                 ) ??
@@ -812,8 +807,7 @@ class _FinancialPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?.fold(
+        final projectId = snapshot.data?.fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -844,8 +838,7 @@ class _EditProjectPageWrapper extends StatelessWidget {
           );
         }
 
-        final projectId =
-            snapshot.data?.fold(
+        final projectId = snapshot.data?.fold(
               (failure) => '',
               (user) => user?.currentProjectId ?? '',
             ) ??
@@ -860,6 +853,68 @@ class _EditProjectPageWrapper extends StatelessWidget {
         return BlocProvider(
           create: (context) => getIt<ProjectCubit>(),
           child: EditProjectPage(projectId: projectId),
+        );
+      },
+    );
+  }
+}
+
+/// Widget wrapper para buscar projectId e criar BlocProvider para Wishlist
+class _WishlistPageWrapper extends StatelessWidget {
+  const _WishlistPageWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: getIt<AuthRepository>().getCurrentUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final projectId = snapshot.data?.fold(
+              (failure) => '',
+              (user) => user?.currentProjectId ?? '',
+            ) ??
+            '';
+
+        return BlocProvider(
+          create: (context) =>
+              getIt<WishlistCubit>()..loadWishlistItems(projectId),
+          child: WishlistPage(projectId: projectId),
+        );
+      },
+    );
+  }
+}
+
+/// Widget wrapper para buscar projectId e criar BlocProvider para Reform Map
+class _ReformMapPageWrapper extends StatelessWidget {
+  const _ReformMapPageWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: getIt<AuthRepository>().getCurrentUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final projectId = snapshot.data?.fold(
+              (failure) => '',
+              (user) => user?.currentProjectId ?? '',
+            ) ??
+            '';
+
+        return BlocProvider(
+          create: (context) =>
+              getIt<ReformMapCubit>()..loadReformMap(projectId),
+          child: ReformMapPage(projectId: projectId),
         );
       },
     );

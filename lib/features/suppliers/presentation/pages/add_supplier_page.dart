@@ -163,7 +163,13 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
               items: SupplierType.values.map((type) {
                 return DropdownMenuItem(
                   value: type,
-                  child: Text('${type.icon} ${type.displayName}'),
+                  child: Row(
+                    children: [
+                      Icon(type.icon, size: 20),
+                      const SizedBox(width: 8),
+                      Text(type.displayName),
+                    ],
+                  ),
                 );
               }).toList(),
               onChanged: (value) {

@@ -17,17 +17,26 @@ class WishlistRepositoryImpl implements WishlistRepository {
     String projectId,
   ) async {
     try {
+      // Query simples sem orderBy para funcionar enquanto índice está sendo construído
       final snapshot = await _firestore
           .collection('projects')
           .doc(projectId)
           .collection('wishlist')
-          .orderBy('isSelected', descending: true)
-          .orderBy('createdAt', descending: true)
           .get();
 
       final items = snapshot.docs
           .map((doc) => WishlistItemModel.fromMap(doc.data(), doc.id))
           .toList();
+
+      // Ordenação em memória: selecionados primeiro, depois por data
+      items.sort((a, b) {
+        // Primeiro ordena por isSelected (true primeiro)
+        if (a.isSelected != b.isSelected) {
+          return a.isSelected ? -1 : 1;
+        }
+        // Depois ordena por data (mais recente primeiro)
+        return b.createdAt.compareTo(a.createdAt);
+      });
 
       return Right(items);
     } catch (e) {
@@ -38,12 +47,28 @@ class WishlistRepositoryImpl implements WishlistRepository {
   @override
   Future<Either<Failure, void>> addWishlistItem(WishlistItemEntity item) async {
     try {
+      // Converter Entity para Model
+      final model = WishlistItemModel(
+        id: item.id,
+        projectId: item.projectId,
+        name: item.name,
+        url: item.url,
+        imageUrl: item.imageUrl,
+        storeName: item.storeName,
+        price: item.price,
+        notes: item.notes,
+        category: item.category,
+        phaseId: item.phaseId,
+        isSelected: item.isSelected,
+        createdAt: item.createdAt,
+      );
+
       await _firestore
           .collection('projects')
           .doc(item.projectId)
           .collection('wishlist')
           .doc(item.id)
-          .set((item as WishlistItemModel).toMap());
+          .set(model.toMap());
 
       return const Right(null);
     } catch (e) {
@@ -56,12 +81,28 @@ class WishlistRepositoryImpl implements WishlistRepository {
     WishlistItemEntity item,
   ) async {
     try {
+      // Converter Entity para Model
+      final model = WishlistItemModel(
+        id: item.id,
+        projectId: item.projectId,
+        name: item.name,
+        url: item.url,
+        imageUrl: item.imageUrl,
+        storeName: item.storeName,
+        price: item.price,
+        notes: item.notes,
+        category: item.category,
+        phaseId: item.phaseId,
+        isSelected: item.isSelected,
+        createdAt: item.createdAt,
+      );
+
       await _firestore
           .collection('projects')
           .doc(item.projectId)
           .collection('wishlist')
           .doc(item.id)
-          .update((item as WishlistItemModel).toMap());
+          .update(model.toMap());
 
       return const Right(null);
     } catch (e) {

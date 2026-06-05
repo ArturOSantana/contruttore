@@ -42,7 +42,7 @@ class AlertsPage extends StatelessWidget {
                   value: type,
                   child: Row(
                     children: [
-                      Text(type.icon),
+                      Icon(type.icon, size: 16),
                       SizedBox(width: AppSpacing.xs),
                       Text(type.displayName),
                     ],
@@ -125,7 +125,7 @@ class AlertsPage extends StatelessWidget {
                       color: AppColors.surfaceVariant,
                       child: Row(
                         children: [
-                          Text(state.filterType!.icon),
+                          Icon(state.filterType!.icon, size: 16),
                           SizedBox(width: AppSpacing.xs),
                           Text(
                             'Filtrando: ${state.filterType!.displayName}',
@@ -224,9 +224,9 @@ class _AlertCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     ),
                     child: Center(
-                      child: Text(
+                      child: Icon(
                         alert.type.icon,
-                        style: const TextStyle(fontSize: 20),
+                        size: 20,
                       ),
                     ),
                   ),

@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:contruttore/core/constants/app_icons.dart';
 
 class DocumentEntity extends Equatable {
   final String id;
@@ -39,15 +41,15 @@ class DocumentEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    projectId,
-    type,
-    name,
-    fileUrl,
-    expiryDate,
-    notes,
-    createdAt,
-  ];
+        id,
+        projectId,
+        type,
+        name,
+        fileUrl,
+        expiryDate,
+        notes,
+        createdAt,
+      ];
 }
 
 enum DocumentType { contract, art, alvara, floorPlan, memorial, other }
@@ -70,20 +72,20 @@ extension DocumentTypeExtension on DocumentType {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case DocumentType.contract:
-        return '📄';
+        return AppIcons.documentContract;
       case DocumentType.art:
-        return '👷';
+        return AppIcons.art;
       case DocumentType.alvara:
-        return '✅';
+        return AppIcons.alvara;
       case DocumentType.floorPlan:
-        return '📐';
+        return AppIcons.floorPlan;
       case DocumentType.memorial:
-        return '📋';
+        return AppIcons.memorial;
       case DocumentType.other:
-        return '📎';
+        return AppIcons.otherDocument;
     }
   }
 

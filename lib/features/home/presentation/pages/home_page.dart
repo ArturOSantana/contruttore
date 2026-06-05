@@ -158,7 +158,7 @@ class _HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$greeting, $firstName 👋', style: AppTextStyles.headlineLarge),
+        Text('$greeting, $firstName', style: AppTextStyles.headlineLarge),
         SizedBox(height: AppSpacing.xs),
         Text(
           '${data.project.name} · Entrega em $monthsUntilDelivery meses',
@@ -382,7 +382,11 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildModulesGrid() {
     final modules = [
-      {'icon': Icons.list_alt, 'label': 'Fases', 'route': RouteNames.phases},
+      {
+        'icon': Icons.map,
+        'label': 'Mapa da Reforma',
+        'route': RouteNames.reformMap
+      },
       {
         'icon': Icons.attach_money,
         'label': 'Financeiro',
@@ -553,7 +557,7 @@ class _HomePageState extends State<HomePage> {
             // Já está na home
             break;
           case 1:
-            context.push(RouteNames.phases);
+            context.push(RouteNames.reformMap);
             break;
           case 2:
             context.push(RouteNames.financial);
@@ -565,7 +569,7 @@ class _HomePageState extends State<HomePage> {
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
-        BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Fases'),
+        BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Mapa'),
         BottomNavigationBarItem(
           icon: Icon(Icons.attach_money),
           label: 'Financeiro',

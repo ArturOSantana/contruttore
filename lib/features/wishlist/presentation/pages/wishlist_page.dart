@@ -27,6 +27,10 @@ class WishlistPage extends StatefulWidget {
 class _WishlistPageState extends State<WishlistPage> {
   late final WishlistCubit _cubit;
 
+  // Filtros
+  WishlistCategory? _selectedCategory;
+  String _dateFilter = 'all';
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +44,71 @@ class _WishlistPageState extends State<WishlistPage> {
     super.dispose();
   }
 
+  // Aplicar filtros
+  List<WishlistItemEntity> _applyFilters(List<WishlistItemEntity> items) {
+    var filtered = items;
+
+    if (_selectedCategory != null) {
+      filtered =
+          filtered.where((item) => item.category == _selectedCategory).toList();
+    }
+
+    final now = DateTime.now();
+    switch (_dateFilter) {
+      case 'today':
+        final today = DateTime(now.year, now.month, now.day);
+        filtered =
+            filtered.where((item) => item.createdAt.isAfter(today)).toList();
+        break;
+      case 'week':
+        final weekAgo = now.subtract(Duration(days: 7));
+        filtered =
+            filtered.where((item) => item.createdAt.isAfter(weekAgo)).toList();
+        break;
+      case 'month':
+        final monthStart = DateTime(now.year, now.month, 1);
+        filtered = filtered
+            .where((item) => item.createdAt.isAfter(monthStart))
+            .toList();
+        break;
+    }
+
+    return filtered;
+  }
+
+  // Excluir múltiplos selecionados
+  Future<void> _deleteSelectedItems(List<WishlistItemEntity> items) async {
+    final selectedItems = items.where((item) => item.isSelected).toList();
+
+    if (selectedItems.isEmpty) return;
+
+    final confirmed = await ConfirmationDialog.show(
+      context,
+      title: 'Excluir Selecionados',
+      message:
+          'Deseja excluir ${selectedItems.length} ${selectedItems.length == 1 ? "item" : "itens"} selecionados?',
+      confirmLabel: 'Excluir',
+      cancelLabel: 'Cancelar',
+      isDestructive: true,
+    );
+
+    if (confirmed && mounted) {
+      for (final item in selectedItems) {
+        await _cubit.deleteWishlistItem(widget.projectId, item.id);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '${selectedItems.length} ${selectedItems.length == 1 ? "item excluído" : "itens excluídos"}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,6 +117,24 @@ class _WishlistPageState extends State<WishlistPage> {
         title: const Text('Lista de Desejos'),
         backgroundColor: AppColors.surface,
         elevation: 0,
+        actions: [
+          BlocBuilder<WishlistCubit, WishlistState>(
+            bloc: _cubit,
+            builder: (context, state) {
+              if (state is WishlistLoaded && state.selectedCount > 0) {
+                return IconButton(
+                  icon: Badge(
+                    label: Text('${state.selectedCount}'),
+                    child: Icon(Icons.delete_sweep),
+                  ),
+                  tooltip: 'Excluir ${state.selectedCount} selecionados',
+                  onPressed: () => _deleteSelectedItems(state.items),
+                );
+              }
+              return SizedBox.shrink();
+            },
+          ),
+        ],
       ),
       body: BlocConsumer<WishlistCubit, WishlistState>(
         bloc: _cubit,
@@ -93,12 +180,17 @@ class _WishlistPageState extends State<WishlistPage> {
           }
 
           if (state is WishlistLoaded) {
-            if (state.items.isEmpty) {
+            final filteredItems = _applyFilters(state.items);
+
+            if (filteredItems.isEmpty) {
               return EmptyStateWidget(
                 icon: Icons.favorite_border,
-                title: 'Nenhum item salvo',
-                message:
-                    'Salve links de produtos que você gostou para não perder',
+                title: state.items.isEmpty
+                    ? 'Nenhum item salvo'
+                    : 'Nenhum item encontrado',
+                message: state.items.isEmpty
+                    ? 'Salve links de produtos que você gostou para não perder'
+                    : 'Nenhum item corresponde aos filtros selecionados',
                 actionLabel: 'Adicionar Link',
                 onAction: () async {
                   final result = await context.push(
@@ -107,13 +199,6 @@ class _WishlistPageState extends State<WishlistPage> {
                   if (result == true && mounted) {
                     _cubit.loadWishlistItems(widget.projectId);
                   }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Funcionalidade de adicionar em desenvolvimento',
-                      ),
-                    ),
-                  );
                 },
               );
             }
@@ -121,19 +206,20 @@ class _WishlistPageState extends State<WishlistPage> {
             return Column(
               children: [
                 _buildSummaryCard(state),
+                _buildFilters(),
                 Expanded(
                   child: GridView.builder(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: AppSpacing.md,
-                          mainAxisSpacing: AppSpacing.md,
-                          childAspectRatio: 0.75,
-                        ),
-                    itemCount: state.items.length,
+                      crossAxisCount: 2,
+                      crossAxisSpacing: AppSpacing.md,
+                      mainAxisSpacing: AppSpacing.md,
+                      childAspectRatio: 0.75,
+                    ),
+                    itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
-                      final item = state.items[index];
+                      final item = filteredItems[index];
                       return _buildWishlistCard(item);
                     },
                   ),
@@ -146,15 +232,90 @@ class _WishlistPageState extends State<WishlistPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Funcionalidade de adicionar em desenvolvimento'),
-            ),
+        onPressed: () async {
+          final result = await context.push(
+            '${RouteNames.wishlistCreate}?projectId=${widget.projectId}',
           );
+          if (result == true && mounted) {
+            _cubit.loadWishlistItems(widget.projectId);
+          }
         },
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildFilters() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          bottom: BorderSide(color: AppColors.border, width: 1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Filtros',
+              style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600)),
+          SizedBox(height: AppSpacing.xs),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                FilterChip(
+                  label: Text('Todos'),
+                  selected: _dateFilter == 'all',
+                  onSelected: (_) => setState(() => _dateFilter = 'all'),
+                ),
+                SizedBox(width: AppSpacing.xs),
+                FilterChip(
+                  label: Text('Hoje'),
+                  selected: _dateFilter == 'today',
+                  onSelected: (_) => setState(() => _dateFilter = 'today'),
+                ),
+                SizedBox(width: AppSpacing.xs),
+                FilterChip(
+                  label: Text('Semana'),
+                  selected: _dateFilter == 'week',
+                  onSelected: (_) => setState(() => _dateFilter = 'week'),
+                ),
+                SizedBox(width: AppSpacing.xs),
+                FilterChip(
+                  label: Text('Mês'),
+                  selected: _dateFilter == 'month',
+                  onSelected: (_) => setState(() => _dateFilter = 'month'),
+                ),
+                SizedBox(width: AppSpacing.md),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: DropdownButton<WishlistCategory?>(
+                    value: _selectedCategory,
+                    hint: Text('Categoria'),
+                    underline: SizedBox.shrink(),
+                    items: [
+                      DropdownMenuItem(
+                          value: null, child: Text('Todas Categorias')),
+                      ...WishlistCategory.values.map((cat) => DropdownMenuItem(
+                            value: cat,
+                            child: Text(cat.displayName),
+                          )),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _selectedCategory = value),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -380,9 +541,8 @@ class _WishlistPageState extends State<WishlistPage> {
                           backgroundColor: item.isSelected
                               ? AppColors.success
                               : AppColors.surfaceVariant,
-                          foregroundColor: item.isSelected
-                              ? Colors.white
-                              : null,
+                          foregroundColor:
+                              item.isSelected ? Colors.white : null,
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xs),
@@ -475,8 +635,7 @@ class _WishlistPageState extends State<WishlistPage> {
   }
 
   void _shareItem(WishlistItemEntity item) {
-    final text =
-        '${item.name}\n'
+    final text = '${item.name}\n'
         '${item.storeName != null ? '${item.storeName}\n' : ''}'
         '${item.price != null ? 'R\$ ${item.price!.toStringAsFixed(2)}\n' : ''}'
         '${item.url}';

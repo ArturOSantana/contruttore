@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:contruttore/features/financial/domain/entities/expense_entity.dart';
 import 'package:contruttore/features/financial/domain/entities/financial_summary_entity.dart';
 import 'package:contruttore/features/financial/domain/usecases/add_expense_usecase.dart';
+import 'package:contruttore/features/financial/domain/usecases/delete_expense_usecase.dart';
 import 'package:contruttore/features/financial/domain/usecases/get_expenses_usecase.dart';
 import 'package:contruttore/features/financial/domain/usecases/get_financial_summary_usecase.dart';
 import 'package:contruttore/features/financial/domain/usecases/update_expense_usecase.dart';
@@ -20,33 +21,41 @@ class MockAddExpenseUseCase extends Mock implements AddExpenseUseCase {}
 
 class MockUpdateExpenseUseCase extends Mock implements UpdateExpenseUseCase {}
 
+class MockDeleteExpenseUseCase extends Mock implements DeleteExpenseUseCase {}
+
 void main() {
   late FinancialCubit financialCubit;
   late MockGetFinancialSummaryUseCase mockGetFinancialSummaryUseCase;
   late MockGetExpensesUseCase mockGetExpensesUseCase;
   late MockAddExpenseUseCase mockAddExpenseUseCase;
   late MockUpdateExpenseUseCase mockUpdateExpenseUseCase;
+  late MockDeleteExpenseUseCase mockDeleteExpenseUseCase;
 
   setUp(() {
     mockGetFinancialSummaryUseCase = MockGetFinancialSummaryUseCase();
     mockGetExpensesUseCase = MockGetExpensesUseCase();
     mockAddExpenseUseCase = MockAddExpenseUseCase();
     mockUpdateExpenseUseCase = MockUpdateExpenseUseCase();
+    mockDeleteExpenseUseCase = MockDeleteExpenseUseCase();
 
     financialCubit = FinancialCubit(
       mockGetFinancialSummaryUseCase,
       mockGetExpensesUseCase,
       mockAddExpenseUseCase,
       mockUpdateExpenseUseCase,
+      mockDeleteExpenseUseCase,
     );
   });
 
   const tSummary = FinancialSummaryEntity(
     totalBudget: 100000,
-    totalSpent: 45000,
+    totalConfirmed: 25000,
     totalCommitted: 20000,
     totalEstimated: 35000,
-    categories: [],
+    totalSpent: 45000,
+    remaining: 55000,
+    percentageUsed: 45.0,
+    categorySummaries: {},
   );
 
   final tExpenses = [

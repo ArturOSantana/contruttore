@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:contruttore/core/constants/app_icons.dart';
 
 /// Entidade que representa toda movimentação financeira do projeto
 ///
@@ -66,26 +68,26 @@ class TransactionEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    projectId,
-    type,
-    source,
-    amount,
-    signedAmount,
-    date,
-    description,
-    supplierId,
-    installmentId,
-    paymentId,
-    shoppingItemId,
-    relatedTransactionId,
-    phaseId,
-    categoryId,
-    invoicePhotoUrl,
-    notes,
-    status,
-    createdAt,
-  ];
+        id,
+        projectId,
+        type,
+        source,
+        amount,
+        signedAmount,
+        date,
+        description,
+        supplierId,
+        installmentId,
+        paymentId,
+        shoppingItemId,
+        relatedTransactionId,
+        phaseId,
+        categoryId,
+        invoicePhotoUrl,
+        notes,
+        status,
+        createdAt,
+      ];
 }
 
 /// Tipo da transação
@@ -129,16 +131,16 @@ extension TransactionTypeExtension on TransactionType {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case TransactionType.expense:
-        return '💰';
+        return AppIcons.expense;
       case TransactionType.commitment:
-        return '📋';
+        return AppIcons.commitment;
       case TransactionType.estimate:
-        return '📊';
+        return AppIcons.estimate;
       case TransactionType.reversal:
-        return '↩️';
+        return AppIcons.reversal;
     }
   }
 }
@@ -163,22 +165,22 @@ extension TransactionSourceExtension on TransactionSource {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case TransactionSource.manual:
-        return '✍️';
+        return AppIcons.manual;
       case TransactionSource.installment:
-        return '👷';
+        return AppIcons.installment;
       case TransactionSource.installmentReversal:
-        return '↩️';
+        return AppIcons.installmentReversal;
       case TransactionSource.shopping:
-        return '🛒';
+        return AppIcons.shopping;
       case TransactionSource.shoppingReversal:
-        return '↩️';
+        return AppIcons.shoppingReversal;
       case TransactionSource.contract:
-        return '📄';
+        return AppIcons.contract;
       case TransactionSource.contractCancel:
-        return '❌';
+        return AppIcons.contractCancel;
     }
   }
 }

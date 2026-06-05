@@ -213,6 +213,36 @@ service cloud.firestore {
         allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
         allow update, delete: if ownsProject(projectId);
       }
+
+      // ============================================
+      // PROBLEMAS DA REFORMA (Mapa da Reforma)
+      // ============================================
+      
+      match /problems/{problemId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // AÇÕES DO MAPA DA REFORMA
+      // ============================================
+      
+      match /reform_actions/{actionId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // HISTÓRICO DE SAÚDE DA REFORMA
+      // ============================================
+      
+      match /health_history/{snapshotId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
     }
 
     // ============================================

@@ -53,6 +53,7 @@ dependencies:
   # APIs externas
   http: ^1.2.2
   dio: ^5.7.0
+  html: ^0.15.4
 
   # Icons
   cupertino_icons: ^1.0.8
@@ -63,6 +64,10 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.4.13
   injectable_generator: ^2.6.2
+  
+  # Testes
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
 
 flutter:
   uses-material-design: true
