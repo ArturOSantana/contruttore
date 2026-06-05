@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -27,11 +30,60 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePropertiesFile = rootProject.file("key.properties")
+            if (keystorePropertiesFile.exists()) {
+                val keystoreProperties = Properties()
+                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+                
+                val keystorePath = keystoreProperties.getProperty("storeFile")
+                val keystoreFile = file(keystorePath)
+                
+                // Só configura se o arquivo keystore realmente existir
+                if (keystoreFile.exists()) {
+                    storeFile = keystoreFile
+                    storePassword = keystoreProperties.getProperty("storePassword")
+                    keyAlias = keystoreProperties.getProperty("keyAlias")
+                    keyPassword = keystoreProperties.getProperty("keyPassword")
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Só assina se o keystore existir
+            val keystorePropertiesFile = rootProject.file("key.properties")
+            var shouldSign = false
+            
+            if (keystorePropertiesFile.exists()) {
+                val keystoreProperties = Properties()
+                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+                val keystorePath = keystoreProperties.getProperty("storeFile")
+                shouldSign = file(keystorePath).exists()
+            }
+            
+            if (shouldSign) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("development") {
+            dimension = "environment"
+            versionNameSuffix = "-dev"
+        }
+        create("production") {
+            dimension = "environment"
         }
     }
 }
