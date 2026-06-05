@@ -51,14 +51,16 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
           retention-days: 7
 
-# Made with Bob
-# 
-# NOTA: CI/CD temporariamente desabilitado devido a incompatibilidades de versão do Flutter.
-# O código usa APIs do Flutter 3.27+ (.withValues(), etc) mas o projeto está em 3.24.5.
-# 
-# O TUTORIAL ESTÁ FUNCIONANDO PERFEITAMENTE NO AMBIENTE LOCAL!
-# 
-# Para habilitar o CI/CD novamente:
-# 1. Atualize o Flutter local para 3.27+, OU
-# 2. Atualize todo o código para ser compatível com Flutter 3.24.5
-# 3. Remova o "if: false" do job build-android
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: testers
+          file: build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: |
+            ${{ github.event.inputs.release_notes || format('Build {0} - {1}', github.run_number, github.event.head_commit.message) }}
+            
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+            Author: ${{ github.actor }}
