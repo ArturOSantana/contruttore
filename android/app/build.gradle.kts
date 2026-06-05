@@ -75,23 +75,6 @@ android {
             )
         }
     }
-
-    flavorDimensions += "environment"
-    productFlavors {
-        create("development") {
-            dimension = "environment"
-            versionNameSuffix = "-dev"
-        }
-        create("production") {
-            dimension = "environment"
-        }
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
-    }
 }
 
 dependencies {
