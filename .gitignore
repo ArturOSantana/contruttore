@@ -118,7 +118,7 @@ android/app/*.jks
 # They contain API keys and should be kept secret
 **/android/app/google-services.json
 **/ios/GoogleService-Info.plist
-lib/firebase_options.dart
+# lib/firebase_options.dart  # COMENTADO: Este arquivo PODE ser commitado (API keys são protegidas pelo Firebase Console)
 .firebase/
 firebase-debug.log
 firestore-debug.log
