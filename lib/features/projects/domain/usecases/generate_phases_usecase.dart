@@ -22,18 +22,118 @@ class GeneratePhasesUseCase {
         final phase = phases[i];
         String status;
 
-        if (currentSituation == 'just_signed') {
-          // Fases 1-4 ativas, restantes locked
-          status = i < 4 ? 'active' : 'locked';
-        } else if (currentSituation == 'construction') {
-          // Todas as fases de comprador ativas
-          status = i < 5 ? 'active' : 'locked';
-        } else if (currentSituation == 'keys_received') {
-          // Fases 1-4 done_no_record, 5-12 active
-          status = i < 4 ? 'done_no_record' : (i == 4 ? 'active' : 'locked');
+        // Jornada B - Foco apenas na reforma (fases 6-12)
+        if (currentSituation == 'just_got_keys') {
+          // Acabou de pegar as chaves
+          // Fases 1-5: done_no_record (compra concluída)
+          // Fase 6: active (planejamento)
+          // Fases 7-12: locked
+          if (i < 5) {
+            status = 'done_no_record';
+          } else if (i == 5) {
+            status = 'active';
+          } else {
+            status = 'locked';
+          }
+        } else if (currentSituation == 'planning') {
+          // Está planejando a reforma
+          // Fases 1-5: done_no_record
+          // Fase 6: active (planejamento)
+          // Fases 7-12: locked
+          if (i < 5) {
+            status = 'done_no_record';
+          } else if (i == 5) {
+            status = 'active';
+          } else {
+            status = 'locked';
+          }
+        } else if (currentSituation == 'hiring') {
+          // Já está contratando profissionais
+          // Fases 1-5: done_no_record
+          // Fase 6: done (planejamento concluído)
+          // Fase 7: active (demolição/preparação)
+          // Fases 8-12: locked
+          if (i < 5) {
+            status = 'done_no_record';
+          } else if (i == 5) {
+            status = 'done';
+          } else if (i == 6) {
+            status = 'active';
+          } else {
+            status = 'locked';
+          }
+        } else if (currentSituation == 'started') {
+          // Já comeceu a obra
+          // Fases 1-5: done_no_record
+          // Fases 6-7: done (planejamento e demolição)
+          // Fase 8: active (instalações)
+          // Fases 9-12: locked
+          if (i < 5) {
+            status = 'done_no_record';
+          } else if (i >= 5 && i < 7) {
+            status = 'done';
+          } else if (i == 7) {
+            status = 'active';
+          } else {
+            status = 'locked';
+          }
+        } else if (currentSituation == 'finishing') {
+          // Está instalando acabamentos
+          // Fases 1-5: done_no_record
+          // Fases 6-8: done
+          // Fase 9: active (revestimentos)
+          // Fases 10-12: locked
+          if (i < 5) {
+            status = 'done_no_record';
+          } else if (i >= 5 && i < 8) {
+            status = 'done';
+          } else if (i == 8) {
+            status = 'active';
+          } else {
+            status = 'locked';
+          }
+        } else if (currentSituation == 'furnishing') {
+          // Está montando os móveis
+          // Fases 1-5: done_no_record
+          // Fases 6-9: done
+          // Fase 10: active (marcenaria)
+          // Fases 11-12: locked
+          if (i < 5) {
+            status = 'done_no_record';
+          } else if (i >= 5 && i < 9) {
+            status = 'done';
+          } else if (i == 9) {
+            status = 'active';
+          } else {
+            status = 'locked';
+          }
+        } else if (currentSituation == 'moving') {
+          // Está quase se mudando
+          // Fases 1-5: done_no_record
+          // Fases 6-10: done
+          // Fase 11: active (louças e metais)
+          // Fase 12: locked
+          if (i < 5) {
+            status = 'done_no_record';
+          } else if (i >= 5 && i < 10) {
+            status = 'done';
+          } else if (i == 10) {
+            status = 'active';
+          } else {
+            status = 'locked';
+          }
         } else {
-          // renovation - perguntar em qual fase está (implementar depois)
-          status = i < 5 ? 'done_no_record' : 'active';
+          // Fallback para situações antigas (manter compatibilidade)
+          if (currentSituation == 'just_signed') {
+            status = i < 4 ? 'active' : 'locked';
+          } else if (currentSituation == 'construction') {
+            status = i < 5 ? 'active' : 'locked';
+          } else if (currentSituation == 'keys_received') {
+            status = i < 4 ? 'done_no_record' : (i == 4 ? 'active' : 'locked');
+          } else {
+            // renovation - default
+            status = i < 5 ? 'done_no_record' : 'active';
+          }
         }
 
         await _firestore
@@ -42,16 +142,16 @@ class GeneratePhasesUseCase {
             .collection('phases')
             .doc('phase_${i + 1}')
             .set({
-              'number': i + 1,
-              'name': phase['name'],
-              'description': phase['description'],
-              'status': status,
-              'startDate': null,
-              'endDate': null,
-              'estimatedDurationDays': phase['estimatedDurationDays'],
-              'subtasks': phase['subtasks'],
-              'notes': null,
-            });
+          'number': i + 1,
+          'name': phase['name'],
+          'description': phase['description'],
+          'status': status,
+          'startDate': null,
+          'endDate': null,
+          'estimatedDurationDays': phase['estimatedDurationDays'],
+          'subtasks': phase['subtasks'],
+          'notes': null,
+        });
       }
 
       return const Right(null);

@@ -109,23 +109,23 @@ extension ActionTypeExtension on ActionType {
   String get icon {
     switch (this) {
       case ActionType.decision:
-        return '🤔';
+        return '';
       case ActionType.purchase:
-        return '🛒';
+        return '';
       case ActionType.hire:
-        return '👷';
+        return '';
       case ActionType.document:
-        return '📄';
+        return '';
       case ActionType.payment:
-        return '💰';
+        return '';
       case ActionType.inspection:
-        return '🔍';
+        return '';
       case ActionType.approval:
-        return '✅';
+        return '';
       case ActionType.schedule:
-        return '📅';
+        return '';
       case ActionType.other:
-        return '📌';
+        return '';
     }
   }
 }

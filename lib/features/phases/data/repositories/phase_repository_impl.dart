@@ -58,12 +58,13 @@ class PhaseRepositoryImpl implements PhaseRepository {
   @override
   Future<Either<Failure, void>> updatePhase(PhaseEntity phase) async {
     try {
+      // Usar set() com merge para criar ou atualizar
       await _firestore
           .collection('projects')
           .doc(phase.projectId)
           .collection('phases')
           .doc(phase.id)
-          .update(PhaseModel.fromEntity(phase).toMap());
+          .set(PhaseModel.fromEntity(phase).toMap(), SetOptions(merge: true));
 
       return const Right(null);
     } catch (e) {
@@ -130,9 +131,9 @@ class PhaseRepositoryImpl implements PhaseRepository {
           .collection('phases')
           .doc(phaseId)
           .update({
-            'status': PhaseStatus.done.name,
-            'endDate': Timestamp.now(),
-          });
+        'status': PhaseStatus.done.name,
+        'endDate': Timestamp.now(),
+      });
 
       return const Right(null);
     } catch (e) {
@@ -172,6 +173,47 @@ class PhaseRepositoryImpl implements PhaseRepository {
       });
     } catch (e) {
       return Left(ServerFailure('Erro ao adicionar subtarefa: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> markPhasesRetroactive({
+    required String projectId,
+    required List<String> phaseNames,
+  }) async {
+    try {
+      // Buscar todas as fases do projeto
+      final phasesResult = await getPhases(projectId);
+
+      return phasesResult.fold(
+        (failure) => Left(failure),
+        (phases) async {
+          // Filtrar fases que devem ser marcadas como retroativas
+          final phasesToUpdate = phases
+              .where(
+                (phase) => phaseNames.contains(phase.name),
+              )
+              .toList();
+
+          // Atualizar cada fase
+          for (final phase in phasesToUpdate) {
+            await _firestore
+                .collection('projects')
+                .doc(projectId)
+                .collection('phases')
+                .doc(phase.id)
+                .update({
+              'status': PhaseStatus.doneNoRecord.name,
+              'isRetroactive': true,
+              'retroactiveMarkedAt': Timestamp.now(),
+            });
+          }
+
+          return const Right(null);
+        },
+      );
+    } catch (e) {
+      return Left(ServerFailure('Erro ao marcar fases como retroativas: $e'));
     }
   }
 }

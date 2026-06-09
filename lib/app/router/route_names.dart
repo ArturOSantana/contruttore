@@ -6,7 +6,11 @@ class RouteNames {
   // Splash & Onboarding
   static const String splash = '/';
   static const String tutorial = '/tutorial';
+  static const String onboardingChoice = '/onboarding-choice';
   static const String onboarding = '/onboarding';
+  static const String onboarding14Steps = '/onboarding-14';
+  static const String onboardingResults = '/onboarding-results';
+  static const String reformRisks = '/reform-risks';
   static const String retroactiveOnboarding = '/retroactive-onboarding';
 
   // Auth
@@ -19,6 +23,7 @@ class RouteNames {
 
   // Reform Map (substitui Phases)
   static const String reformMap = '/reform-map';
+  static const String reportProblem = '/report-problem';
 
   // Phases (mantido para compatibilidade)
   static const String phases = '/phases';

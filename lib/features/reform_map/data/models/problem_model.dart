@@ -17,12 +17,27 @@ class ProblemModel extends ProblemEntity {
     required super.reportedAt,
     super.resolvedAt,
     super.solution,
+    super.resolution,
     super.affectedAreas = const [],
-    super.responsibleId,
+    super.supplierId,
+    super.photoUrls = const [],
     super.attachments = const [],
   });
 
   factory ProblemModel.fromMap(Map<String, dynamic> map) {
+    // Suporta tanto supplierId quanto responsibleId (retrocompatibilidade)
+    final supplierId =
+        map['supplierId'] as String? ?? map['responsibleId'] as String?;
+
+    // Suporta tanto photoUrls quanto attachments (retrocompatibilidade)
+    final photoUrls = (map['photoUrls'] as List<dynamic>?)
+            ?.map((a) => a as String)
+            .toList() ??
+        (map['attachments'] as List<dynamic>?)
+            ?.map((a) => a as String)
+            .toList() ??
+        [];
+
     return ProblemModel(
       id: map['id'] as String,
       projectId: map['projectId'] as String,
@@ -49,15 +64,14 @@ class ProblemModel extends ProblemEntity {
           ? DateTime.parse(map['resolvedAt'] as String)
           : null,
       solution: map['solution'] as String?,
+      resolution: map['resolution'] as String? ?? map['solution'] as String?,
       affectedAreas: (map['affectedAreas'] as List<dynamic>?)
               ?.map((a) => a as String)
               .toList() ??
           [],
-      responsibleId: map['responsibleId'] as String?,
-      attachments: (map['attachments'] as List<dynamic>?)
-              ?.map((a) => a as String)
-              .toList() ??
-          [],
+      supplierId: supplierId,
+      photoUrls: photoUrls,
+      attachments: photoUrls, // Mantém compatibilidade
     );
   }
 
@@ -77,9 +91,13 @@ class ProblemModel extends ProblemEntity {
       'reportedAt': reportedAt.toIso8601String(),
       'resolvedAt': resolvedAt?.toIso8601String(),
       'solution': solution,
+      'resolution': resolution ?? solution,
       'affectedAreas': affectedAreas,
-      'responsibleId': responsibleId,
-      'attachments': attachments,
+      'supplierId': supplierId,
+      'photoUrls': photoUrls,
+      // Mantém campos antigos para compatibilidade
+      'responsibleId': supplierId,
+      'attachments': photoUrls,
     };
   }
 
@@ -99,8 +117,10 @@ class ProblemModel extends ProblemEntity {
       reportedAt: entity.reportedAt,
       resolvedAt: entity.resolvedAt,
       solution: entity.solution,
+      resolution: entity.resolution,
       affectedAreas: entity.affectedAreas,
-      responsibleId: entity.responsibleId,
+      supplierId: entity.supplierId,
+      photoUrls: entity.photoUrls,
       attachments: entity.attachments,
     );
   }

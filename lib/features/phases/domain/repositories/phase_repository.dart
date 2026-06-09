@@ -20,6 +20,10 @@ abstract class PhaseRepository {
     String phaseId,
     SubtaskEntity subtask,
   );
+  Future<Either<Failure, void>> markPhasesRetroactive({
+    required String projectId,
+    required List<String> phaseNames,
+  });
 }
 
 // Made with Bob

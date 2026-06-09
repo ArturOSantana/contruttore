@@ -81,8 +81,8 @@ class _ShoppingPageState extends State<ShoppingPage> {
             return ErrorWidgetCustom(
               message: state.message,
               onRetry: () => context.read<ShoppingCubit>().loadShoppingItems(
-                widget.projectId,
-              ),
+                    widget.projectId,
+                  ),
             );
           }
 
@@ -92,8 +92,8 @@ class _ShoppingPageState extends State<ShoppingPage> {
             return RefreshIndicator(
               onRefresh: () async {
                 await context.read<ShoppingCubit>().loadShoppingItems(
-                  widget.projectId,
-                );
+                      widget.projectId,
+                    );
               },
               child: filteredItems.isEmpty
                   ? _buildEmptyState()
@@ -347,9 +347,8 @@ class _ShoppingPageState extends State<ShoppingPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: item.isPurchased
-              ? null
-              : () => _showMarkAsPurchasedDialog(item),
+          onTap:
+              item.isPurchased ? null : () => _showMarkAsPurchasedDialog(item),
           borderRadius: BorderRadius.circular(AppRadius.m),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.m),
@@ -447,8 +446,8 @@ class _ShoppingPageState extends State<ShoppingPage> {
 
                       if (mounted) {
                         context.read<ShoppingCubit>().loadShoppingItems(
-                          widget.projectId,
-                        );
+                              widget.projectId,
+                            );
                       }
                     } else if (value == 'return' && item.isPurchased) {
                       await _showReturnItemDialog(item);
@@ -465,9 +464,9 @@ class _ShoppingPageState extends State<ShoppingPage> {
 
                       if (confirmed && mounted) {
                         await context.read<ShoppingCubit>().deleteShoppingItem(
-                          widget.projectId,
-                          item.id,
-                        );
+                              widget.projectId,
+                              item.id,
+                            );
 
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -738,7 +737,15 @@ class _ShoppingPageState extends State<ShoppingPage> {
     final priceController = TextEditingController(
       text: item.estimatedPrice?.toStringAsFixed(2) ?? '',
     );
-    final storeController = TextEditingController();
+
+    // Se o item já tem fornecedor, preenche automaticamente
+    final storeController = TextEditingController(
+      text: item.store ?? '',
+    );
+
+    // Verifica se já tem fornecedor cadastrado
+    final hasSupplier = item.supplierId != null ||
+        (item.store != null && item.store!.isNotEmpty);
 
     // Captura o cubit antes de abrir o dialog
     final cubit = context.read<ShoppingCubit>();
@@ -767,14 +774,28 @@ class _ShoppingPageState extends State<ShoppingPage> {
               autofocus: true,
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: storeController,
-              decoration: const InputDecoration(
-                labelText: 'Loja/Fornecedor *',
-                hintText: 'Ex: Leroy Merlin',
+            // Só mostra campo de loja se NÃO tiver fornecedor cadastrado
+            if (!hasSupplier)
+              TextField(
+                controller: storeController,
+                decoration: const InputDecoration(
+                  labelText: 'Loja/Fornecedor *',
+                  hintText: 'Ex: Leroy Merlin',
+                ),
+                textCapitalization: TextCapitalization.words,
+              )
+            else
+              TextField(
+                controller: storeController,
+                decoration: InputDecoration(
+                  labelText: 'Loja/Fornecedor',
+                  prefixIcon: const Icon(Icons.store, color: AppColors.success),
+                  filled: true,
+                  fillColor: AppColors.successLight,
+                ),
+                enabled: false, // Readonly
+                style: const TextStyle(color: AppColors.textPrimary),
               ),
-              textCapitalization: TextCapitalization.words,
-            ),
           ],
         ),
         actions: [
@@ -784,10 +805,17 @@ class _ShoppingPageState extends State<ShoppingPage> {
           ),
           FilledButton(
             onPressed: () {
-              if (priceController.text.isEmpty ||
-                  storeController.text.isEmpty) {
+              if (priceController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Preencha todos os campos')),
+                  const SnackBar(content: Text('Informe o preço pago')),
+                );
+                return;
+              }
+
+              // Se não tem fornecedor, valida o campo loja
+              if (!hasSupplier && storeController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Informe a loja/fornecedor')),
                 );
                 return;
               }
@@ -804,12 +832,12 @@ class _ShoppingPageState extends State<ShoppingPage> {
               }
 
               context.read<ShoppingCubit>().markAsPurchased(
-                projectId: widget.projectId,
-                itemId: item.id,
-                actualPrice: actualPrice,
-                store: storeController.text,
-                purchaseDate: DateTime.now(),
-              );
+                    projectId: widget.projectId,
+                    itemId: item.id,
+                    actualPrice: actualPrice,
+                    store: storeController.text,
+                    purchaseDate: DateTime.now(),
+                  );
 
               Navigator.pop(dialogContext);
             },
@@ -903,8 +931,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
     final confirmed = await ConfirmationDialog.show(
       context,
       title: 'Devolver Item',
-      message:
-          'Tem certeza que deseja devolver "${item.name}"?\n\n'
+      message: 'Tem certeza que deseja devolver "${item.name}"?\n\n'
           'Quantidade: ${item.quantity} ${item.unit}\n'
           'Valor pago: ${CurrencyUtils.format(item.totalActual)}\n'
           'Loja: ${item.store ?? "N/A"}\n'
@@ -917,10 +944,10 @@ class _ShoppingPageState extends State<ShoppingPage> {
 
     if (confirmed && mounted) {
       await context.read<ShoppingCubit>().returnItem(
-        projectId: widget.projectId,
-        itemId: item.id,
-        expenseTransactionId: item.expenseTransactionId!,
-      );
+            projectId: widget.projectId,
+            itemId: item.id,
+            expenseTransactionId: item.expenseTransactionId!,
+          );
     }
   }
 }

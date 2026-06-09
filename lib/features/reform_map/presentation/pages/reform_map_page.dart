@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../app/router/route_names.dart';
+import '../../domain/entities/next_action_entity.dart';
 import '../cubit/reform_map_cubit.dart';
 import '../cubit/reform_map_state.dart';
 import '../widgets/current_phase_widget.dart';
 import '../widgets/health_score_widget.dart';
+import '../widgets/milestones_card.dart';
+import '../widgets/move_in_distance_card.dart';
+import '../widgets/move_in_mode_card.dart';
 import '../widgets/next_action_widget.dart';
+import '../widgets/next_phase_preparation_card.dart';
+import '../widgets/pending_decisions_card.dart';
 import '../widgets/phase_overview_widget.dart';
 import '../widgets/problems_list_widget.dart';
+import '../widgets/reform_calendar_card.dart';
+import '../widgets/reform_week_card.dart';
+import '../widgets/upcoming_purchases_card.dart';
 
 /// Tela principal do Mapa da Reforma
 ///
@@ -111,6 +122,74 @@ class _ReformMapPageState extends State<ReformMapPage> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
+                      // Distância até a Mudança (NOVO - Sprint 1.1)
+                      if (reformMap.moveInDistance != null)
+                        MoveInDistanceCard(
+                          distance: reformMap.moveInDistance!,
+                        ),
+                      if (reformMap.moveInDistance != null)
+                        const SizedBox(height: 16),
+
+                      // Decisões Pendentes (NOVO - Sprint 1.2)
+                      if (reformMap.pendingDecisions.isNotEmpty)
+                        PendingDecisionsCard(
+                          decisions: reformMap.pendingDecisions,
+                        ),
+                      if (reformMap.pendingDecisions.isNotEmpty)
+                        const SizedBox(height: 16),
+
+                      // Próximas Compras (NOVO - Sprint 2.1)
+                      if (reformMap.upcomingPurchases.isNotEmpty)
+                        UpcomingPurchasesCard(
+                          purchases: reformMap.upcomingPurchases,
+                        ),
+                      if (reformMap.upcomingPurchases.isNotEmpty)
+                        const SizedBox(height: 16),
+
+                      // Preparação da Próxima Etapa (NOVO - Sprint 2.2)
+                      if (reformMap.nextPhasePreparation != null)
+                        NextPhasePreparationCard(
+                          preparation: reformMap.nextPhasePreparation!,
+                        ),
+                      if (reformMap.nextPhasePreparation != null)
+                        const SizedBox(height: 16),
+
+                      // Marcos da Reforma (NOVO - Sprint 2.3)
+                      if (reformMap.milestones.isNotEmpty)
+                        MilestonesCard(
+                          milestones: reformMap.milestones,
+                        ),
+                      if (reformMap.milestones.isNotEmpty)
+                        const SizedBox(height: 16),
+
+                      // Calendário Inteligente (NOVO - Sprint 3.1)
+                      if (reformMap.calendar != null)
+                        ReformCalendarCard(
+                          calendar: reformMap.calendar!,
+                        ),
+                      if (reformMap.calendar != null)
+                        const SizedBox(height: 16),
+
+                      // Semana da Reforma (NOVO - Sprint 3.2)
+                      if (reformMap.week != null)
+                        ReformWeekCard(
+                          week: reformMap.week!,
+                        ),
+                      if (reformMap.week != null) const SizedBox(height: 16),
+
+                      // Modo Mudança (NOVO - Sprint 4.1)
+                      if (reformMap.moveInMode != null &&
+                          reformMap.moveInMode!.isActive)
+                        MoveInModeCard(
+                          moveInMode: reformMap.moveInMode!,
+                          onTaskTap: () {
+                            // TODO: Navegar para checklist completo
+                          },
+                        ),
+                      if (reformMap.moveInMode != null &&
+                          reformMap.moveInMode!.isActive)
+                        const SizedBox(height: 16),
+
                       // Saúde da Reforma
                       HealthScoreWidget(
                         health: reformMap.health,
@@ -222,22 +301,112 @@ class _ReformMapPageState extends State<ReformMapPage> {
     );
   }
 
-  void _executeAction(BuildContext context, dynamic nextAction) {
-    // Aqui você implementaria a navegação para a ação específica
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Executando ação...'),
+  void _executeAction(BuildContext context, NextActionEntity nextAction) {
+    // Navegação inteligente baseada na categoria da ação
+    switch (nextAction.category) {
+      case ActionCategory.financial:
+        // Navegar para adicionar despesa ou ver financeiro
+        if (nextAction.type == ActionType.payment) {
+          context
+              .push('${RouteNames.payments}?phase=${nextAction.phaseId ?? ''}');
+        } else {
+          context.push(
+              '${RouteNames.expenseCreate}?phase=${nextAction.phaseId ?? ''}');
+        }
+        break;
+
+      case ActionCategory.shopping:
+        // Navegar para adicionar item de compra
+        if (nextAction.metadata?['itemId'] != null) {
+          // Editar item existente
+          context.push(
+              '${RouteNames.shoppingEdit.replaceAll(':id', nextAction.metadata!['itemId'])}');
+        } else {
+          // Adicionar novo item
+          context.push(
+              '${RouteNames.shoppingCreate}?phase=${nextAction.phaseId ?? ''}');
+        }
+        break;
+
+      case ActionCategory.supplier:
+        // Navegar para adicionar fornecedor ou orçamento
+        if (nextAction.type == ActionType.hire) {
+          context.push(
+              '${RouteNames.supplierCreate}?phase=${nextAction.phaseId ?? ''}');
+        } else {
+          context.push(
+              '${RouteNames.suppliers}?phase=${nextAction.phaseId ?? ''}');
+        }
+        break;
+
+      case ActionCategory.document:
+        // Navegar para adicionar documento
+        context.push(
+            '${RouteNames.documentUpload}?phase=${nextAction.phaseId ?? ''}');
+        break;
+
+      case ActionCategory.phase:
+        // Navegar para detalhes da fase
+        if (nextAction.phaseId != null) {
+          _navigateToPhaseDetails(context, nextAction.phaseId!);
+        }
+        break;
+
+      case ActionCategory.wishlist:
+        // Navegar para lista de desejos
+        context.push(
+            '${RouteNames.wishlistCreate}?phase=${nextAction.phaseId ?? ''}');
+        break;
+
+      case ActionCategory.general:
+      default:
+        // Para ações gerais, mostrar diálogo com detalhes
+        _showActionDetailsDialog(context, nextAction);
+        break;
+    }
+  }
+
+  void _showActionDetailsDialog(BuildContext context, NextActionEntity action) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(action.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(action.description),
+            const SizedBox(height: 16),
+            if (action.reason.isNotEmpty) ...[
+              Text(
+                'Por quê?',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 4),
+              Text(action.reason),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+          if (action.phaseId != null)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _navigateToPhaseDetails(context, action.phaseId!);
+              },
+              child: const Text('Ver Etapa'),
+            ),
+        ],
       ),
     );
   }
 
   void _navigateToPhaseDetails(BuildContext context, String phaseId) {
-    // Aqui você implementaria a navegação para os detalhes da fase
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Abrindo detalhes da fase: $phaseId'),
-      ),
-    );
+    context.push('${RouteNames.phaseDetail.replaceAll(':id', phaseId)}');
   }
 
   void _navigateToProblemDetails(BuildContext context, String problemId) {
@@ -250,31 +419,9 @@ class _ReformMapPageState extends State<ReformMapPage> {
   }
 
   void _showAddProblemDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reportar Problema'),
-        content: const Text(
-          'Aqui você poderá reportar problemas como:\n\n'
-          '• Infiltração\n'
-          '• Material errado\n'
-          '• Atraso de fornecedor\n'
-          '• Defeitos na execução',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Aqui você implementaria o formulário de adicionar problema
-            },
-            child: const Text('Adicionar'),
-          ),
-        ],
-      ),
+    // Navegar para a página de reportar problema
+    context.push(
+      '${RouteNames.reportProblem}?projectId=${widget.projectId}',
     );
   }
 }

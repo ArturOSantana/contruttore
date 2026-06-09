@@ -31,6 +31,14 @@ abstract class FinancialRepository {
   Future<Either<Failure, FinancialSummaryEntity>> getFinancialSummary(
     String projectId,
   );
+
+  /// Atualiza estatísticas financeiras de uma fase
+  ///
+  /// Calcula e atualiza os totais de despesas de uma fase específica
+  Future<Either<Failure, void>> updatePhaseFinancials({
+    required String projectId,
+    required String phaseId,
+  });
 }
 
 // Made with Bob

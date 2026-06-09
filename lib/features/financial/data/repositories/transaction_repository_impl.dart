@@ -138,7 +138,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   @override
   Future<Either<Failure, List<TransactionEntity>>>
-  getTransactionsByShoppingItem(String projectId, String shoppingItemId) async {
+      getTransactionsByShoppingItem(
+          String projectId, String shoppingItemId) async {
     try {
       final snapshot = await _transactionsCollection(projectId)
           .where('shoppingItemId', isEqualTo: shoppingItemId)
@@ -276,6 +277,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
     String? estimateTransactionId,
   }) async {
     try {
+      print('🔵 [DEBUG] Iniciando createShoppingPurchaseTransaction');
+      print('🔵 [DEBUG] projectId: $projectId');
+      print('🔵 [DEBUG] shoppingItemId: $shoppingItemId');
+      print('🔵 [DEBUG] transaction.id: ${transaction.id}');
+
       // WRITEBATCH: Operação atômica
       final batch = _firestore.batch();
 
@@ -286,6 +292,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
           .collection('shopping')
           .doc(shoppingItemId);
 
+      print('🔵 [DEBUG] Adicionando update do shopping item ao batch');
       batch.update(shoppingRef, shoppingItemUpdate);
 
       // 2. Cria a transaction (expense)
@@ -293,10 +300,14 @@ class TransactionRepositoryImpl implements TransactionRepository {
         projectId,
       ).doc(transaction.id);
       final model = TransactionModel.fromEntity(transaction);
+
+      print('🔵 [DEBUG] Adicionando transaction ao batch');
+      print('🔵 [DEBUG] Transaction data: ${model.toMap()}');
       batch.set(transactionRef, model.toMap());
 
       // 3. Marca estimate como fulfilled (se existir)
       if (estimateTransactionId != null) {
+        print('🔵 [DEBUG] Adicionando update do estimate ao batch');
         final estimateRef = _transactionsCollection(
           projectId,
         ).doc(estimateTransactionId);
@@ -307,14 +318,18 @@ class TransactionRepositoryImpl implements TransactionRepository {
       }
 
       // Commit: todas as operações ou nenhuma
+      print('🔵 [DEBUG] Executando batch.commit()...');
       await batch.commit();
+      print('✅ [DEBUG] Batch commit concluído com sucesso!');
 
       return const Right(null);
     } on FirebaseException catch (e) {
+      print('❌ [DEBUG] FirebaseException: ${e.code} - ${e.message}');
       return Left(
         ServerFailure(e.message ?? 'Erro ao criar transação de compra'),
       );
     } catch (e) {
+      print('❌ [DEBUG] Exception: $e');
       return Left(ServerFailure('Erro inesperado: $e'));
     }
   }

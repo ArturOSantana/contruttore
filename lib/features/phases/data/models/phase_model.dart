@@ -18,6 +18,14 @@ class PhaseModel extends PhaseEntity {
     super.commonMistake,
     super.isRetroactive,
     super.retroactiveMarkedAt,
+    super.estimatedBudget,
+    super.totalSpent,
+    super.totalPending,
+    super.dependsOn,
+    super.blockedBy,
+    super.expectedSupplierTypes,
+    super.expectedPurchaseCategories,
+    super.expectedDocumentTypes,
   });
 
   factory PhaseModel.fromMap(Map<String, dynamic> map, String id) {
@@ -38,8 +46,7 @@ class PhaseModel extends PhaseEntity {
           ? (map['endDate'] as Timestamp).toDate()
           : null,
       estimatedDurationDays: map['estimatedDurationDays'] ?? 0,
-      subtasks:
-          (map['subtasks'] as List<dynamic>?)
+      subtasks: (map['subtasks'] as List<dynamic>?)
               ?.map((s) => SubtaskModel.fromMap(s))
               .toList() ??
           [],
@@ -50,9 +57,19 @@ class PhaseModel extends PhaseEntity {
       retroactiveMarkedAt: map['retroactiveMarkedAt'] != null
           ? (map['retroactiveMarkedAt'] as Timestamp).toDate()
           : null,
+      estimatedBudget: (map['estimatedBudget'] ?? 0).toDouble(),
+      totalSpent: (map['totalSpent'] ?? 0).toDouble(),
+      totalPending: (map['totalPending'] ?? 0).toDouble(),
+      dependsOn: List<String>.from(map['dependsOn'] ?? []),
+      blockedBy: List<String>.from(map['blockedBy'] ?? []),
+      expectedSupplierTypes:
+          List<String>.from(map['expectedSupplierTypes'] ?? []),
+      expectedPurchaseCategories:
+          List<String>.from(map['expectedPurchaseCategories'] ?? []),
+      expectedDocumentTypes:
+          List<String>.from(map['expectedDocumentTypes'] ?? []),
     );
   }
-
   Map<String, dynamic> toMap() {
     return {
       'projectId': projectId,
@@ -124,9 +141,8 @@ class SubtaskModel extends SubtaskEntity {
       'name': name,
       'isRequired': isRequired,
       'isDone': isDone,
-      'completedAt': completedAt != null
-          ? Timestamp.fromDate(completedAt!)
-          : null,
+      'completedAt':
+          completedAt != null ? Timestamp.fromDate(completedAt!) : null,
       'notes': notes,
     };
   }

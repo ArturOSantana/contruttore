@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
+import '../../../diary/domain/usecases/add_automatic_entry_usecase.dart';
+import '../../../diary/domain/entities/diary_entry_entity.dart';
+import '../../../financial/domain/usecases/update_phase_financials_usecase.dart';
 import '../../domain/entities/installment_entity.dart';
 import '../../domain/repositories/installment_repository.dart';
 import '../../domain/usecases/get_installments_usecase.dart';
@@ -19,6 +22,8 @@ class InstallmentsCubit extends Cubit<InstallmentsState> {
   final MarkPaymentAsPaidUseCase _markPaymentAsPaidUseCase;
   final CancelInstallmentPaymentUseCase _cancelPaymentUseCase;
   final DeleteInstallmentUseCase _deleteInstallmentUseCase;
+  final UpdatePhaseFinancialsUseCase _updatePhaseFinancialsUseCase;
+  final AddAutomaticEntryUseCase _addAutomaticEntryUseCase;
 
   InstallmentsCubit(
     this._getInstallmentsUseCase,
@@ -26,6 +31,8 @@ class InstallmentsCubit extends Cubit<InstallmentsState> {
     this._markPaymentAsPaidUseCase,
     this._cancelPaymentUseCase,
     this._deleteInstallmentUseCase,
+    this._updatePhaseFinancialsUseCase,
+    this._addAutomaticEntryUseCase,
   ) : super(InstallmentsInitial());
 
   Future<void> loadInstallments(String projectId) async {
@@ -121,10 +128,31 @@ class InstallmentsCubit extends Cubit<InstallmentsState> {
       categoryId: categoryId,
     );
 
-    result.fold((failure) => emit(InstallmentsError(failure.message)), (_) {
-      emit(InstallmentOperationSuccess('Parcela marcada como paga'));
-      loadInstallments(projectId);
-    });
+    await result.fold(
+      (failure) async => emit(InstallmentsError(failure.message)),
+      (_) async {
+        // INTEGRAÇÃO: Atualiza financeiro da fase
+        if (phaseId != null) {
+          await _updatePhaseFinancialsUseCase(
+            projectId: projectId,
+            phaseId: phaseId,
+          );
+        }
+
+        // INTEGRAÇÃO: Adiciona log automático no diário
+        await _addAutomaticEntryUseCase(
+          projectId: projectId,
+          title: 'Parcela paga',
+          description:
+              '$supplierName - $serviceDescription - R\$ ${paidAmount.toStringAsFixed(2)}',
+          phaseId: phaseId,
+          type: DiaryEntryType.daily,
+        );
+
+        emit(InstallmentOperationSuccess('Parcela marcada como paga'));
+        await loadInstallments(projectId);
+      },
+    );
   }
 
   /// Cancela um pagamento já realizado

@@ -8,14 +8,14 @@ import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/loading_widget.dart';
-import '../../domain/entities/expense_entity.dart';
+import '../../domain/entities/transaction_entity.dart';
 import '../cubit/financial_cubit.dart';
 
 class AddExpensePage extends StatefulWidget {
   final String projectId;
-  final ExpenseEntity? expense; // null = adicionar, não-null = editar
+  final TransactionEntity? transaction; // null = adicionar, não-null = editar
 
-  const AddExpensePage({super.key, required this.projectId, this.expense});
+  const AddExpensePage({super.key, required this.projectId, this.transaction});
 
   @override
   State<AddExpensePage> createState() => _AddExpensePageState();
@@ -27,25 +27,25 @@ class _AddExpensePageState extends State<AddExpensePage> {
   final _amountController = TextEditingController();
 
   String? _selectedCategoryId;
-  ExpenseStatus _selectedStatus = ExpenseStatus.estimated;
+  String? _selectedPhaseId;
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.expense != null) {
-      _loadExpenseData();
+    if (widget.transaction != null) {
+      _loadTransactionData();
     }
   }
 
-  void _loadExpenseData() {
-    final expense = widget.expense!;
-    _descriptionController.text = expense.description;
-    _amountController.text = expense.amount.toStringAsFixed(2);
-    _selectedCategoryId = expense.categoryId;
-    _selectedStatus = expense.status;
-    _selectedDate = expense.date;
+  void _loadTransactionData() {
+    final transaction = widget.transaction!;
+    _descriptionController.text = transaction.description;
+    _amountController.text = transaction.amount.toStringAsFixed(2);
+    _selectedCategoryId = transaction.categoryId;
+    _selectedPhaseId = transaction.phaseId;
+    _selectedDate = transaction.date;
   }
 
   @override
@@ -85,30 +85,33 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Selecione uma categoria')));
-      return;
-    }
 
     setState(() => _isLoading = true);
 
-    final expense = ExpenseEntity(
-      id: widget.expense?.id ?? const Uuid().v4(),
-      projectId: widget.projectId,
-      categoryId: _selectedCategoryId!,
-      amount: double.parse(_amountController.text.replaceAll(',', '.')),
-      date: _selectedDate,
-      description: _descriptionController.text.trim(),
-      status: _selectedStatus,
-      createdAt: widget.expense?.createdAt ?? DateTime.now(),
-    );
+    final amount = double.parse(_amountController.text.replaceAll(',', '.'));
+    final description = _descriptionController.text.trim();
 
-    if (widget.expense == null) {
-      await context.read<FinancialCubit>().addExpense(expense);
+    if (widget.transaction == null) {
+      // Adicionar nova transação
+      await context.read<FinancialCubit>().addTransaction(
+            projectId: widget.projectId,
+            description: description,
+            amount: amount,
+            date: _selectedDate,
+            phaseId: _selectedPhaseId,
+            categoryId: _selectedCategoryId,
+          );
     } else {
-      await context.read<FinancialCubit>().updateExpense(expense);
+      // Atualizar transação existente
+      await context.read<FinancialCubit>().updateTransaction(
+            projectId: widget.projectId,
+            transactionId: widget.transaction!.id,
+            description: description,
+            amount: amount,
+            date: _selectedDate,
+            phaseId: _selectedPhaseId,
+            categoryId: _selectedCategoryId,
+          );
     }
 
     if (mounted) {
@@ -118,11 +121,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.expense != null;
+    final isEditing = widget.transaction != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Editar Despesa' : 'Nova Despesa'),
+        title: Text(isEditing ? 'Editar Transação' : 'Nova Despesa'),
         actions: [
           if (_isLoading)
             const Center(
@@ -198,11 +201,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
             const SizedBox(height: AppSpacing.m),
 
-            // Categoria
+            // Categoria (opcional)
             DropdownButtonFormField<String>(
               initialValue: _selectedCategoryId,
               decoration: const InputDecoration(
-                labelText: 'Categoria',
+                labelText: 'Categoria (opcional)',
                 border: OutlineInputBorder(),
               ),
               hint: const Text('Selecione uma categoria'),
@@ -211,36 +214,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 setState(() {
                   _selectedCategoryId = value;
                 });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Selecione uma categoria';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: AppSpacing.m),
-
-            // Status
-            DropdownButtonFormField<ExpenseStatus>(
-              initialValue: _selectedStatus,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-              ),
-              items: ExpenseStatus.values.map((status) {
-                return DropdownMenuItem(
-                  value: status,
-                  child: Text(_getStatusLabel(status)),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedStatus = value;
-                  });
-                }
               },
             ),
 
@@ -331,17 +304,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
         child: Text(cat['name']!),
       );
     }).toList();
-  }
-
-  String _getStatusLabel(ExpenseStatus status) {
-    switch (status) {
-      case ExpenseStatus.estimated:
-        return 'Estimado';
-      case ExpenseStatus.committed:
-        return 'Comprometido';
-      case ExpenseStatus.confirmed:
-        return 'Confirmado (Pago)';
-    }
   }
 }
 

@@ -11,12 +11,13 @@ class ShoppingItemEntity extends Equatable {
   final double quantity;
   final String unit;
   final bool isPurchased;
-  final String? store;
+  final String? store; // Nome da loja (texto livre para compatibilidade)
+  final String? supplierId; // ID do fornecedor vinculado
   final String? notes;
   final DateTime? purchaseDate;
   final String? wishlistItemId;
   final String?
-  expenseTransactionId; // ID da transação de despesa (para reversal)
+      expenseTransactionId; // ID da transação de despesa (para reversal)
   final DateTime createdAt;
 
   // Campos para parcelamento (quando compra é parcelada)
@@ -35,6 +36,7 @@ class ShoppingItemEntity extends Equatable {
     required this.unit,
     required this.isPurchased,
     this.store,
+    this.supplierId,
     this.notes,
     this.purchaseDate,
     this.wishlistItemId,
@@ -62,6 +64,7 @@ class ShoppingItemEntity extends Equatable {
     String? unit,
     bool? isPurchased,
     String? store,
+    String? supplierId,
     String? notes,
     DateTime? purchaseDate,
     String? wishlistItemId,
@@ -82,6 +85,7 @@ class ShoppingItemEntity extends Equatable {
       unit: unit ?? this.unit,
       isPurchased: isPurchased ?? this.isPurchased,
       store: store ?? this.store,
+      supplierId: supplierId ?? this.supplierId,
       notes: notes ?? this.notes,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       wishlistItemId: wishlistItemId ?? this.wishlistItemId,
@@ -94,25 +98,26 @@ class ShoppingItemEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    projectId,
-    phaseId,
-    name,
-    category,
-    estimatedPrice,
-    actualPrice,
-    quantity,
-    unit,
-    isPurchased,
-    store,
-    notes,
-    purchaseDate,
-    wishlistItemId,
-    expenseTransactionId,
-    createdAt,
-    installments,
-    firstPaymentDate,
-  ];
+        id,
+        projectId,
+        phaseId,
+        name,
+        category,
+        estimatedPrice,
+        actualPrice,
+        quantity,
+        unit,
+        isPurchased,
+        store,
+        supplierId,
+        notes,
+        purchaseDate,
+        wishlistItemId,
+        expenseTransactionId,
+        createdAt,
+        installments,
+        firstPaymentDate,
+      ];
 }
 
 enum ShoppingCategory {

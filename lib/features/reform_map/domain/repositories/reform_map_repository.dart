@@ -4,6 +4,8 @@ import '../entities/reform_map_entity.dart';
 import '../entities/reform_health_entity.dart';
 import '../entities/next_action_entity.dart';
 import '../entities/problem_entity.dart';
+import '../entities/next_step_preparation_entity.dart';
+import '../entities/upcoming_expenses_entity.dart';
 
 /// Repositório para o Mapa da Reforma
 abstract class ReformMapRepository {
@@ -63,6 +65,27 @@ abstract class ReformMapRepository {
     String projectId, {
     int days = 30,
   });
+
+  // ========== Novos métodos v2.0 ==========
+
+  /// Calcula despesas futuras previstas
+  Future<Either<Failure, UpcomingExpensesEntity>> calculateUpcomingExpenses(
+    String projectId,
+    int days,
+  );
+
+  /// Busca preparação da próxima etapa
+  Future<Either<Failure, NextStepPreparationEntity?>> getNextStepPreparation(
+    String projectId,
+  );
+
+  /// Atualiza item de preparação da próxima etapa
+  Future<Either<Failure, void>> updatePreparationItem(
+    String projectId,
+    String stepId,
+    String itemId,
+    bool isDone,
+  );
 }
 
 /// Snapshot de saúde em um momento específico

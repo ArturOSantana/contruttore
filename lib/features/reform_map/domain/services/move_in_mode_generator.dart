@@ -1,0 +1,306 @@
+import 'package:injectable/injectable.dart';
+import '../../../projects/domain/entities/phase_entity.dart';
+import '../entities/move_in_mode_entity.dart';
+
+/// Serviço que gera o Modo Mudança
+///
+/// Ativa quando a reforma está próxima da conclusão
+/// e gera checklist de preparação para mudança
+@injectable
+class MoveInModeGenerator {
+  /// Gera o modo mudança baseado no estado da reforma
+  MoveInModeEntity generate({
+    required List<PhaseEntity> phases,
+    required double overallProgress,
+    DateTime? plannedMoveInDate,
+    required List<String> criticalPendingItems,
+  }) {
+    // Calcula dias até a mudança
+    final now = DateTime.now();
+    final moveInDate = plannedMoveInDate ?? _estimateMoveInDate(phases, now);
+    final daysUntilMoveIn = moveInDate.difference(now).inDays;
+
+    // Determina se o modo está ativo
+    // Ativa quando: progresso >= 80% OU faltam <= 30 dias
+    final isActive = overallProgress >= 80 || daysUntilMoveIn <= 30;
+
+    // Gera tarefas de preparação
+    final tasks = _generateTasks(
+      phases: phases,
+      daysUntilMoveIn: daysUntilMoveIn,
+      overallProgress: overallProgress,
+    );
+
+    // Gera recomendações
+    final recommendations = _generateRecommendations(
+      daysUntilMoveIn: daysUntilMoveIn,
+      overallProgress: overallProgress,
+      criticalPendingItems: criticalPendingItems,
+    );
+
+    // Determina status
+    final status = _determineStatus(
+      overallProgress: overallProgress,
+      criticalPendingItems: criticalPendingItems,
+      daysUntilMoveIn: daysUntilMoveIn,
+      tasks: tasks,
+    );
+
+    return MoveInModeEntity(
+      isActive: isActive,
+      daysUntilMoveIn: daysUntilMoveIn,
+      moveInDate: moveInDate,
+      overallProgress: overallProgress,
+      tasks: tasks,
+      criticalPendingItems: criticalPendingItems,
+      recommendations: recommendations,
+      status: status,
+    );
+  }
+
+  /// Estima data de mudança baseada nas fases
+  DateTime _estimateMoveInDate(List<PhaseEntity> phases, DateTime now) {
+    // Pega a última fase
+    if (phases.isEmpty) {
+      return now.add(const Duration(days: 90)); // 3 meses padrão
+    }
+
+    final lastPhase = phases.last;
+
+    // Se tem data de fim, usa ela + 7 dias
+    if (lastPhase.endDate != null) {
+      return lastPhase.endDate!.add(const Duration(days: 7));
+    }
+
+    // Senão, estima baseado no progresso
+    final remainingProgress = 100 - lastPhase.progressPercentage;
+    final estimatedDays = (remainingProgress * 0.5).round(); // 0.5 dia por %
+
+    return now.add(Duration(days: estimatedDays));
+  }
+
+  /// Gera lista de tarefas de preparação
+  List<MoveInTaskEntity> _generateTasks({
+    required List<PhaseEntity> phases,
+    required int daysUntilMoveIn,
+    required double overallProgress,
+  }) {
+    final tasks = <MoveInTaskEntity>[];
+
+    // Limpeza pós-obra
+    if (overallProgress >= 90) {
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'cleaning_1',
+          title: 'Limpeza pós-obra',
+          description: 'Contratar empresa de limpeza profissional',
+          category: MoveInTaskCategory.cleaning,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 7)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'cleaning_2',
+          title: 'Limpeza de vidros',
+          description: 'Limpar todas as janelas e espelhos',
+          category: MoveInTaskCategory.cleaning,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
+        ),
+      );
+    }
+
+    // Vistoria final
+    if (overallProgress >= 85) {
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'inspection_1',
+          title: 'Vistoria final',
+          description: 'Verificar todos os acabamentos e instalações',
+          category: MoveInTaskCategory.inspection,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 10)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'inspection_2',
+          title: 'Testar instalações',
+          description: 'Testar água, luz, gás e internet',
+          category: MoveInTaskCategory.inspection,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 8)),
+        ),
+      );
+    }
+
+    // Documentação
+    tasks.add(
+      MoveInTaskEntity(
+        id: 'doc_1',
+        title: 'Organizar documentos',
+        description: 'Reunir ARTs, garantias e manuais',
+        category: MoveInTaskCategory.documentation,
+        isCompleted: false,
+        isCritical: false,
+        dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
+      ),
+    );
+
+    // Serviços (água, luz, gás)
+    if (daysUntilMoveIn <= 15) {
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'utilities_1',
+          title: 'Transferir contas',
+          description: 'Transferir água, luz e gás para seu nome',
+          category: MoveInTaskCategory.utilities,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 7)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'utilities_2',
+          title: 'Ativar internet',
+          description: 'Agendar instalação da internet',
+          category: MoveInTaskCategory.utilities,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
+        ),
+      );
+    }
+
+    // Mudança
+    if (daysUntilMoveIn <= 20) {
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'moving_1',
+          title: 'Contratar mudança',
+          description: 'Pesquisar e contratar empresa de mudança',
+          category: MoveInTaskCategory.moving,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 15)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'moving_2',
+          title: 'Embalar pertences',
+          description: 'Começar a embalar itens não essenciais',
+          category: MoveInTaskCategory.moving,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 10)),
+        ),
+      );
+    }
+
+    // Decoração
+    if (overallProgress >= 95) {
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'decoration_1',
+          title: 'Comprar decoração',
+          description: 'Adquirir itens de decoração pendentes',
+          category: MoveInTaskCategory.decoration,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 3)),
+        ),
+      );
+    }
+
+    return tasks;
+  }
+
+  /// Gera recomendações personalizadas
+  List<String> _generateRecommendations({
+    required int daysUntilMoveIn,
+    required double overallProgress,
+    required List<String> criticalPendingItems,
+  }) {
+    final recommendations = <String>[];
+
+    // Recomendações baseadas no tempo
+    if (daysUntilMoveIn <= 7) {
+      recommendations.add('Foque apenas no essencial para a mudança');
+      recommendations.add('Deixe decoração para depois da mudança');
+    } else if (daysUntilMoveIn <= 15) {
+      recommendations.add('Comece a embalar itens não essenciais');
+      recommendations.add('Já contrate a empresa de mudança');
+    } else if (daysUntilMoveIn <= 30) {
+      recommendations.add('Pesquise empresas de mudança');
+      recommendations.add('Organize documentos da obra');
+    }
+
+    // Recomendações baseadas no progresso
+    if (overallProgress < 90) {
+      recommendations.add('Priorize acabamentos essenciais');
+      recommendations.add('Deixe detalhes para depois');
+    } else if (overallProgress >= 95) {
+      recommendations.add('Faça uma vistoria completa');
+      recommendations.add('Teste todas as instalações');
+    }
+
+    // Recomendações baseadas em pendências
+    if (criticalPendingItems.isNotEmpty) {
+      recommendations.add('Resolva pendências críticas primeiro');
+      if (criticalPendingItems.length > 3) {
+        recommendations.add('Considere adiar a mudança');
+      }
+    }
+
+    // Recomendações gerais
+    recommendations.add('Tire fotos do resultado final');
+    recommendations.add('Guarde todos os manuais e garantias');
+
+    return recommendations;
+  }
+
+  /// Determina o status do modo mudança
+  MoveInStatus _determineStatus({
+    required double overallProgress,
+    required List<String> criticalPendingItems,
+    required int daysUntilMoveIn,
+    required List<MoveInTaskEntity> tasks,
+  }) {
+    // Atrasado: tem pendências críticas e pouco tempo
+    if (criticalPendingItems.isNotEmpty && daysUntilMoveIn <= 7) {
+      return MoveInStatus.delayed;
+    }
+
+    // Pronto: progresso alto, sem pendências, tarefas concluídas
+    final completedTasks = tasks.where((t) => t.isCompleted).length;
+    final totalTasks = tasks.length;
+    final tasksProgress = totalTasks > 0 ? (completedTasks / totalTasks) : 0;
+
+    if (overallProgress >= 95 &&
+        criticalPendingItems.isEmpty &&
+        tasksProgress >= 0.8) {
+      return MoveInStatus.ready;
+    }
+
+    // Quase pronto: progresso alto, poucas pendências
+    if (overallProgress >= 90 && criticalPendingItems.length <= 2) {
+      return MoveInStatus.almostReady;
+    }
+
+    // Não está pronto
+    return MoveInStatus.notReady;
+  }
+}
+
+// Made with Bob

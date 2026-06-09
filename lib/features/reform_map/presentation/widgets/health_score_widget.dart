@@ -5,9 +5,10 @@ import '../../domain/entities/reform_health_entity.dart';
 ///
 /// Exibe:
 /// - Score de 0 a 100
-/// - Status (Excelente, Boa, Atenção, Crítica)
-/// - Cor indicativa
-/// - Mensagem motivacional
+/// - Nível (Saudável, Atenção, Crítico)
+/// - Cor indicativa baseada no HealthLevel
+/// - Mensagem personalizada da entidade
+/// - Issues e pontos positivos
 class HealthScoreWidget extends StatelessWidget {
   final ReformHealthEntity health;
   final VoidCallback? onTap;
@@ -20,6 +21,8 @@ class HealthScoreWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
       elevation: 4,
       child: InkWell(
@@ -44,7 +47,7 @@ class HealthScoreWidget extends StatelessWidget {
                       children: [
                         Text(
                           'Saúde da Reforma',
-                          style: Theme.of(context).textTheme.titleMedium,
+                          style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -70,12 +73,108 @@ class HealthScoreWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               const SizedBox(height: 12),
+
+              // Mensagem personalizada da entidade
               Text(
-                _getMotivationalMessage(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[700],
-                    ),
+                health.message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[700],
+                ),
               ),
+
+              // Issues (problemas identificados)
+              if (health.issues.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 20,
+                      color: Colors.orange.shade700,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Pontos de Atenção',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...health.issues.map((issue) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: Colors.orange.shade700,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              issue,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+
+              // Positives (pontos positivos)
+              if (health.positives.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 20,
+                      color: Colors.green.shade700,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Pontos Positivos',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...health.positives.map((positive) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: Colors.green.shade700,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              positive,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+
+              // Fatores (mantido para retrocompatibilidade)
               if (health.factors.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 const Divider(),
@@ -146,37 +245,36 @@ class HealthScoreWidget extends StatelessWidget {
   }
 
   Color _getColor() {
-    if (health.score >= 80) return Colors.green;
-    if (health.score >= 60) return Colors.blue;
-    if (health.score >= 40) return Colors.orange;
-    return Colors.red;
+    switch (health.level) {
+      case HealthLevel.healthy:
+        return Colors.green;
+      case HealthLevel.attention:
+        return Colors.orange;
+      case HealthLevel.critical:
+        return Colors.red;
+    }
   }
 
   IconData _getIcon() {
-    if (health.score >= 80) return Icons.check_circle;
-    if (health.score >= 60) return Icons.info;
-    if (health.score >= 40) return Icons.warning;
-    return Icons.error;
+    switch (health.level) {
+      case HealthLevel.healthy:
+        return Icons.check_circle_rounded;
+      case HealthLevel.attention:
+        return Icons.warning_amber_rounded;
+      case HealthLevel.critical:
+        return Icons.error_rounded;
+    }
   }
 
   String _getStatusText() {
-    if (health.score >= 80) return 'Excelente';
-    if (health.score >= 60) return 'Boa';
-    if (health.score >= 40) return 'Atenção';
-    return 'Crítica';
-  }
-
-  String _getMotivationalMessage() {
-    if (health.score >= 80) {
-      return 'Parabéns! Sua reforma está indo muito bem. Continue assim!';
+    switch (health.level) {
+      case HealthLevel.healthy:
+        return 'Saudável';
+      case HealthLevel.attention:
+        return 'Atenção';
+      case HealthLevel.critical:
+        return 'Crítico';
     }
-    if (health.score >= 60) {
-      return 'Sua reforma está no caminho certo. Fique atento às pendências.';
-    }
-    if (health.score >= 40) {
-      return 'Alguns pontos precisam de atenção. Veja as recomendações abaixo.';
-    }
-    return 'Sua reforma precisa de atenção urgente. Resolva os problemas críticos.';
   }
 
   Color _getFactorColor(double score) {

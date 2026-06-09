@@ -195,6 +195,36 @@ service cloud.firestore {
       }
 
       // ============================================
+      // RISCOS DA REFORMA (Onboarding)
+      // ============================================
+      
+      match /reform_risks/{riskId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // CHECKLISTS (Onboarding)
+      // ============================================
+      
+      match /checklists/{checklistId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // PRÓXIMA AÇÃO (Onboarding)
+      // ============================================
+      
+      match /next_action/{actionId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
       // TAREFAS
       // ============================================
       

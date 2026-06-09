@@ -33,6 +33,7 @@ class _EditProjectPageState extends State<EditProjectPage> {
 
   DateTime? _deliveryDate;
   DateTime? _contractDate;
+  DateTime? _plannedMoveInDate;
   bool _isLoading = false;
 
   @override
@@ -55,6 +56,7 @@ class _EditProjectPageState extends State<EditProjectPage> {
     _contingencyPercentController.text = project.contingencyPercent.toString();
     _deliveryDate = project.deliveryDate;
     _contractDate = project.contractDate;
+    _plannedMoveInDate = project.plannedMoveInDate;
   }
 
   @override
@@ -210,6 +212,15 @@ class _EditProjectPageState extends State<EditProjectPage> {
                   icon: Icons.edit_calendar,
                   date: _contractDate,
                   onTap: () => _selectDate(context, isDeliveryDate: false),
+                ),
+                SizedBox(height: AppSpacing.md),
+
+                // Data Planejada de Mudança
+                _buildDateField(
+                  label: 'Data Planejada de Mudança (opcional)',
+                  icon: Icons.moving,
+                  date: _plannedMoveInDate,
+                  onTap: () => _selectPlannedMoveInDate(context),
                 ),
                 SizedBox(height: AppSpacing.md),
 
@@ -438,6 +449,36 @@ class _EditProjectPageState extends State<EditProjectPage> {
     }
   }
 
+  Future<void> _selectPlannedMoveInDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _plannedMoveInDate ?? DateTime.now().add(const Duration(days: 90)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+      helpText: 'Selecione a data planejada para mudança',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.textInverse,
+              surface: AppColors.surface,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _plannedMoveInDate = picked;
+      });
+    }
+  }
+
   Future<void> _saveProject() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -468,6 +509,7 @@ class _EditProjectPageState extends State<EditProjectPage> {
       area: double.parse(_areaController.text),
       deliveryDate: _deliveryDate,
       contractDate: _contractDate,
+      plannedMoveInDate: _plannedMoveInDate,
       totalBudget: _totalBudgetController.text.isNotEmpty
           ? double.parse(_totalBudgetController.text)
           : null,

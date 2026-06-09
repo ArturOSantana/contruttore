@@ -2,13 +2,21 @@ import 'package:equatable/equatable.dart';
 
 /// Entidade que representa a saúde geral da reforma
 class ReformHealthEntity extends Equatable {
-  final double score; // 0-100 (renomeado de healthScore para score)
-  final HealthStatus status;
+  final double score; // 0-100
+  final HealthLevel level; // Nível visual (healthy/attention/critical)
+  final String message; // Mensagem amigável para o usuário
+  final List<String> issues; // Lista de problemas encontrados
+  final List<String> positives; // Lista de pontos positivos
+  final HealthStatus status; // Mantido para compatibilidade
   final List<HealthFactor> factors;
   final DateTime calculatedAt;
 
   const ReformHealthEntity({
     required this.score,
+    required this.level,
+    required this.message,
+    this.issues = const [],
+    this.positives = const [],
     required this.status,
     required this.factors,
     required this.calculatedAt,
@@ -17,13 +25,24 @@ class ReformHealthEntity extends Equatable {
   @override
   List<Object?> get props => [
         score,
+        level,
+        message,
+        issues,
+        positives,
         status,
         factors,
         calculatedAt,
       ];
 }
 
-/// Status geral da saúde da reforma
+/// Nível visual da saúde (v2.0)
+enum HealthLevel {
+  healthy, // 80-100:  Saudável
+  attention, // 50-79:  Atenção
+  critical, // 0-49:  Crítica
+}
+
+/// Status geral da saúde da reforma (mantido para compatibilidade)
 enum HealthStatus {
   excellent, // 90-100
   good, // 70-89

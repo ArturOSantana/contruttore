@@ -132,6 +132,41 @@ class DiaryRepositoryImpl implements DiaryRepository {
       return Left(ServerFailure('Erro ao buscar última entrada: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> addAutomaticEntry({
+    required String projectId,
+    required String title,
+    required String description,
+    String? phaseId,
+    DiaryEntryType type = DiaryEntryType.daily,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final entry = DiaryEntryModel(
+        id: _firestore.collection('projects').doc().id,
+        projectId: projectId,
+        type: type,
+        phaseId: phaseId,
+        title: title,
+        description: description,
+        photoUrls: const [],
+        date: now,
+        createdAt: now,
+      );
+
+      await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('diary')
+          .doc(entry.id)
+          .set(entry.toMap());
+
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure('Erro ao adicionar entrada automática: $e'));
+    }
+  }
 }
 
 // Made with Bob

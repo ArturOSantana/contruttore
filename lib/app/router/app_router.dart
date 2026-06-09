@@ -9,12 +9,17 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/tutorial/presentation/pages/tutorial_page.dart';
-import '../../features/onboarding/onboarding_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_choice_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_14_steps_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_results_page.dart';
+import '../../features/onboarding/presentation/pages/reform_risks_page.dart';
 import '../../features/onboarding/presentation/pages/retroactive_onboarding_page.dart';
+import '../../features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import '../../features/onboarding/presentation/cubit/retroactive_cubit.dart';
 import '../../features/phases/presentation/pages/phases_page.dart';
 import '../../features/phases/presentation/cubit/phases_cubit.dart';
 import '../../features/reform_map/presentation/pages/reform_map_page.dart';
+import '../../features/reform_map/presentation/pages/report_problem_page.dart';
 import '../../features/reform_map/presentation/cubit/reform_map_cubit.dart';
 import '../../features/alerts/presentation/cubit/alerts_cubit.dart';
 import '../../features/shopping/presentation/cubit/shopping_cubit.dart';
@@ -30,23 +35,23 @@ import '../../features/projects/presentation/cubit/projects_list_cubit.dart';
 import '../../features/projects/presentation/pages/projects_list_page.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/projects/domain/repositories/project_repository.dart';
-import '../../features/financial/financial_page.dart';
+import '../../features/financial/presentation/pages/financial_page.dart';
 import '../../features/financial/presentation/pages/add_expense_page.dart';
 import '../../features/payments/presentation/pages/payments_page.dart';
 import '../../features/installments/presentation/pages/installments_page.dart';
 import '../../features/installments/presentation/pages/add_installment_page.dart';
-import '../../features/suppliers/suppliers_page.dart';
+import '../../features/suppliers/presentation/pages/suppliers_page.dart';
 import '../../features/suppliers/presentation/pages/add_supplier_page.dart';
 import '../../features/suppliers/presentation/pages/compare_quotes_page.dart';
 import '../../features/suppliers/presentation/pages/compare_suppliers_page.dart';
 import '../../features/suppliers/presentation/pages/supplier_quotes_page.dart';
-import '../../features/diary/diary_page.dart';
+import '../../features/diary/presentation/pages/diary_page.dart';
 import '../../features/diary/presentation/pages/add_diary_entry_page.dart';
-import '../../features/shopping/shopping_page.dart';
+import '../../features/shopping/presentation/pages/shopping_page.dart';
 import '../../features/shopping/presentation/pages/add_shopping_item_page.dart';
 import '../../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../../features/wishlist/presentation/pages/add_wishlist_item_page.dart';
-import '../../features/alerts/alerts_page.dart';
+import '../../features/alerts/presentation/pages/alerts_page.dart';
 import '../../features/glossary/presentation/pages/glossary_page.dart';
 import '../../features/glossary/presentation/pages/glossary_term_page.dart';
 import '../../features/glossary/presentation/cubit/glossary_cubit.dart';
@@ -81,9 +86,63 @@ class AppRouter {
         builder: (context, state) => const TutorialPage(),
       ),
       GoRoute(
+        path: RouteNames.onboardingChoice,
+        name: 'onboarding-choice',
+        builder: (context, state) => const OnboardingChoicePage(),
+      ),
+      GoRoute(
         path: RouteNames.onboarding,
         name: 'onboarding',
-        builder: (context, state) => const OnboardingPage(),
+        builder: (context, state) => const Onboarding14StepsPage(),
+      ),
+      GoRoute(
+        path: RouteNames.onboarding14Steps,
+        name: 'onboarding-14',
+        builder: (context, state) => const Onboarding14StepsPage(),
+      ),
+      GoRoute(
+        path: RouteNames.onboardingResults,
+        name: 'onboarding-results',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final cubit = extra?['cubit'] as OnboardingCubit?;
+
+          if (cubit == null) {
+            // Fallback: criar novo cubit se não foi passado
+            final newCubit = getIt<OnboardingCubit>();
+            return OnboardingResultsPage(
+              cubit: newCubit,
+              nextAction: extra?['nextAction'] ?? '',
+              criticalAlerts: extra?['criticalAlerts'] ?? [],
+              checklistsByRoom: extra?['checklistsByRoom'] ?? {},
+              healthScore: extra?['healthScore'] ?? 0,
+              estimatedDuration: extra?['estimatedDuration'] ?? 0,
+            );
+          }
+
+          return OnboardingResultsPage(
+            cubit: cubit,
+            nextAction: extra?['nextAction'] ?? '',
+            criticalAlerts: extra?['criticalAlerts'] ?? [],
+            checklistsByRoom: extra?['checklistsByRoom'] ?? {},
+            healthScore: extra?['healthScore'] ?? 0,
+            estimatedDuration: extra?['estimatedDuration'] ?? 0,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.reformRisks,
+        name: 'reform-risks',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final risks = extra?['risks'] as List? ?? [];
+          final onContinue = extra?['onContinue'] as VoidCallback?;
+
+          return ReformRisksPage(
+            risks: risks.cast(),
+            onContinue: onContinue ?? () => context.go(RouteNames.home),
+          );
+        },
       ),
       GoRoute(
         path: RouteNames.retroactiveOnboarding,
@@ -141,6 +200,26 @@ class AppRouter {
         path: RouteNames.reformMap,
         name: 'reform-map',
         builder: (context, state) => const _ReformMapPageWrapper(),
+      ),
+
+      // Report Problem
+      GoRoute(
+        path: RouteNames.reportProblem,
+        name: 'report-problem',
+        builder: (context, state) {
+          final projectId = state.uri.queryParameters['projectId']!;
+          final phaseId = state.uri.queryParameters['phaseId'];
+          final phaseName = state.uri.queryParameters['phaseName'];
+
+          return BlocProvider(
+            create: (context) => context.read<ReformMapCubit>(),
+            child: ReportProblemPage(
+              projectId: projectId,
+              phaseId: phaseId,
+              phaseName: phaseName,
+            ),
+          );
+        },
       ),
 
       // Phases (mantido para compatibilidade)

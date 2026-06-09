@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
+import '../../../diary/domain/usecases/add_automatic_entry_usecase.dart';
+import '../../../diary/domain/entities/diary_entry_entity.dart';
 import '../../domain/entities/document_entity.dart';
 import '../../domain/usecases/add_document_usecase.dart';
 import '../../domain/usecases/delete_document_usecase.dart';
@@ -15,12 +17,14 @@ class DocumentsCubit extends Cubit<DocumentsState> {
   final AddDocumentUseCase _addDocumentUseCase;
   final DeleteDocumentUseCase _deleteDocumentUseCase;
   final UploadFileUseCase _uploadFileUseCase;
+  final AddAutomaticEntryUseCase _addAutomaticEntryUseCase;
 
   DocumentsCubit(
     this._getDocumentsUseCase,
     this._addDocumentUseCase,
     this._deleteDocumentUseCase,
     this._uploadFileUseCase,
+    this._addAutomaticEntryUseCase,
   ) : super(DocumentsInitial());
 
   Future<void> loadDocuments(String projectId) async {
@@ -69,10 +73,22 @@ class DocumentsCubit extends Cubit<DocumentsState> {
         // Add to Firestore
         final addResult = await _addDocumentUseCase(document);
 
-        addResult.fold((failure) => emit(DocumentsError(failure.message)), (_) {
-          emit(DocumentAdded());
-          loadDocuments(projectId);
-        });
+        await addResult.fold(
+          (failure) async => emit(DocumentsError(failure.message)),
+          (_) async {
+            // INTEGRAÇÃO: Adiciona log automático no diário
+            await _addAutomaticEntryUseCase(
+              projectId: projectId,
+              title: 'Documento adicionado',
+              description: '${type.displayName} - $name',
+              phaseId: null, // Documentos não têm fase específica
+              type: DiaryEntryType.daily,
+            );
+
+            emit(DocumentAdded());
+            await loadDocuments(projectId);
+          },
+        );
       },
     );
   }

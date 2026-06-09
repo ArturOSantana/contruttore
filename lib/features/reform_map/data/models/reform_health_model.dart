@@ -4,6 +4,10 @@ import '../../domain/entities/reform_health_entity.dart';
 class ReformHealthModel extends ReformHealthEntity {
   const ReformHealthModel({
     required super.score,
+    required super.level,
+    required super.message,
+    super.issues = const [],
+    super.positives = const [],
     required super.status,
     required super.factors,
     required super.calculatedAt,
@@ -13,6 +17,18 @@ class ReformHealthModel extends ReformHealthEntity {
   factory ReformHealthModel.fromMap(Map<String, dynamic> map) {
     return ReformHealthModel(
       score: (map['score'] as num).toDouble(),
+      level: HealthLevel.values.firstWhere(
+        (e) => e.toString() == 'HealthLevel.${map['level']}',
+        orElse: () => HealthLevel.attention,
+      ),
+      message: map['message'] as String? ?? 'Calculando saúde da reforma...',
+      issues:
+          (map['issues'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+              [],
+      positives: (map['positives'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       status: HealthStatus.values.firstWhere(
         (e) => e.toString() == 'HealthStatus.${map['status']}',
         orElse: () => HealthStatus.good,
@@ -29,6 +45,10 @@ class ReformHealthModel extends ReformHealthEntity {
   Map<String, dynamic> toMap() {
     return {
       'score': score,
+      'level': level.toString().split('.').last,
+      'message': message,
+      'issues': issues,
+      'positives': positives,
       'status': status.toString().split('.').last,
       'factors': factors.map((f) => (f as HealthFactorModel).toMap()).toList(),
       'calculatedAt': calculatedAt.toIso8601String(),
@@ -39,6 +59,10 @@ class ReformHealthModel extends ReformHealthEntity {
   factory ReformHealthModel.fromEntity(ReformHealthEntity entity) {
     return ReformHealthModel(
       score: entity.score,
+      level: entity.level,
+      message: entity.message,
+      issues: entity.issues,
+      positives: entity.positives,
       status: entity.status,
       factors:
           entity.factors.map((f) => HealthFactorModel.fromEntity(f)).toList(),

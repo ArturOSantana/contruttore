@@ -17,6 +17,7 @@ class ReformMapModel extends ReformMapEntity {
     required super.financial,
     required super.positiveMessages,
     required super.lastUpdated,
+    super.plannedMoveInDate,
   });
 
   factory ReformMapModel.fromMap(Map<String, dynamic> map) {
@@ -45,6 +46,9 @@ class ReformMapModel extends ReformMapEntity {
           .map((m) => m as String)
           .toList(),
       lastUpdated: DateTime.parse(map['lastUpdated'] as String),
+      plannedMoveInDate: map['plannedMoveInDate'] != null
+          ? DateTime.parse(map['plannedMoveInDate'] as String)
+          : null,
     );
   }
 
@@ -63,6 +67,7 @@ class ReformMapModel extends ReformMapEntity {
       'financial': (financial as FinancialSnapshotModel).toMap(),
       'positiveMessages': positiveMessages,
       'lastUpdated': lastUpdated.toIso8601String(),
+      'plannedMoveInDate': plannedMoveInDate?.toIso8601String(),
     };
   }
 
@@ -83,6 +88,7 @@ class ReformMapModel extends ReformMapEntity {
       financial: FinancialSnapshotModel.fromEntity(entity.financial),
       positiveMessages: entity.positiveMessages,
       lastUpdated: entity.lastUpdated,
+      plannedMoveInDate: entity.plannedMoveInDate,
     );
   }
 }

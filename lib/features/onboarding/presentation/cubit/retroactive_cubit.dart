@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import '../../../projects/domain/entities/project_entity.dart';
 import '../../../projects/domain/repositories/project_repository.dart';
@@ -15,6 +16,7 @@ import '../../domain/services/retroactive_budget_distributor.dart';
 import 'retroactive_state.dart';
 
 /// Cubit que gerencia o fluxo de onboarding retroativo
+@injectable
 class RetroactiveCubit extends Cubit<RetroactiveState> {
   final ProjectRepository _projectRepository;
   final PhaseRepository _phaseRepository;
@@ -27,13 +29,13 @@ class RetroactiveCubit extends Cubit<RetroactiveState> {
     required PhaseRepository phaseRepository,
     required FinancialRepository financialRepository,
     required SupplierRepository supplierRepository,
-    Uuid? uuid,
-  }) : _projectRepository = projectRepository,
-       _phaseRepository = phaseRepository,
-       _financialRepository = financialRepository,
-       _supplierRepository = supplierRepository,
-       _uuid = uuid ?? const Uuid(),
-       super(const RetroactiveInitial());
+    required Uuid uuid,
+  })  : _projectRepository = projectRepository,
+        _phaseRepository = phaseRepository,
+        _financialRepository = financialRepository,
+        _supplierRepository = supplierRepository,
+        _uuid = uuid,
+        super(const RetroactiveInitial());
 
   /// Inicia o fluxo de onboarding retroativo
   void start() {
@@ -81,9 +83,8 @@ class RetroactiveCubit extends Cubit<RetroactiveState> {
     final currentState = state;
     if (currentState is! RetroactiveCollecting) return;
 
-    final updatedEntries = currentState.expenseEntries
-        .where((e) => e.id != entryId)
-        .toList();
+    final updatedEntries =
+        currentState.expenseEntries.where((e) => e.id != entryId).toList();
 
     emit(currentState.copyWith(expenseEntries: updatedEntries));
   }
@@ -105,9 +106,8 @@ class RetroactiveCubit extends Cubit<RetroactiveState> {
     final currentState = state;
     if (currentState is! RetroactiveCollecting) return;
 
-    final updatedSuppliers = currentState.quickSuppliers
-        .where((s) => s.id != supplierId)
-        .toList();
+    final updatedSuppliers =
+        currentState.quickSuppliers.where((s) => s.id != supplierId).toList();
 
     emit(currentState.copyWith(quickSuppliers: updatedSuppliers));
   }
@@ -155,6 +155,9 @@ class RetroactiveCubit extends Cubit<RetroactiveState> {
       );
 
       await _projectRepository.createProject(project);
+
+      // Aguardar propagação do Firestore para evitar erro de permissão
+      await Future.delayed(const Duration(milliseconds: 500));
 
       // 2. Criar as 12 fases com status correto
       await _createPhasesWithRetroactiveStatus(
@@ -220,7 +223,7 @@ class RetroactiveCubit extends Cubit<RetroactiveState> {
       }
 
       final phase = PhaseEntity(
-        id: _uuid.v4(),
+        id: 'phase_$i', // Usar padrão consistente com GeneratePhasesUseCase
         projectId: projectId,
         number: i,
         name: _getPhaseNameByNumber(i),

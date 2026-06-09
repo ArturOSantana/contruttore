@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/usecases/complete_phase_usecase.dart';
 import '../../domain/usecases/get_phases_usecase.dart';
+import '../../domain/usecases/mark_phases_retroactive_usecase.dart';
 import '../../domain/usecases/toggle_subtask_usecase.dart';
 import 'phases_state.dart';
 
@@ -10,11 +11,13 @@ class PhasesCubit extends Cubit<PhasesState> {
   final GetPhasesUseCase _getPhasesUseCase;
   final ToggleSubtaskUseCase _toggleSubtaskUseCase;
   final CompletePhaseUseCase _completePhaseUseCase;
+  final MarkPhasesRetroactiveUseCase _markPhasesRetroactiveUseCase;
 
   PhasesCubit(
     this._getPhasesUseCase,
     this._toggleSubtaskUseCase,
     this._completePhaseUseCase,
+    this._markPhasesRetroactiveUseCase,
   ) : super(PhasesInitial());
 
   Future<void> loadPhases(String projectId) async {
@@ -52,6 +55,21 @@ class PhasesCubit extends Cubit<PhasesState> {
     final result = await _completePhaseUseCase(
       projectId: projectId,
       phaseId: phaseId,
+    );
+
+    result.fold(
+      (failure) => emit(PhasesError(failure.message)),
+      (_) => loadPhases(projectId),
+    );
+  }
+
+  Future<void> markPhasesRetroactive({
+    required String projectId,
+    required List<String> phaseNames,
+  }) async {
+    final result = await _markPhasesRetroactiveUseCase(
+      projectId: projectId,
+      phaseNames: phaseNames,
     );
 
     result.fold(

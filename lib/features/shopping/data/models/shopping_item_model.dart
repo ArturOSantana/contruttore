@@ -14,6 +14,7 @@ class ShoppingItemModel extends ShoppingItemEntity {
     required super.unit,
     required super.isPurchased,
     super.store,
+    super.supplierId,
     super.notes,
     super.purchaseDate,
     super.wishlistItemId,
@@ -47,6 +48,7 @@ class ShoppingItemModel extends ShoppingItemEntity {
       unit: map['unit'] ?? 'un',
       isPurchased: map['isPurchased'] ?? false,
       store: map['store'],
+      supplierId: map['supplierId'],
       notes: map['notes'],
       purchaseDate: parseDate(map['purchaseDate']),
       wishlistItemId: map['wishlistItemId'],
@@ -69,10 +71,10 @@ class ShoppingItemModel extends ShoppingItemEntity {
       'unit': unit,
       'isPurchased': isPurchased,
       'store': store,
+      'supplierId': supplierId,
       'notes': notes,
-      'purchaseDate': purchaseDate != null
-          ? Timestamp.fromDate(purchaseDate!)
-          : null,
+      'purchaseDate':
+          purchaseDate != null ? Timestamp.fromDate(purchaseDate!) : null,
       'wishlistItemId': wishlistItemId,
       'expenseTransactionId': expenseTransactionId,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -96,6 +98,7 @@ class ShoppingItemModel extends ShoppingItemEntity {
       unit: entity.unit,
       isPurchased: entity.isPurchased,
       store: entity.store,
+      supplierId: entity.supplierId,
       notes: entity.notes,
       purchaseDate: entity.purchaseDate,
       wishlistItemId: entity.wishlistItemId,

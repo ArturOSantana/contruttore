@@ -8,17 +8,20 @@ class ProblemEntity extends Equatable {
   final String description;
   final ProblemType type;
   final ProblemSeverity severity;
-  final String? phaseId;
+  final String? phaseId; // Renomeado de stepId para phaseId (compatibilidade)
   final String? phaseName;
   final double? financialImpact;
-  final int? delayDays; // Mantido como delayDays (não timeImpactDays)
+  final int? delayDays; // Impacto em dias de atraso
   final ProblemStatus status;
   final DateTime reportedAt;
   final DateTime? resolvedAt;
-  final String? solution;
+  final String? solution; // Como foi resolvido
+  final String? resolution; // Alias para solution (v2.0)
   final List<String> affectedAreas; // Áreas afetadas
-  final String? responsibleId; // ID do fornecedor responsável
-  final List<String> attachments; // URLs de fotos/documentos
+  final String?
+      supplierId; // ID do fornecedor responsável (renomeado de responsibleId)
+  final List<String> photoUrls; // URLs de fotos (renomeado de attachments)
+  final List<String> attachments; // Mantido para compatibilidade
 
   const ProblemEntity({
     required this.id,
@@ -35,16 +38,23 @@ class ProblemEntity extends Equatable {
     required this.reportedAt,
     this.resolvedAt,
     this.solution,
+    this.resolution,
     this.affectedAreas = const [],
-    this.responsibleId,
+    this.supplierId,
+    this.photoUrls = const [],
     this.attachments = const [],
   });
 
   bool get isResolved => status == ProblemStatus.resolved;
   bool get isOpen => status == ProblemStatus.open;
+  bool get isCritical => severity == ProblemSeverity.critical;
   bool get hasFinancialImpact =>
       financialImpact != null && financialImpact! > 0;
   bool get hasDelayImpact => delayDays != null && delayDays! > 0;
+
+  // Alias para compatibilidade
+  String? get responsibleId => supplierId;
+  String? get stepId => phaseId;
 
   @override
   List<Object?> get props => [
@@ -62,8 +72,10 @@ class ProblemEntity extends Equatable {
         reportedAt,
         resolvedAt,
         solution,
+        resolution,
         affectedAreas,
-        responsibleId,
+        supplierId,
+        photoUrls,
         attachments,
       ];
 }
@@ -128,25 +140,25 @@ extension ProblemTypeExtension on ProblemType {
   String get icon {
     switch (this) {
       case ProblemType.leak:
-        return '💧';
+        return '';
       case ProblemType.crack:
-        return '🔨';
+        return '';
       case ProblemType.defect:
-        return '⚠️';
+        return '';
       case ProblemType.delay:
         return '⏰';
       case ProblemType.wrongMaterial:
-        return '📦';
+        return '';
       case ProblemType.wrongMeasure:
-        return '📏';
+        return '';
       case ProblemType.damage:
-        return '💥';
+        return '';
       case ProblemType.missing:
-        return '❓';
+        return '';
       case ProblemType.quality:
-        return '🔍';
+        return '';
       case ProblemType.other:
-        return '🚧';
+        return '';
     }
   }
 }

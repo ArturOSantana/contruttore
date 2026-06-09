@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
 import '../../../../app/router/route_names.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../cubit/reform_map_cubit.dart';
+import '../cubit/reform_map_state.dart';
 
-/// Página de detalhes de uma fase específica
+/// Página de detalhes de uma fase específica do Mapa da Reforma
 ///
-/// Mostra todas as informações contextuais da fase:
+/// Esta página é o coração da experiência do usuário leigo.
+/// Ela traduz a complexidade da construção civil em informações
+/// simples e acionáveis.
+///
+/// Mostra:
+/// - Status e progresso da fase
+/// - Resumo financeiro (orçado vs gasto)
 /// - Explicação para leigos
 /// - O que acontece nesta etapa
-/// - O que pode dar errado
-/// - Fornecedores relacionados
-/// - Compras necessárias
+/// - Erros comuns a evitar
+/// - Fornecedores relacionados (com dados reais)
+/// - Compras necessárias (com dados reais)
 /// - Documentos esperados
-/// - Parcelas vinculadas
-/// - Diário de registros
-class PhaseDetailPage extends StatelessWidget {
+/// - Parcelas vinculadas (com dados reais)
+/// - Próximos passos recomendados
+class PhaseDetailPage extends StatefulWidget {
   final String projectId;
   final PhaseEntity phase;
 
@@ -25,63 +36,125 @@ class PhaseDetailPage extends StatelessWidget {
   });
 
   @override
+  State<PhaseDetailPage> createState() => _PhaseDetailPageState();
+}
+
+class _PhaseDetailPageState extends State<PhaseDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Carrega dados atualizados ao abrir a página
+    context.read<ReformMapCubit>().loadReformMap(widget.projectId);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(phase.name),
+        title: Text(widget.phase.name),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.refresh),
             onPressed: () {
-              // TODO: Implementar edição de fase
+              context.read<ReformMapCubit>().refreshAll(widget.projectId);
             },
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Status Card
-          _buildStatusCard(context),
-          const SizedBox(height: 16),
+      body: BlocBuilder<ReformMapCubit, ReformMapState>(
+        builder: (context, state) {
+          if (state is ReformMapLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          // Explicação
-          _buildExplanationCard(context),
-          const SizedBox(height: 16),
+          if (state is ReformMapError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(state.message),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context
+                          .read<ReformMapCubit>()
+                          .loadReformMap(widget.projectId);
+                    },
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            );
+          }
 
-          // O que acontece
-          _buildWhatHappensCard(context),
-          const SizedBox(height: 16),
+          // Busca a fase atualizada do estado
+          PhaseEntity currentPhase = widget.phase;
+          if (state is ReformMapLoaded) {
+            final updatedPhase = state.reformMap.phases
+                .where((p) => p.id == widget.phase.id)
+                .firstOrNull;
+            if (updatedPhase != null) {
+              currentPhase = updatedPhase;
+            }
+          }
 
-          // Erros comuns
-          _buildCommonMistakesCard(context),
-          const SizedBox(height: 16),
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Status Card
+              _buildStatusCard(context, currentPhase),
+              const SizedBox(height: 16),
 
-          // Fornecedores
-          _buildSuppliersCard(context),
-          const SizedBox(height: 16),
+              // Resumo Financeiro (NOVO)
+              if (currentPhase.estimatedBudget > 0)
+                _buildFinancialSummaryCard(context, currentPhase),
+              if (currentPhase.estimatedBudget > 0) const SizedBox(height: 16),
 
-          // Compras
-          _buildShoppingCard(context),
-          const SizedBox(height: 16),
+              // Explicação
+              _buildExplanationCard(context, currentPhase),
+              const SizedBox(height: 16),
 
-          // Documentos
-          _buildDocumentsCard(context),
-          const SizedBox(height: 16),
+              // O que acontece
+              _buildWhatHappensCard(context, currentPhase),
+              const SizedBox(height: 16),
 
-          // Parcelas
-          _buildInstallmentsCard(context),
-          const SizedBox(height: 16),
+              // Erros comuns
+              _buildCommonMistakesCard(context, currentPhase),
+              const SizedBox(height: 16),
 
-          // Diário
-          _buildDiaryCard(context),
-        ],
+              // Próximos Passos (NOVO)
+              _buildNextStepsCard(context, currentPhase),
+              const SizedBox(height: 16),
+
+              // Fornecedores
+              _buildSuppliersCard(context, currentPhase),
+              const SizedBox(height: 16),
+
+              // Compras
+              _buildShoppingCard(context, currentPhase),
+              const SizedBox(height: 16),
+
+              // Documentos
+              _buildDocumentsCard(context, currentPhase),
+              const SizedBox(height: 16),
+
+              // Parcelas
+              _buildInstallmentsCard(context, currentPhase),
+              const SizedBox(height: 16),
+
+              // Diário
+              _buildDiaryCard(context, currentPhase),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildStatusCard(BuildContext context) {
-    final statusInfo = _getStatusInfo();
+  Widget _buildStatusCard(BuildContext context, PhaseEntity phase) {
+    final statusInfo = _getStatusInfo(phase);
 
     return Card(
       child: Padding(
@@ -123,6 +196,39 @@ class PhaseDetailPage extends StatelessWidget {
                 ),
               ],
             ),
+            if (phase.progressPercentage > 0) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Progresso',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        LinearProgressIndicator(
+                          value: phase.progressPercentage / 100,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            statusInfo['color'] as Color,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${phase.progressPercentage.toStringAsFixed(0)}% concluído',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (phase.startDate != null || phase.endDate != null) ...[
               const SizedBox(height: 16),
               const Divider(),
@@ -170,8 +276,131 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildExplanationCard(BuildContext context) {
-    final explanation = _getPhaseExplanation();
+  /// NOVO: Card com resumo financeiro da fase
+  Widget _buildFinancialSummaryCard(BuildContext context, PhaseEntity phase) {
+    final budgetUsed = phase.budgetUsedPercentage;
+    final isOverBudget = phase.isOverBudget;
+
+    return Card(
+      color: isOverBudget ? Colors.red[50] : null,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isOverBudget
+                      ? Icons.warning_amber
+                      : Icons.account_balance_wallet,
+                  color: isOverBudget
+                      ? Colors.red
+                      : Theme.of(context).primaryColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Resumo Financeiro',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Orçado',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text(
+                        CurrencyFormatter.format(phase.estimatedBudget),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Gasto',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text(
+                        CurrencyFormatter.format(phase.totalSpent),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: isOverBudget ? Colors.red : null,
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: budgetUsed / 100,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isOverBudget ? Colors.red : Colors.green,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${budgetUsed.toStringAsFixed(0)}% utilizado',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (phase.totalPending > 0)
+                  Text(
+                    'Pendente: ${CurrencyFormatter.format(phase.totalPending)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.orange,
+                        ),
+                  ),
+              ],
+            ),
+            if (isOverBudget) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning, size: 16, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Orçamento excedido em ${CurrencyFormatter.format(phase.totalSpent - phase.estimatedBudget)}',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExplanationCard(BuildContext context, PhaseEntity phase) {
+    final explanation = _getPhaseExplanation(phase);
 
     return Card(
       child: Padding(
@@ -200,8 +429,8 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildWhatHappensCard(BuildContext context) {
-    final activities = _getPhaseActivities();
+  Widget _buildWhatHappensCard(BuildContext context, PhaseEntity phase) {
+    final activities = _getPhaseActivities(phase);
 
     return Card(
       child: Padding(
@@ -242,8 +471,8 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCommonMistakesCard(BuildContext context) {
-    final mistakes = _getCommonMistakes();
+  Widget _buildCommonMistakesCard(BuildContext context, PhaseEntity phase) {
+    final mistakes = _getCommonMistakes(phase);
 
     return Card(
       color: Colors.orange[50],
@@ -285,34 +514,101 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSuppliersCard(BuildContext context) {
-    return _buildNavigationCard(
-      context,
-      title: 'Fornecedores',
-      subtitle: 'Profissionais desta etapa',
-      icon: Icons.people,
-      count: 0, // TODO: Buscar do Firebase
-      onTap: () {
-        context.push('${RouteNames.suppliers}?phase=${phase.id}');
+  /// NOVO: Card com próximos passos recomendados
+  Widget _buildNextStepsCard(BuildContext context, PhaseEntity phase) {
+    final nextSteps = _getNextSteps(phase);
+
+    if (nextSteps.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      color: Colors.blue[50],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.lightbulb_outline, color: Colors.blue),
+                const SizedBox(width: 8),
+                Text(
+                  'Próximos passos',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...nextSteps.map((step) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.arrow_forward,
+                          size: 20, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          step,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuppliersCard(BuildContext context, PhaseEntity phase) {
+    final expectedTypes = phase.expectedSupplierTypes;
+
+    return FutureBuilder<int>(
+      future: _getSupplierCount(phase.id),
+      builder: (context, snapshot) {
+        return _buildNavigationCard(
+          context,
+          title: 'Fornecedores',
+          subtitle: expectedTypes.isNotEmpty
+              ? 'Profissionais necessários: ${expectedTypes.join(", ")}'
+              : 'Profissionais desta etapa',
+          icon: Icons.people,
+          count: snapshot.data ?? 0,
+          onTap: () {
+            context.push('${RouteNames.suppliers}?phase=${phase.id}');
+          },
+        );
       },
     );
   }
 
-  Widget _buildShoppingCard(BuildContext context) {
-    return _buildNavigationCard(
-      context,
-      title: 'Compras',
-      subtitle: 'Materiais necessários',
-      icon: Icons.shopping_cart,
-      count: 0, // TODO: Buscar do Firebase
-      onTap: () {
-        context.push('${RouteNames.shopping}?phase=${phase.id}');
+  Widget _buildShoppingCard(BuildContext context, PhaseEntity phase) {
+    final expectedCategories = phase.expectedPurchaseCategories;
+
+    return FutureBuilder<int>(
+      future: _getShoppingCount(phase.id),
+      builder: (context, snapshot) {
+        return _buildNavigationCard(
+          context,
+          title: 'Compras',
+          subtitle: expectedCategories.isNotEmpty
+              ? 'Categorias: ${expectedCategories.join(", ")}'
+              : 'Materiais necessários',
+          icon: Icons.shopping_cart,
+          count: snapshot.data ?? 0,
+          onTap: () {
+            context.push('${RouteNames.shopping}?phase=${phase.id}');
+          },
+        );
       },
     );
   }
 
-  Widget _buildDocumentsCard(BuildContext context) {
-    final expectedDocs = _getExpectedDocuments();
+  Widget _buildDocumentsCard(BuildContext context, PhaseEntity phase) {
+    final expectedDocs = phase.expectedDocumentTypes.isNotEmpty
+        ? phase.expectedDocumentTypes
+        : _getExpectedDocuments(phase);
 
     return Card(
       child: InkWell(
@@ -335,6 +631,31 @@ class PhaseDetailPage extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
+                  FutureBuilder<int>(
+                    future: _getDocumentsCount(phase.id),
+                    builder: (context, snapshot) {
+                      final count = snapshot.data ?? 0;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          count.toString(),
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
                   const Icon(Icons.chevron_right),
                 ],
               ),
@@ -363,28 +684,42 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInstallmentsCard(BuildContext context) {
-    return _buildNavigationCard(
-      context,
-      title: 'Parcelas',
-      subtitle: 'Pagamentos vinculados',
-      icon: Icons.payment,
-      count: 0, // TODO: Buscar do Firebase
-      onTap: () {
-        context.push('${RouteNames.payments}?phase=${phase.id}');
+  Widget _buildInstallmentsCard(BuildContext context, PhaseEntity phase) {
+    return FutureBuilder<int>(
+      future: _getInstallmentsCount(phase.id),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        return _buildNavigationCard(
+          context,
+          title: 'Parcelas',
+          subtitle: phase.totalPending > 0
+              ? 'Pendente: ${CurrencyFormatter.format(phase.totalPending)}'
+              : 'Pagamentos vinculados',
+          icon: Icons.payment,
+          count: count,
+          onTap: () {
+            context.push('${RouteNames.payments}?phase=${phase.id}');
+          },
+        );
       },
     );
   }
 
-  Widget _buildDiaryCard(BuildContext context) {
-    return _buildNavigationCard(
-      context,
-      title: 'Diário',
-      subtitle: 'Registros desta etapa',
-      icon: Icons.book,
-      count: 0, // TODO: Buscar do Firebase
-      onTap: () {
-        context.push('${RouteNames.diary}?phase=${phase.id}');
+  Widget _buildDiaryCard(BuildContext context, PhaseEntity phase) {
+    return FutureBuilder<int>(
+      future: _getDiaryCount(phase.id),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        return _buildNavigationCard(
+          context,
+          title: 'Diário',
+          subtitle: 'Registros desta etapa',
+          icon: Icons.book,
+          count: count,
+          onTap: () {
+            context.push('${RouteNames.diary}?phase=${phase.id}');
+          },
+        );
       },
     );
   }
@@ -415,7 +750,7 @@ class PhaseDetailPage extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
-                      '$count $subtitle',
+                      subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.grey[600],
                           ),
@@ -431,7 +766,7 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Map<String, dynamic> _getStatusInfo() {
+  Map<String, dynamic> _getStatusInfo(PhaseEntity phase) {
     switch (phase.status) {
       case PhaseStatus.done:
         return {
@@ -464,8 +799,7 @@ class PhaseDetailPage extends StatelessWidget {
     }
   }
 
-  String _getPhaseExplanation() {
-    // TODO: Buscar do Firebase ou usar dados estáticos
+  String _getPhaseExplanation(PhaseEntity phase) {
     final explanations = {
       'Planejamento': 'Nesta etapa você define o que será feito na reforma, '
           'cria o projeto, escolhe materiais e contrata profissionais.',
@@ -490,8 +824,7 @@ class PhaseDetailPage extends StatelessWidget {
         'Esta é uma etapa importante da sua reforma.';
   }
 
-  List<String> _getPhaseActivities() {
-    // TODO: Buscar do Firebase ou usar dados estáticos
+  List<String> _getPhaseActivities(PhaseEntity phase) {
     final activities = {
       'Planejamento': [
         'Definir escopo da reforma',
@@ -525,8 +858,7 @@ class PhaseDetailPage extends StatelessWidget {
     return activities[phase.name] ?? ['Executar as atividades desta etapa'];
   }
 
-  List<String> _getCommonMistakes() {
-    // TODO: Buscar do Firebase ou usar dados estáticos
+  List<String> _getCommonMistakes(PhaseEntity phase) {
     final mistakes = {
       'Planejamento': [
         'Não fazer projeto detalhado',
@@ -551,8 +883,7 @@ class PhaseDetailPage extends StatelessWidget {
     return mistakes[phase.name] ?? ['Não planejar adequadamente'];
   }
 
-  List<String> _getExpectedDocuments() {
-    // TODO: Buscar do Firebase ou usar dados estáticos
+  List<String> _getExpectedDocuments(PhaseEntity phase) {
     final documents = {
       'Planejamento': ['Projeto arquitetônico', 'Orçamentos', 'Contratos'],
       'Hidráulica': [
@@ -569,6 +900,120 @@ class PhaseDetailPage extends StatelessWidget {
     };
 
     return documents[phase.name] ?? ['Contratos', 'Notas fiscais', 'Garantias'];
+  }
+
+  /// NOVO: Próximos passos baseados no status da fase
+  List<String> _getNextSteps(PhaseEntity phase) {
+    if (phase.status == PhaseStatus.locked) {
+      return [
+        'Aguarde a conclusão das etapas anteriores',
+        'Você pode começar a pesquisar fornecedores',
+        'Aproveite para definir materiais e acabamentos',
+      ];
+    }
+
+    if (phase.status == PhaseStatus.active) {
+      final steps = <String>[];
+
+      if (phase.expectedSupplierTypes.isNotEmpty && phase.totalSpent == 0) {
+        steps.add('Contratar ${phase.expectedSupplierTypes.first}');
+      }
+
+      if (phase.expectedPurchaseCategories.isNotEmpty) {
+        steps.add('Comprar materiais necessários');
+      }
+
+      if (phase.expectedDocumentTypes.isNotEmpty) {
+        steps.add('Solicitar ${phase.expectedDocumentTypes.first}');
+      }
+
+      if (steps.isEmpty) {
+        steps.add('Acompanhar o andamento dos trabalhos');
+        steps.add('Registrar o progresso no diário');
+      }
+      return steps;
+    }
+
+    if (phase.status == PhaseStatus.done ||
+        phase.status == PhaseStatus.doneNoRecord) {
+      return [
+        'Etapa concluída! Parabéns!',
+        'Você pode revisar os registros no diário',
+      ];
+    }
+
+    return [];
+  }
+
+  // Métodos para buscar contagens reais do Firebase
+  Future<int> _getSupplierCount(String phaseId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .collection('suppliers')
+          .where('phaseId', isEqualTo: phaseId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> _getShoppingCount(String phaseId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .collection('shopping')
+          .where('phaseId', isEqualTo: phaseId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> _getDocumentsCount(String phaseId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .collection('documents')
+          .where('phaseId', isEqualTo: phaseId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> _getInstallmentsCount(String phaseId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .collection('installments')
+          .where('phaseId', isEqualTo: phaseId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> _getDiaryCount(String phaseId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .collection('diary')
+          .where('phaseId', isEqualTo: phaseId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      return 0;
+    }
   }
 
   String _formatDate(DateTime date) {

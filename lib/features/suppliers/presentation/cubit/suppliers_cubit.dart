@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/utils/payment_generator.dart';
 import '../../../payments/domain/repositories/payment_repository.dart';
+import '../../../diary/domain/usecases/add_automatic_entry_usecase.dart';
+import '../../../diary/domain/entities/diary_entry_entity.dart';
 import '../../domain/entities/supplier_entity.dart';
 import '../../domain/entities/quote_entity.dart';
 import '../../domain/usecases/get_suppliers_usecase.dart';
@@ -25,6 +27,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
   final AcceptQuoteUseCase _acceptQuoteUseCase;
   final CompareQuotesUseCase _compareQuotesUseCase;
   final PaymentRepository _paymentRepository;
+  final AddAutomaticEntryUseCase _addAutomaticEntryUseCase;
 
   SuppliersCubit(
     this._getSuppliersUseCase,
@@ -36,6 +39,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
     this._acceptQuoteUseCase,
     this._compareQuotesUseCase,
     this._paymentRepository,
+    this._addAutomaticEntryUseCase,
   ) : super(SuppliersInitial());
 
   String? _currentProjectId;
@@ -113,6 +117,15 @@ class SuppliersCubit extends Cubit<SuppliersState> {
           }
         }
 
+        // INTEGRAÇÃO: Adiciona log automático no diário
+        await _addAutomaticEntryUseCase(
+          projectId: supplier.projectId,
+          title: 'Fornecedor adicionado',
+          description: '${supplier.name} - ${supplier.type.displayName}',
+          phaseId: supplier.phaseId,
+          type: DiaryEntryType.visit,
+        );
+
         emit(SupplierOperationSuccess('Fornecedor adicionado com sucesso'));
         if (_currentProjectId != null) {
           await loadSuppliers(_currentProjectId!);
@@ -150,6 +163,19 @@ class SuppliersCubit extends Cubit<SuppliersState> {
     SupplierStatus status,
   ) async {
     final updatedSupplier = supplier.copyWith(status: status);
+
+    // Se está marcando como concluído, adiciona log
+    if (status == SupplierStatus.completed &&
+        supplier.status != SupplierStatus.completed) {
+      await _addAutomaticEntryUseCase(
+        projectId: supplier.projectId,
+        title: 'Serviço concluído',
+        description: '${supplier.name} - ${supplier.type.displayName}',
+        phaseId: supplier.phaseId,
+        type: DiaryEntryType.visit,
+      );
+    }
+
     await updateSupplier(updatedSupplier);
   }
 

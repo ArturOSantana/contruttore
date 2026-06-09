@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../../diary/domain/usecases/add_automatic_entry_usecase.dart';
+import '../../../diary/domain/entities/diary_entry_entity.dart';
 import '../../domain/entities/wishlist_item_entity.dart';
 import '../../domain/usecases/get_wishlist_items_usecase.dart';
 import '../../domain/usecases/add_wishlist_item_usecase.dart';
@@ -15,6 +17,7 @@ class WishlistCubit extends Cubit<WishlistState> {
   final ToggleSelectedUseCase _toggleSelectedUseCase;
   final MoveToShoppingUseCase _moveToShoppingUseCase;
   final DeleteWishlistItemUseCase _deleteWishlistItemUseCase;
+  final AddAutomaticEntryUseCase _addAutomaticEntryUseCase;
 
   WishlistCubit(
     this._getWishlistItemsUseCase,
@@ -22,6 +25,7 @@ class WishlistCubit extends Cubit<WishlistState> {
     this._toggleSelectedUseCase,
     this._moveToShoppingUseCase,
     this._deleteWishlistItemUseCase,
+    this._addAutomaticEntryUseCase,
   ) : super(WishlistInitial());
 
   Future<void> loadWishlistItems(String projectId) async {
@@ -80,23 +84,34 @@ class WishlistCubit extends Cubit<WishlistState> {
         if (isSelected) {
           final moveResult = await _moveToShoppingUseCase(item);
 
-          moveResult.fold(
-            (failure) => emit(
+          await moveResult.fold(
+            (failure) async => emit(
               WishlistError(
                 'Item selecionado mas não foi possível adicionar à lista de compras: ${failure.message}',
               ),
             ),
-            (_) => emit(
-              WishlistOperationSuccess(
-                'Item selecionado e adicionado à lista de compras',
-              ),
-            ),
+            (_) async {
+              // INTEGRAÇÃO: Adiciona log automático no diário
+              await _addAutomaticEntryUseCase(
+                projectId: projectId,
+                title: 'Item movido para compras',
+                description: '${item.name} - ${item.category}',
+                phaseId: item.phaseId,
+                type: DiaryEntryType.daily,
+              );
+
+              emit(
+                WishlistOperationSuccess(
+                  'Item selecionado e adicionado à lista de compras',
+                ),
+              );
+            },
           );
         } else {
           emit(WishlistOperationSuccess('Item desmarcado'));
         }
 
-        loadWishlistItems(projectId);
+        await loadWishlistItems(projectId);
       },
     );
   }

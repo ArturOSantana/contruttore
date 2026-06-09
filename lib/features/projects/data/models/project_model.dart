@@ -15,6 +15,7 @@ class ProjectModel extends ProjectEntity {
     required super.contingencyPercent,
     super.propertyValue,
     required super.currentSituation,
+    super.plannedMoveInDate,
     required super.createdAt,
   });
 
@@ -36,6 +37,9 @@ class ProjectModel extends ProjectEntity {
           ? (map['propertyValue'] as num).toDouble()
           : null,
       currentSituation: map['currentSituation'] as String,
+      plannedMoveInDate: map['plannedMoveInDate'] != null
+          ? (map['plannedMoveInDate'] as Timestamp).toDate()
+          : null,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }
@@ -54,6 +58,9 @@ class ProjectModel extends ProjectEntity {
       'contingencyPercent': contingencyPercent,
       'propertyValue': propertyValue,
       'currentSituation': currentSituation,
+      'plannedMoveInDate': plannedMoveInDate != null
+          ? Timestamp.fromDate(plannedMoveInDate!)
+          : null,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }

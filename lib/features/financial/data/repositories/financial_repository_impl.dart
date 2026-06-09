@@ -342,18 +342,24 @@ class FinancialRepositoryImpl implements FinancialRepository {
     String projectId,
   ) async {
     try {
-      // Buscar categorias
-      final categoriesResult = await getCategories(projectId);
+      // Buscar categorias e despesas em paralelo (otimização)
+      final results = await Future.wait([
+        getCategories(projectId),
+        getExpenses(projectId),
+      ]);
+
+      final categoriesResult =
+          results[0] as Either<Failure, List<CategoryEntity>>;
+      final expensesResult = results[1] as Either<Failure, List<ExpenseEntity>>;
+
       if (categoriesResult.isLeft()) {
         return Left(ServerFailure('Erro ao buscar categorias'));
       }
-      final categories = categoriesResult.getOrElse(() => []);
-
-      // Buscar despesas
-      final expensesResult = await getExpenses(projectId);
       if (expensesResult.isLeft()) {
         return Left(ServerFailure('Erro ao buscar despesas'));
       }
+
+      final categories = categoriesResult.getOrElse(() => []);
       final expenses = expensesResult.getOrElse(() => []);
 
       // Calcular totais
@@ -418,9 +424,8 @@ class FinancialRepositoryImpl implements FinancialRepository {
 
       final totalSpent = totalConfirmed + totalCommitted;
       final remaining = totalBudget - totalSpent;
-      final percentageUsed = totalBudget > 0
-          ? (totalSpent / totalBudget) * 100
-          : 0.0;
+      final percentageUsed =
+          totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0.0;
 
       return Right(
         FinancialSummaryEntity(
@@ -436,6 +441,94 @@ class FinancialRepositoryImpl implements FinancialRepository {
       );
     } catch (e) {
       return Left(ServerFailure('Erro ao calcular resumo financeiro: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePhaseFinancials({
+    required String projectId,
+    required String phaseId,
+  }) async {
+    try {
+      // Buscar todas as despesas da fase
+      final expensesSnapshot = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('expenses')
+          .where('phaseId', isEqualTo: phaseId)
+          .get();
+
+      // Calcular totais
+      double totalSpent = 0;
+      double totalPending = 0;
+      double totalEstimated = 0;
+
+      for (final doc in expensesSnapshot.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0;
+        final status = data['status'] as String?;
+
+        if (status == 'confirmed') {
+          totalSpent += amount;
+        } else if (status == 'committed') {
+          totalPending += amount;
+        } else if (status == 'estimated') {
+          totalEstimated += amount;
+        }
+      }
+
+      // Usar WriteBatch para operações atômicas
+      final batch = _firestore.batch();
+
+      // Atualizar a fase
+      final phaseRef = _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('phases')
+          .doc(phaseId);
+
+      batch.update(phaseRef, {
+        'totalSpent': totalSpent,
+        'totalPending': totalPending,
+        'totalEstimated': totalEstimated,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Atualizar o projeto com totais consolidados
+      final projectRef = _firestore.collection('projects').doc(projectId);
+
+      // Buscar todas as fases para calcular total do projeto
+      final phasesSnapshot = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('phases')
+          .get();
+
+      double projectTotalSpent = totalSpent;
+      double projectTotalPending = totalPending;
+
+      for (final phaseDoc in phasesSnapshot.docs) {
+        if (phaseDoc.id != phaseId) {
+          final phaseData = phaseDoc.data();
+          projectTotalSpent +=
+              (phaseData['totalSpent'] as num?)?.toDouble() ?? 0;
+          projectTotalPending +=
+              (phaseData['totalPending'] as num?)?.toDouble() ?? 0;
+        }
+      }
+
+      batch.update(projectRef, {
+        'totalSpent': projectTotalSpent,
+        'totalPending': projectTotalPending,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Executar todas as operações atomicamente
+      await batch.commit();
+
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure('Erro ao atualizar financeiro da fase: $e'));
     }
   }
 }

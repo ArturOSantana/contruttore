@@ -15,9 +15,30 @@ class PhaseEntity extends Equatable {
   final List<String> glossaryTerms; // IDs dos termos do glossário relacionados
   final String? commonMistake; // "O que pode dar errado aqui"
   final bool
-  isRetroactive; // Fase marcada como concluída no onboarding retroativo
+      isRetroactive; // Fase marcada como concluída no onboarding retroativo
   final DateTime?
-  retroactiveMarkedAt; // Data em que foi marcada como retroativa
+      retroactiveMarkedAt; // Data em que foi marcada como retroativa
+
+  // Campos financeiros
+  final double estimatedBudget; // Orçamento previsto para esta fase
+  final double totalSpent; // Total gasto até agora
+  final double totalPending; // Total de parcelas pendentes
+
+  // Dependências entre fases
+  final List<String> dependsOn; // IDs das fases que devem ser concluídas antes
+  final List<String> blockedBy; // IDs das fases que estão bloqueando esta
+
+  // Profissionais esperados
+  final List<String>
+      expectedSupplierTypes; // Tipos de fornecedores necessários (ex: "Pedreiro", "Eletricista")
+
+  // Compras esperadas
+  final List<String>
+      expectedPurchaseCategories; // Categorias de compras esperadas (ex: "Materiais", "Acabamentos")
+
+  // Documentos esperados
+  final List<String>
+      expectedDocumentTypes; // Tipos de documentos necessários (ex: "ART", "Contrato")
 
   const PhaseEntity({
     required this.id,
@@ -35,6 +56,14 @@ class PhaseEntity extends Equatable {
     this.commonMistake,
     this.isRetroactive = false,
     this.retroactiveMarkedAt,
+    this.estimatedBudget = 0.0,
+    this.totalSpent = 0.0,
+    this.totalPending = 0.0,
+    this.dependsOn = const [],
+    this.blockedBy = const [],
+    this.expectedSupplierTypes = const [],
+    this.expectedPurchaseCategories = const [],
+    this.expectedDocumentTypes = const [],
   });
 
   bool get canComplete {
@@ -56,6 +85,24 @@ class PhaseEntity extends Equatable {
     return (completedSubtasksCount / subtasks.length) * 100;
   }
 
+  // Novos getters financeiros
+  double get budgetUsedPercentage {
+    if (estimatedBudget == 0) return 0;
+    return (totalSpent / estimatedBudget) * 100;
+  }
+
+  double get remainingBudget {
+    return estimatedBudget - totalSpent - totalPending;
+  }
+
+  bool get isOverBudget {
+    return totalSpent > estimatedBudget;
+  }
+
+  bool get isBlocked {
+    return blockedBy.isNotEmpty;
+  }
+
   PhaseEntity copyWith({
     String? id,
     String? projectId,
@@ -72,6 +119,14 @@ class PhaseEntity extends Equatable {
     String? commonMistake,
     bool? isRetroactive,
     DateTime? retroactiveMarkedAt,
+    double? estimatedBudget,
+    double? totalSpent,
+    double? totalPending,
+    List<String>? dependsOn,
+    List<String>? blockedBy,
+    List<String>? expectedSupplierTypes,
+    List<String>? expectedPurchaseCategories,
+    List<String>? expectedDocumentTypes,
   }) {
     return PhaseEntity(
       id: id ?? this.id,
@@ -90,27 +145,46 @@ class PhaseEntity extends Equatable {
       commonMistake: commonMistake ?? this.commonMistake,
       isRetroactive: isRetroactive ?? this.isRetroactive,
       retroactiveMarkedAt: retroactiveMarkedAt ?? this.retroactiveMarkedAt,
+      estimatedBudget: estimatedBudget ?? this.estimatedBudget,
+      totalSpent: totalSpent ?? this.totalSpent,
+      totalPending: totalPending ?? this.totalPending,
+      dependsOn: dependsOn ?? this.dependsOn,
+      blockedBy: blockedBy ?? this.blockedBy,
+      expectedSupplierTypes:
+          expectedSupplierTypes ?? this.expectedSupplierTypes,
+      expectedPurchaseCategories:
+          expectedPurchaseCategories ?? this.expectedPurchaseCategories,
+      expectedDocumentTypes:
+          expectedDocumentTypes ?? this.expectedDocumentTypes,
     );
   }
 
   @override
   List<Object?> get props => [
-    id,
-    projectId,
-    number,
-    name,
-    description,
-    status,
-    startDate,
-    endDate,
-    estimatedDurationDays,
-    subtasks,
-    notes,
-    glossaryTerms,
-    commonMistake,
-    isRetroactive,
-    retroactiveMarkedAt,
-  ];
+        id,
+        projectId,
+        number,
+        name,
+        description,
+        status,
+        startDate,
+        endDate,
+        estimatedDurationDays,
+        subtasks,
+        notes,
+        glossaryTerms,
+        commonMistake,
+        isRetroactive,
+        retroactiveMarkedAt,
+        estimatedBudget,
+        totalSpent,
+        totalPending,
+        dependsOn,
+        blockedBy,
+        expectedSupplierTypes,
+        expectedPurchaseCategories,
+        expectedDocumentTypes,
+      ];
 }
 
 enum PhaseStatus {

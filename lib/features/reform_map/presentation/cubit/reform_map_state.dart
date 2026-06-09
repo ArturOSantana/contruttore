@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/next_step_preparation_entity.dart';
 import '../../domain/entities/reform_map_entity.dart';
+import '../../domain/entities/upcoming_expenses_entity.dart';
 
 /// Estados do Mapa da Reforma
 abstract class ReformMapState extends Equatable {
@@ -47,6 +49,62 @@ class ReformMapUpdating extends ReformMapState {
 
   @override
   List<Object?> get props => [currentMap];
+}
+
+// Made with Bob
+
+/// Estado com dados de despesas futuras carregados
+class UpcomingExpensesLoaded extends ReformMapState {
+  final UpcomingExpensesEntity expenses;
+  final int days; // 30, 60 ou 90
+
+  const UpcomingExpensesLoaded(this.expenses, this.days);
+
+  @override
+  List<Object?> get props => [expenses, days];
+}
+
+/// Estado com preparação da próxima etapa carregada
+class NextStepPreparationLoaded extends ReformMapState {
+  final NextStepPreparationEntity? preparation;
+
+  const NextStepPreparationLoaded(this.preparation);
+
+  @override
+  List<Object?> get props => [preparation];
+}
+
+/// Estado combinado com mapa e dados adicionais
+class ReformMapLoadedWithExtras extends ReformMapState {
+  final ReformMapEntity reformMap;
+  final UpcomingExpensesEntity? upcomingExpenses;
+  final NextStepPreparationEntity? nextStepPreparation;
+
+  const ReformMapLoadedWithExtras({
+    required this.reformMap,
+    this.upcomingExpenses,
+    this.nextStepPreparation,
+  });
+
+  @override
+  List<Object?> get props => [
+        reformMap,
+        upcomingExpenses,
+        nextStepPreparation,
+      ];
+
+  /// Cria uma cópia com novos valores
+  ReformMapLoadedWithExtras copyWith({
+    ReformMapEntity? reformMap,
+    UpcomingExpensesEntity? upcomingExpenses,
+    NextStepPreparationEntity? nextStepPreparation,
+  }) {
+    return ReformMapLoadedWithExtras(
+      reformMap: reformMap ?? this.reformMap,
+      upcomingExpenses: upcomingExpenses ?? this.upcomingExpenses,
+      nextStepPreparation: nextStepPreparation ?? this.nextStepPreparation,
+    );
+  }
 }
 
 // Made with Bob

@@ -13,7 +13,8 @@ class ProjectEntity extends Equatable {
   final double contingencyPercent;
   final double? propertyValue;
   final String
-  currentSituation; // 'just_signed' | 'construction' | 'keys_received' | 'renovation'
+      currentSituation; // 'just_signed' | 'construction' | 'keys_received' | 'renovation'
+  final DateTime? plannedMoveInDate; // Data planejada para mudança
   final DateTime createdAt;
 
   const ProjectEntity({
@@ -29,6 +30,7 @@ class ProjectEntity extends Equatable {
     required this.contingencyPercent,
     this.propertyValue,
     required this.currentSituation,
+    this.plannedMoveInDate,
     required this.createdAt,
   });
 
@@ -45,6 +47,7 @@ class ProjectEntity extends Equatable {
     double? contingencyPercent,
     double? propertyValue,
     String? currentSituation,
+    DateTime? plannedMoveInDate,
     DateTime? createdAt,
   }) {
     return ProjectEntity(
@@ -60,26 +63,28 @@ class ProjectEntity extends Equatable {
       contingencyPercent: contingencyPercent ?? this.contingencyPercent,
       propertyValue: propertyValue ?? this.propertyValue,
       currentSituation: currentSituation ?? this.currentSituation,
+      plannedMoveInDate: plannedMoveInDate ?? this.plannedMoveInDate,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
   @override
   List<Object?> get props => [
-    id,
-    userId,
-    name,
-    address,
-    constructorName,
-    area,
-    deliveryDate,
-    contractDate,
-    totalBudget,
-    contingencyPercent,
-    propertyValue,
-    currentSituation,
-    createdAt,
-  ];
+        id,
+        userId,
+        name,
+        address,
+        constructorName,
+        area,
+        deliveryDate,
+        contractDate,
+        totalBudget,
+        contingencyPercent,
+        propertyValue,
+        currentSituation,
+        plannedMoveInDate,
+        createdAt,
+      ];
 }
 
 // Made with Bob

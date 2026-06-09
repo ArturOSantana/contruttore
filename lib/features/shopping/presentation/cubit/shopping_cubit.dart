@@ -2,6 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/utils/payment_generator.dart';
 import '../../../payments/domain/repositories/payment_repository.dart';
+import '../../../financial/domain/usecases/update_phase_financials_usecase.dart';
+import '../../../diary/domain/usecases/add_automatic_entry_usecase.dart';
+import '../../../diary/domain/entities/diary_entry_entity.dart';
 import '../../domain/entities/shopping_item_entity.dart';
 import '../../domain/usecases/get_shopping_items_usecase.dart';
 import '../../domain/usecases/add_shopping_item_usecase.dart';
@@ -20,6 +23,8 @@ class ShoppingCubit extends Cubit<ShoppingState> {
   final GenerateSuggestionsUseCase _generateSuggestionsUseCase;
   final DeleteShoppingItemUseCase _deleteShoppingItemUseCase;
   final PaymentRepository _paymentRepository;
+  final UpdatePhaseFinancialsUseCase _updatePhaseFinancialsUseCase;
+  final AddAutomaticEntryUseCase _addAutomaticEntryUseCase;
 
   ShoppingCubit(
     this._getShoppingItemsUseCase,
@@ -29,6 +34,8 @@ class ShoppingCubit extends Cubit<ShoppingState> {
     this._generateSuggestionsUseCase,
     this._deleteShoppingItemUseCase,
     this._paymentRepository,
+    this._updatePhaseFinancialsUseCase,
+    this._addAutomaticEntryUseCase,
   ) : super(ShoppingInitial());
 
   Future<void> loadShoppingItems(String projectId) async {
@@ -90,6 +97,8 @@ class ShoppingCubit extends Cubit<ShoppingState> {
   /// - Operação atômica (shopping + transaction)
   /// - Se havia estimate, marca como fulfilled
   /// - Se parcelado, gera payments automaticamente
+  /// - Atualiza financeiro da fase automaticamente
+  /// - Adiciona log no diário automaticamente
   Future<void> markAsPurchased({
     required String projectId,
     required String itemId,
@@ -99,6 +108,23 @@ class ShoppingCubit extends Cubit<ShoppingState> {
     int installments = 1,
     DateTime? firstPaymentDate,
   }) async {
+    // Busca o item para pegar informações
+    final itemsResult = await _getShoppingItemsUseCase(projectId);
+    String itemName = 'Compra';
+    String? phaseId;
+
+    itemsResult.fold((_) => itemName = 'Compra', (items) {
+      try {
+        final item = items.firstWhere((i) => i.id == itemId);
+        itemName = item.name;
+        phaseId = item.phaseId;
+      } catch (e) {
+        // Item não encontrado, usa valores padrão
+        itemName = 'Compra';
+        phaseId = null;
+      }
+    });
+
     final result = await _markAsPurchasedUseCase(
       projectId: projectId,
       itemId: itemId,
@@ -113,18 +139,6 @@ class ShoppingCubit extends Cubit<ShoppingState> {
       // Se a compra é parcelada, gera payments automaticamente
       if (installments > 1 && firstPaymentDate != null) {
         try {
-          // Busca o item para pegar o nome
-          final itemsResult = await _getShoppingItemsUseCase(projectId);
-          String itemName = 'Compra';
-
-          itemsResult.fold((_) => itemName = 'Compra', (items) {
-            final item = items.firstWhere(
-              (i) => i.id == itemId,
-              orElse: () => items.first,
-            );
-            itemName = item.name;
-          });
-
           final payments = PaymentGenerator.generatePayments(
             projectId: projectId,
             name: itemName,
@@ -142,6 +156,24 @@ class ShoppingCubit extends Cubit<ShoppingState> {
           return;
         }
       }
+
+      // Atualizar financeiro da fase se houver phaseId
+      if (phaseId != null) {
+        await _updatePhaseFinancialsUseCase(
+          projectId: projectId,
+          phaseId: phaseId!,
+        );
+      }
+
+      // Adicionar log automático no diário
+      await _addAutomaticEntryUseCase(
+        projectId: projectId,
+        title: 'Compra realizada',
+        description:
+            '$itemName - $store - R\$ ${actualPrice.toStringAsFixed(2)}',
+        phaseId: phaseId,
+        type: DiaryEntryType.delivery,
+      );
 
       emit(ShoppingOperationSuccess('Item marcado como comprado'));
       loadShoppingItems(projectId);

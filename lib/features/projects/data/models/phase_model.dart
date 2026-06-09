@@ -18,15 +18,23 @@ class PhaseModel extends PhaseEntity {
     super.commonMistake,
     super.isRetroactive = false,
     super.retroactiveMarkedAt,
+    super.estimatedBudget = 0.0,
+    super.totalSpent = 0.0,
+    super.totalPending = 0.0,
+    super.dependsOn = const [],
+    super.blockedBy = const [],
+    super.expectedSupplierTypes = const [],
+    super.expectedPurchaseCategories = const [],
+    super.expectedDocumentTypes = const [],
   });
 
-  factory PhaseModel.fromMap(Map<String, dynamic> map) {
+  factory PhaseModel.fromMap(Map<String, dynamic> map, [String? docId]) {
     return PhaseModel(
-      id: map['id'] as String,
-      projectId: map['projectId'] as String,
-      number: map['number'] as int,
-      name: map['name'] as String,
-      description: map['description'] as String,
+      id: docId ?? map['id'] as String,
+      projectId: map['projectId'] as String? ?? '',
+      number: map['number'] as int? ?? 0,
+      name: map['name'] as String? ?? '',
+      description: map['description'] as String? ?? '',
       status: PhaseStatus.values.firstWhere(
         (e) => e.toString() == 'PhaseStatus.${map['status']}',
         orElse: () => PhaseStatus.locked,
@@ -37,7 +45,7 @@ class PhaseModel extends PhaseEntity {
       endDate: map['endDate'] != null
           ? (map['endDate'] as Timestamp).toDate()
           : null,
-      estimatedDurationDays: map['estimatedDurationDays'] as int,
+      estimatedDurationDays: map['estimatedDurationDays'] as int? ?? 0,
       subtasks: (map['subtasks'] as List<dynamic>?)
               ?.map((s) => SubtaskModel.fromMap(s as Map<String, dynamic>))
               .toList() ??
@@ -52,6 +60,30 @@ class PhaseModel extends PhaseEntity {
       retroactiveMarkedAt: map['retroactiveMarkedAt'] != null
           ? (map['retroactiveMarkedAt'] as Timestamp).toDate()
           : null,
+      estimatedBudget: (map['estimatedBudget'] as num?)?.toDouble() ?? 0.0,
+      totalSpent: (map['totalSpent'] as num?)?.toDouble() ?? 0.0,
+      totalPending: (map['totalPending'] as num?)?.toDouble() ?? 0.0,
+      dependsOn: (map['dependsOn'] as List<dynamic>?)
+              ?.map((d) => d as String)
+              .toList() ??
+          [],
+      blockedBy: (map['blockedBy'] as List<dynamic>?)
+              ?.map((b) => b as String)
+              .toList() ??
+          [],
+      expectedSupplierTypes: (map['expectedSupplierTypes'] as List<dynamic>?)
+              ?.map((s) => s as String)
+              .toList() ??
+          [],
+      expectedPurchaseCategories:
+          (map['expectedPurchaseCategories'] as List<dynamic>?)
+                  ?.map((p) => p as String)
+                  .toList() ??
+              [],
+      expectedDocumentTypes: (map['expectedDocumentTypes'] as List<dynamic>?)
+              ?.map((d) => d as String)
+              .toList() ??
+          [],
     );
   }
 
@@ -74,6 +106,14 @@ class PhaseModel extends PhaseEntity {
       'retroactiveMarkedAt': retroactiveMarkedAt != null
           ? Timestamp.fromDate(retroactiveMarkedAt!)
           : null,
+      'estimatedBudget': estimatedBudget,
+      'totalSpent': totalSpent,
+      'totalPending': totalPending,
+      'dependsOn': dependsOn,
+      'blockedBy': blockedBy,
+      'expectedSupplierTypes': expectedSupplierTypes,
+      'expectedPurchaseCategories': expectedPurchaseCategories,
+      'expectedDocumentTypes': expectedDocumentTypes,
     };
   }
 
@@ -94,6 +134,14 @@ class PhaseModel extends PhaseEntity {
       commonMistake: entity.commonMistake,
       isRetroactive: entity.isRetroactive,
       retroactiveMarkedAt: entity.retroactiveMarkedAt,
+      estimatedBudget: entity.estimatedBudget,
+      totalSpent: entity.totalSpent,
+      totalPending: entity.totalPending,
+      dependsOn: entity.dependsOn,
+      blockedBy: entity.blockedBy,
+      expectedSupplierTypes: entity.expectedSupplierTypes,
+      expectedPurchaseCategories: entity.expectedPurchaseCategories,
+      expectedDocumentTypes: entity.expectedDocumentTypes,
     );
   }
 }

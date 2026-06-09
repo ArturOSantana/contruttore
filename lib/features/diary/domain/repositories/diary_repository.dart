@@ -17,6 +17,15 @@ abstract class DiaryRepository {
     String filePath,
   );
   Future<Either<Failure, DateTime?>> getLastEntryDate(String projectId);
+
+  /// Adiciona uma entrada automática no diário
+  Future<Either<Failure, void>> addAutomaticEntry({
+    required String projectId,
+    required String title,
+    required String description,
+    String? phaseId,
+    DiaryEntryType type = DiaryEntryType.daily,
+  });
 }
 
 // Made with Bob

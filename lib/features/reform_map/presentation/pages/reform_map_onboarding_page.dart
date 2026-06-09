@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../phases/presentation/cubit/phases_cubit.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
-import '../../../projects/presentation/cubit/project_cubit.dart';
 
 /// Página de diagnóstico inicial do Mapa da Reforma
 ///
@@ -102,10 +102,10 @@ class _ReformMapOnboardingPageState extends State<ReformMapOnboardingPage> {
     final stage = _stages[_selectedStage]!;
     final completedPhases = stage['completedPhases'] as List<String>;
 
-    // Atualizar o projeto com as fases concluídas
-    context.read<ProjectCubit>().updateProjectPhases(
-          widget.projectId,
-          completedPhases,
+    // Marcar fases como concluídas retroativamente
+    context.read<PhasesCubit>().markPhasesRetroactive(
+          projectId: widget.projectId,
+          phaseNames: completedPhases,
         );
 
     // Voltar para o Mapa da Reforma
