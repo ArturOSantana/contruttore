@@ -57,6 +57,11 @@ service cloud.firestore {
       // Leitura: apenas o dono
       allow read: if isAuth() && resource.data.userId == request.auth.uid;
       
+      // List: permite listar projetos do usuário
+      allow list: if isAuth() &&
+        request.query.limit <= 50 &&
+        resource.data.userId == request.auth.uid;
+      
       // Criação: apenas com userId correto
       allow create: if isAuth() && hasCorrectUserId();
       

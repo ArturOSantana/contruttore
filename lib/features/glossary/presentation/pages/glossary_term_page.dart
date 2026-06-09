@@ -268,11 +268,8 @@ class GlossaryTermPage extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // Navegar para a fase
-          context.pushNamed(
-            RouteNames.phaseDetail,
-            pathParameters: {'phaseId': phaseNumber.toString()},
-          );
+          // Navegar para a lista de fases
+          context.push(RouteNames.phases);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -331,9 +328,8 @@ class GlossaryTermPage extends StatelessWidget {
   ) {
     if (state is! GlossaryLoaded) return const SizedBox.shrink();
 
-    final relatedTerms = state.terms
-        .where((t) => relatedTermIds.contains(t.id))
-        .toList();
+    final relatedTerms =
+        state.terms.where((t) => relatedTermIds.contains(t.id)).toList();
 
     if (relatedTerms.isEmpty) return const SizedBox.shrink();
 

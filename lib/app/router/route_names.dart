@@ -87,6 +87,7 @@ class RouteNames {
   // Projects
   static const String projects = '/projects';
   static const String editProject = '/projects/edit';
+  static const String projectSettings = '/projects/settings';
 
   // Settings
   static const String settings = '/settings';

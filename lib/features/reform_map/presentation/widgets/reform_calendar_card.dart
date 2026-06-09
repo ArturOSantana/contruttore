@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../domain/entities/reform_calendar_entity.dart';
+import '../../../../core/services/calendar_service.dart';
+import '../cubit/reform_map_cubit.dart';
+import 'add_event_dialog.dart';
 
 /// Card que exibe o calendário inteligente da reforma
 ///
@@ -11,10 +16,12 @@ import '../../domain/entities/reform_calendar_entity.dart';
 /// - Eventos atrasados
 class ReformCalendarCard extends StatelessWidget {
   final ReformCalendarEntity calendar;
+  final String projectId;
 
   const ReformCalendarCard({
     super.key,
     required this.calendar,
+    required this.projectId,
   });
 
   @override
@@ -57,10 +64,10 @@ class ReformCalendarCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                      children: const [
                         Text(
                           'Calendário da Reforma',
                           style: TextStyle(
@@ -79,6 +86,16 @@ class ReformCalendarCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.file_download, color: Colors.white),
+                    onPressed: () => _exportCalendar(context),
+                    tooltip: 'Exportar para Calendário',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    onPressed: () => _showAddEventDialog(context),
+                    tooltip: 'Adicionar Evento',
                   ),
                 ],
               ),
@@ -448,6 +465,56 @@ class ReformCalendarCard extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
+      ),
+    );
+  }
+
+  Future<void> _exportCalendar(BuildContext context) async {
+    try {
+      final service = CalendarService();
+      await service.exportToCalendar(calendar.events);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📅 Calendário exportado! Escolha onde importar.'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erro ao exportar: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showAddEventDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AddEventDialog(
+        onEventAdded: (event) {
+          // Salva evento no Firestore via Cubit
+          context.read<ReformMapCubit>().addCalendarEvent(
+                projectId: projectId,
+                event: event,
+              );
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Evento "${event.title}" adicionado!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        },
       ),
     );
   }

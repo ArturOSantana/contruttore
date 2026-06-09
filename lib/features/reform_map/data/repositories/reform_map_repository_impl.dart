@@ -11,6 +11,7 @@ import '../../domain/entities/problem_entity.dart';
 import '../../domain/entities/reform_health_entity.dart';
 import '../../domain/entities/reform_map_entity.dart';
 import '../../domain/entities/upcoming_expenses_entity.dart';
+import '../../domain/entities/reform_calendar_entity.dart';
 import '../../domain/repositories/reform_map_repository.dart';
 import '../models/next_action_model.dart';
 import '../models/next_step_preparation_model.dart';
@@ -1202,6 +1203,42 @@ class ReformMapRepositoryImpl implements ReformMapRepository {
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure('Erro ao atualizar item de preparação: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> addCalendarEvent({
+    required String projectId,
+    required CalendarEventEntity event,
+  }) async {
+    try {
+      // Converter entity para map
+      final eventData = {
+        'id': event.id,
+        'title': event.title,
+        'description': event.description,
+        'date': Timestamp.fromDate(event.date),
+        'type': event.type.toString().split('.').last,
+        'priority': event.priority.toString().split('.').last,
+        'isCompleted': event.isCompleted,
+        'icon': event.icon,
+        'color': event.color,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      // Salvar no Firestore
+      await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('calendar_events')
+          .doc(event.id)
+          .set(eventData);
+
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Erro ao adicionar evento'));
+    } catch (e) {
+      return Left(ServerFailure('Erro ao adicionar evento: $e'));
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/problem_entity.dart';
+import '../../domain/entities/reform_calendar_entity.dart';
 import '../../domain/services/move_in_distance_calculator.dart';
 import '../../domain/services/move_in_mode_generator.dart';
 import '../../domain/services/pending_decisions_detector.dart';
@@ -10,6 +11,7 @@ import '../../domain/services/milestones_detector.dart';
 import '../../domain/services/calendar_events_detector.dart';
 import '../../domain/services/reform_week_generator.dart';
 import '../../domain/usecases/add_problem_usecase.dart';
+import '../../domain/usecases/add_calendar_event_usecase.dart';
 import '../../domain/usecases/calculate_health_usecase.dart';
 import '../../domain/usecases/calculate_next_action_usecase.dart';
 import '../../domain/usecases/calculate_upcoming_expenses_usecase.dart';
@@ -44,6 +46,7 @@ class ReformMapCubit extends Cubit<ReformMapState> {
   final MilestonesDetector milestonesDetector;
   final CalendarEventsDetector calendarEventsDetector;
   final ReformWeekGenerator reformWeekGenerator;
+  final AddCalendarEventUseCase addCalendarEventUseCase;
 
   ReformMapCubit({
     required this.getReformMapUseCase,
@@ -62,6 +65,7 @@ class ReformMapCubit extends Cubit<ReformMapState> {
     required this.milestonesDetector,
     required this.calendarEventsDetector,
     required this.reformWeekGenerator,
+    required this.addCalendarEventUseCase,
   }) : super(const ReformMapInitial());
 
   /// Carrega o mapa da reforma para um projeto específico
@@ -345,6 +349,27 @@ class ReformMapCubit extends Cubit<ReformMapState> {
       (failure) => emit(ReformMapError(failure.message)),
       (_) async {
         // Recarrega o mapa após resolver problema
+        await loadReformMap(projectId);
+      },
+    );
+  }
+
+  /// Adiciona um evento customizado ao calendário
+  Future<void> addCalendarEvent({
+    required String projectId,
+    required CalendarEventEntity event,
+  }) async {
+    final result = await addCalendarEventUseCase(
+      AddCalendarEventParams(
+        projectId: projectId,
+        event: event,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(ReformMapError(failure.message)),
+      (_) async {
+        // Recarrega o mapa após adicionar evento
         await loadReformMap(projectId);
       },
     );

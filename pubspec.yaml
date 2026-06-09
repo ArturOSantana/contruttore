@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   # Firebase
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
@@ -42,7 +44,7 @@ dependencies:
 
   # Utilidades
   uuid: ^4.5.1
-  intl: ^0.19.0
+  intl: ^0.20.2
   url_launcher: ^6.3.1
   image_picker: ^1.1.2
   # file_picker: ^8.3.7  # Temporariamente desabilitado - incompatível com SDK 36

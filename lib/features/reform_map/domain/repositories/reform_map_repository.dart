@@ -6,6 +6,7 @@ import '../entities/next_action_entity.dart';
 import '../entities/problem_entity.dart';
 import '../entities/next_step_preparation_entity.dart';
 import '../entities/upcoming_expenses_entity.dart';
+import '../entities/reform_calendar_entity.dart';
 
 /// Repositório para o Mapa da Reforma
 abstract class ReformMapRepository {
@@ -86,6 +87,12 @@ abstract class ReformMapRepository {
     String itemId,
     bool isDone,
   );
+
+  /// Adiciona um evento customizado ao calendário
+  Future<Either<Failure, void>> addCalendarEvent({
+    required String projectId,
+    required CalendarEventEntity event,
+  });
 }
 
 /// Snapshot de saúde em um momento específico

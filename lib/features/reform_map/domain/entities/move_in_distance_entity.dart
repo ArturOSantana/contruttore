@@ -62,8 +62,10 @@ class MoveInDistanceEntity extends Equatable {
       return 'Você já passou da metade! ';
     } else if (percentageComplete >= 30) {
       return 'Progresso consistente! ';
+    } else if (percentageComplete > 0) {
+      return 'Ótimo começo! ';
     } else {
-      return 'Sua jornada começou! ';
+      return ''; // Sem mensagem no início
     }
   }
 

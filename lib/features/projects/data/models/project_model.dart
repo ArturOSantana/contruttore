@@ -79,6 +79,7 @@ class ProjectModel extends ProjectEntity {
       contingencyPercent: entity.contingencyPercent,
       propertyValue: entity.propertyValue,
       currentSituation: entity.currentSituation,
+      plannedMoveInDate: entity.plannedMoveInDate,
       createdAt: entity.createdAt,
     );
   }

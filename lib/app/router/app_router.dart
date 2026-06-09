@@ -16,8 +16,10 @@ import '../../features/onboarding/presentation/pages/reform_risks_page.dart';
 import '../../features/onboarding/presentation/pages/retroactive_onboarding_page.dart';
 import '../../features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import '../../features/onboarding/presentation/cubit/retroactive_cubit.dart';
-import '../../features/phases/presentation/pages/phases_page.dart';
-import '../../features/phases/presentation/cubit/phases_cubit.dart';
+import '../../features/projects/presentation/pages/phases_page.dart';
+import '../../features/projects/presentation/pages/phase_detail_page.dart';
+import '../../features/projects/presentation/cubit/phases_cubit.dart';
+import '../../features/projects/domain/entities/phase_entity.dart';
 import '../../features/reform_map/presentation/pages/reform_map_page.dart';
 import '../../features/reform_map/presentation/pages/report_problem_page.dart';
 import '../../features/reform_map/presentation/cubit/reform_map_cubit.dart';
@@ -31,8 +33,10 @@ import '../../features/financial/presentation/cubit/financial_cubit.dart';
 import '../../features/wishlist/presentation/cubit/wishlist_cubit.dart';
 import '../../features/settings/presentation/cubit/app_settings_cubit.dart';
 import '../../features/projects/presentation/cubit/project_cubit.dart';
+import '../../features/projects/presentation/cubit/project_state.dart';
 import '../../features/projects/presentation/cubit/projects_list_cubit.dart';
 import '../../features/projects/presentation/pages/projects_list_page.dart';
+import '../../features/projects/presentation/pages/project_settings_page.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/projects/domain/repositories/project_repository.dart';
 import '../../features/financial/presentation/pages/financial_page.dart';
@@ -226,14 +230,25 @@ class AppRouter {
       GoRoute(
         path: RouteNames.phases,
         name: 'phases',
-        builder: (context, state) => _PhasesPageWrapper(),
+        builder: (context, state) => const _PhasesPageWrapper(),
       ),
       GoRoute(
         path: RouteNames.phaseDetail,
         name: 'phase-detail',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return _PlaceholderPage(title: 'Fase $id');
+          final phaseId = state.pathParameters['id']!;
+          // A fase deve ser passada via extra no GoRouter.push
+          final phase = state.extra as PhaseEntity?;
+
+          if (phase == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Fase não encontrada'),
+              ),
+            );
+          }
+
+          return PhaseDetailPage(phase: phase);
         },
       ),
       GoRoute(
@@ -535,6 +550,11 @@ class AppRouter {
         path: RouteNames.editProject,
         name: 'edit-project',
         builder: (context, state) => const _EditProjectPageWrapper(),
+      ),
+      GoRoute(
+        path: RouteNames.projectSettings,
+        name: 'project-settings',
+        builder: (context, state) => const _ProjectSettingsPageWrapper(),
       ),
 
       // Settings
@@ -963,6 +983,64 @@ class _WishlistPageWrapper extends StatelessWidget {
           create: (context) =>
               getIt<WishlistCubit>()..loadWishlistItems(projectId),
           child: WishlistPage(projectId: projectId),
+        );
+      },
+    );
+  }
+}
+
+/// Widget wrapper para buscar projectId e criar página de configurações do projeto
+class _ProjectSettingsPageWrapper extends StatelessWidget {
+  const _ProjectSettingsPageWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: getIt<AuthRepository>().getCurrentUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final projectId = snapshot.data?.fold(
+              (failure) => '',
+              (user) => user?.currentProjectId ?? '',
+            ) ??
+            '';
+
+        if (projectId.isEmpty) {
+          return const Scaffold(
+            body: Center(child: Text('Nenhum projeto selecionado')),
+          );
+        }
+
+        return BlocProvider(
+          create: (context) => getIt<ProjectCubit>()..getProject(projectId),
+          child: BlocBuilder<ProjectCubit, ProjectState>(
+            builder: (context, state) {
+              if (state is ProjectLoading) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (state is ProjectError) {
+                return Scaffold(
+                  body: Center(child: Text('Erro: ${state.message}')),
+                );
+              }
+
+              if (state is ProjectLoaded && state.project != null) {
+                return ProjectSettingsPage(project: state.project!);
+              }
+
+              return const Scaffold(
+                body: Center(child: Text('Projeto não encontrado')),
+              );
+            },
+          ),
         );
       },
     );

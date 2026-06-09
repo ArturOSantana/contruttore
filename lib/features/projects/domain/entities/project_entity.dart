@@ -47,7 +47,7 @@ class ProjectEntity extends Equatable {
     double? contingencyPercent,
     double? propertyValue,
     String? currentSituation,
-    DateTime? plannedMoveInDate,
+    Object? plannedMoveInDate = _undefined,
     DateTime? createdAt,
   }) {
     return ProjectEntity(
@@ -63,7 +63,9 @@ class ProjectEntity extends Equatable {
       contingencyPercent: contingencyPercent ?? this.contingencyPercent,
       propertyValue: propertyValue ?? this.propertyValue,
       currentSituation: currentSituation ?? this.currentSituation,
-      plannedMoveInDate: plannedMoveInDate ?? this.plannedMoveInDate,
+      plannedMoveInDate: plannedMoveInDate == _undefined
+          ? this.plannedMoveInDate
+          : plannedMoveInDate as DateTime?,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -86,5 +88,8 @@ class ProjectEntity extends Equatable {
         createdAt,
       ];
 }
+
+// Sentinel value para copyWith
+const Object _undefined = Object();
 
 // Made with Bob

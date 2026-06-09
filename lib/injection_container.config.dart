@@ -197,20 +197,30 @@ import 'package:contruttore/features/problems/domain/usecases/get_problems_useca
     as _i613;
 import 'package:contruttore/features/problems/presentation/cubit/problems_cubit.dart'
     as _i467;
+import 'package:contruttore/features/projects/data/repositories/phase_repository_impl.dart'
+    as _i253;
 import 'package:contruttore/features/projects/data/repositories/project_repository_impl.dart'
     as _i311;
+import 'package:contruttore/features/projects/domain/repositories/phase_repository.dart'
+    as _i340;
 import 'package:contruttore/features/projects/domain/repositories/project_repository.dart'
     as _i236;
 import 'package:contruttore/features/projects/domain/usecases/create_project_usecase.dart'
     as _i756;
 import 'package:contruttore/features/projects/domain/usecases/generate_phases_usecase.dart'
     as _i41;
+import 'package:contruttore/features/projects/domain/usecases/get_phases_usecase.dart'
+    as _i373;
 import 'package:contruttore/features/projects/domain/usecases/get_project_usecase.dart'
     as _i627;
 import 'package:contruttore/features/projects/domain/usecases/get_projects_usecase.dart'
     as _i154;
 import 'package:contruttore/features/projects/domain/usecases/update_project_usecase.dart'
     as _i281;
+import 'package:contruttore/features/projects/domain/usecases/update_subtask_usecase.dart'
+    as _i1005;
+import 'package:contruttore/features/projects/presentation/cubit/phases_cubit.dart'
+    as _i144;
 import 'package:contruttore/features/projects/presentation/cubit/project_cubit.dart'
     as _i45;
 import 'package:contruttore/features/projects/presentation/cubit/projects_list_cubit.dart'
@@ -237,6 +247,8 @@ import 'package:contruttore/features/reform_map/domain/services/reform_week_gene
     as _i1002;
 import 'package:contruttore/features/reform_map/domain/services/upcoming_purchases_detector.dart'
     as _i792;
+import 'package:contruttore/features/reform_map/domain/usecases/add_calendar_event_usecase.dart'
+    as _i952;
 import 'package:contruttore/features/reform_map/domain/usecases/add_problem_usecase.dart'
     as _i806;
 import 'package:contruttore/features/reform_map/domain/usecases/calculate_health_usecase.dart'
@@ -465,6 +477,8 @@ extension GetItInjectableX on _i174.GetIt {
         _i150.GetExpiringDocumentsUseCase(gh<_i939.DocumentsRepository>()));
     gh.factory<_i683.UploadFileUseCase>(
         () => _i683.UploadFileUseCase(gh<_i939.DocumentsRepository>()));
+    gh.lazySingleton<_i340.PhaseRepository>(
+        () => _i253.PhaseRepositoryImpl(gh<_i974.FirebaseFirestore>()));
     gh.factory<_i991.EditProfileCubit>(
         () => _i991.EditProfileCubit(gh<_i755.UpdateProfileUseCase>()));
     gh.lazySingleton<_i356.TransactionRepository>(
@@ -509,8 +523,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i756.CreateProjectUseCase(gh<_i236.ProjectRepository>()));
     gh.factory<_i154.GetProjectsUseCase>(
         () => _i154.GetProjectsUseCase(gh<_i236.ProjectRepository>()));
-    gh.factory<_i281.UpdateProjectUseCase>(
-        () => _i281.UpdateProjectUseCase(gh<_i236.ProjectRepository>()));
     gh.factory<_i641.DeleteDiaryEntryUseCase>(
         () => _i641.DeleteDiaryEntryUseCase(gh<_i867.DiaryRepository>()));
     gh.factory<_i239.UpdateDiaryEntryUseCase>(
@@ -519,6 +531,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1003.AddAutomaticEntryUseCase(gh<_i867.DiaryRepository>()));
     gh.factory<_i30.ChangePasswordCubit>(
         () => _i30.ChangePasswordCubit(gh<_i795.ChangePasswordUseCase>()));
+    gh.factory<_i952.AddCalendarEventUseCase>(
+        () => _i952.AddCalendarEventUseCase(gh<_i517.ReformMapRepository>()));
     gh.factory<_i806.AddProblemUseCase>(
         () => _i806.AddProblemUseCase(gh<_i517.ReformMapRepository>()));
     gh.factory<_i246.CalculateHealthUseCase>(
@@ -546,6 +560,29 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i128.NotificationService>(),
           gh<_i984.PaymentRepository>(),
           gh<_i706.Uuid>(),
+        ));
+    gh.factory<_i123.ReformMapCubit>(() => _i123.ReformMapCubit(
+          getReformMapUseCase: gh<_i314.GetReformMapUseCase>(),
+          calculateHealthUseCase: gh<_i246.CalculateHealthUseCase>(),
+          calculateNextActionUseCase: gh<_i421.CalculateNextActionUseCase>(),
+          addProblemUseCase: gh<_i806.AddProblemUseCase>(),
+          calculateUpcomingExpensesUseCase:
+              gh<_i210.CalculateUpcomingExpensesUseCase>(),
+          getNextStepPreparationUseCase:
+              gh<_i1014.GetNextStepPreparationUseCase>(),
+          updatePreparationItemUseCase:
+              gh<_i374.UpdatePreparationItemUseCase>(),
+          resolveProblemUseCase: gh<_i745.ResolveProblemUseCase>(),
+          moveInDistanceCalculator: gh<_i51.MoveInDistanceCalculator>(),
+          moveInModeGenerator: gh<_i934.MoveInModeGenerator>(),
+          pendingDecisionsDetector: gh<_i124.PendingDecisionsDetector>(),
+          upcomingPurchasesDetector: gh<_i792.UpcomingPurchasesDetector>(),
+          nextPhasePreparationDetector:
+              gh<_i629.NextPhasePreparationDetector>(),
+          milestonesDetector: gh<_i951.MilestonesDetector>(),
+          calendarEventsDetector: gh<_i219.CalendarEventsDetector>(),
+          reformWeekGenerator: gh<_i1002.ReformWeekGenerator>(),
+          addCalendarEventUseCase: gh<_i952.AddCalendarEventUseCase>(),
         ));
     gh.factory<_i129.CompletePhaseUseCase>(
         () => _i129.CompletePhaseUseCase(gh<_i909.PhaseRepository>()));
@@ -650,6 +687,8 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.factory<_i627.GetProjectUsecase>(
         () => _i627.GetProjectUsecase(gh<_i236.ProjectRepository>()));
+    gh.factory<_i281.UpdateProjectUseCase>(
+        () => _i281.UpdateProjectUseCase(gh<_i236.ProjectRepository>()));
     gh.factory<_i667.ReformMapIntegrationService>(
         () => _i667.ReformMapIntegrationService(
               gh<_i356.TransactionRepository>(),
@@ -685,6 +724,10 @@ extension GetItInjectableX on _i174.GetIt {
         _i207.UpdatePhaseFinancialsUseCase(gh<_i794.FinancialRepository>()));
     gh.factory<_i725.DeleteExpenseUseCase>(
         () => _i725.DeleteExpenseUseCase(gh<_i794.FinancialRepository>()));
+    gh.factory<_i373.GetPhasesUsecase>(
+        () => _i373.GetPhasesUsecase(gh<_i340.PhaseRepository>()));
+    gh.factory<_i1005.UpdateSubtaskUsecase>(
+        () => _i1005.UpdateSubtaskUsecase(gh<_i340.PhaseRepository>()));
     gh.factory<_i476.PaymentsCubit>(() => _i476.PaymentsCubit(
           gh<_i984.PaymentRepository>(),
           gh<_i937.MarkPaymentAsPaidUseCase>(),
@@ -754,28 +797,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i683.UploadFileUseCase>(),
           gh<_i1003.AddAutomaticEntryUseCase>(),
         ));
-    gh.factory<_i123.ReformMapCubit>(() => _i123.ReformMapCubit(
-          getReformMapUseCase: gh<_i314.GetReformMapUseCase>(),
-          calculateHealthUseCase: gh<_i246.CalculateHealthUseCase>(),
-          calculateNextActionUseCase: gh<_i421.CalculateNextActionUseCase>(),
-          addProblemUseCase: gh<_i806.AddProblemUseCase>(),
-          calculateUpcomingExpensesUseCase:
-              gh<_i210.CalculateUpcomingExpensesUseCase>(),
-          getNextStepPreparationUseCase:
-              gh<_i1014.GetNextStepPreparationUseCase>(),
-          updatePreparationItemUseCase:
-              gh<_i374.UpdatePreparationItemUseCase>(),
-          resolveProblemUseCase: gh<_i745.ResolveProblemUseCase>(),
-          moveInDistanceCalculator: gh<_i51.MoveInDistanceCalculator>(),
-          moveInModeGenerator: gh<_i934.MoveInModeGenerator>(),
-          pendingDecisionsDetector: gh<_i124.PendingDecisionsDetector>(),
-          upcomingPurchasesDetector: gh<_i792.UpcomingPurchasesDetector>(),
-          nextPhasePreparationDetector:
-              gh<_i629.NextPhasePreparationDetector>(),
-          milestonesDetector: gh<_i951.MilestonesDetector>(),
-          calendarEventsDetector: gh<_i219.CalendarEventsDetector>(),
-          reformWeekGenerator: gh<_i1002.ReformWeekGenerator>(),
-        ));
     gh.factory<_i482.AlertsCubit>(() => _i482.AlertsCubit(
           gh<_i282.GetAlertsUseCase>(),
           gh<_i1063.AddAlertUseCase>(),
@@ -786,6 +807,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i45.ProjectCubit>(() => _i45.ProjectCubit(
           gh<_i627.GetProjectUsecase>(),
           gh<_i281.UpdateProjectUseCase>(),
+        ));
+    gh.factory<_i144.PhasesCubit>(() => _i144.PhasesCubit(
+          gh<_i373.GetPhasesUsecase>(),
+          gh<_i1005.UpdateSubtaskUsecase>(),
+          gh<_i207.UpdatePhaseFinancialsUseCase>(),
+          gh<_i1003.AddAutomaticEntryUseCase>(),
+          gh<_i128.NotificationService>(),
         ));
     gh.factory<_i1013.ShoppingCubit>(() => _i1013.ShoppingCubit(
           gh<_i893.GetShoppingItemsUseCase>(),

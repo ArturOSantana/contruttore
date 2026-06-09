@@ -54,6 +54,16 @@ class _ReformMapPageState extends State<ReformMapPage> {
         title: const Text('Mapa da Reforma'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () {
+              context.push(
+                RouteNames.projectSettings,
+                extra: widget.projectId,
+              );
+            },
+            tooltip: 'Configurações do Projeto',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               context.read<ReformMapCubit>().refreshAll(widget.projectId);
@@ -166,6 +176,7 @@ class _ReformMapPageState extends State<ReformMapPage> {
                       if (reformMap.calendar != null)
                         ReformCalendarCard(
                           calendar: reformMap.calendar!,
+                          projectId: widget.projectId,
                         ),
                       if (reformMap.calendar != null)
                         const SizedBox(height: 16),
@@ -406,7 +417,8 @@ class _ReformMapPageState extends State<ReformMapPage> {
   }
 
   void _navigateToPhaseDetails(BuildContext context, String phaseId) {
-    context.push('${RouteNames.phaseDetail.replaceAll(':id', phaseId)}');
+    // Navega para a lista de fases onde o usuário pode selecionar a fase desejada
+    context.push(RouteNames.phases);
   }
 
   void _navigateToProblemDetails(BuildContext context, String problemId) {
