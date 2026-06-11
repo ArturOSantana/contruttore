@@ -9,17 +9,18 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/tutorial/presentation/pages/tutorial_page.dart';
-import '../../features/onboarding/presentation/pages/onboarding_choice_page.dart';
-import '../../features/onboarding/presentation/pages/onboarding_14_steps_page.dart';
-import '../../features/onboarding/presentation/pages/onboarding_results_page.dart';
-import '../../features/onboarding/presentation/pages/reform_risks_page.dart';
-import '../../features/onboarding/presentation/pages/retroactive_onboarding_page.dart';
-import '../../features/onboarding/presentation/cubit/onboarding_cubit.dart';
-import '../../features/onboarding/presentation/cubit/retroactive_cubit.dart';
-import '../../features/projects/presentation/pages/phases_page.dart';
+import '../../features/onboarding/presentation/pages/conversational/welcome_page.dart';
+import '../../features/onboarding/presentation/pages/conversational/current_moment_page.dart';
+import '../../features/onboarding/presentation/pages/conversational/critical_items_page.dart';
+import '../../features/onboarding/presentation/pages/conversational/priorities_page.dart';
+import '../../features/onboarding/presentation/pages/conversational/results_page.dart';
+import '../../features/onboarding/presentation/cubit/conversational_onboarding_cubit.dart';
+import '../../features/phases/presentation/pages/phases_page_improved.dart';
 import '../../features/projects/presentation/pages/phase_detail_page.dart';
+import '../../features/projects/presentation/cubit/phases_state.dart';
 import '../../features/projects/presentation/cubit/phases_cubit.dart';
 import '../../features/projects/domain/entities/phase_entity.dart';
+import '../../features/projects/data/models/phase_model.dart';
 import '../../features/reform_map/presentation/pages/reform_map_page.dart';
 import '../../features/reform_map/presentation/pages/report_problem_page.dart';
 import '../../features/reform_map/presentation/cubit/reform_map_cubit.dart';
@@ -89,85 +90,33 @@ class AppRouter {
         name: 'tutorial',
         builder: (context, state) => const TutorialPage(),
       ),
-      GoRoute(
-        path: RouteNames.onboardingChoice,
-        name: 'onboarding-choice',
-        builder: (context, state) => const OnboardingChoicePage(),
-      ),
-      GoRoute(
-        path: RouteNames.onboarding,
-        name: 'onboarding',
-        builder: (context, state) => const Onboarding14StepsPage(),
-      ),
-      GoRoute(
-        path: RouteNames.onboarding14Steps,
-        name: 'onboarding-14',
-        builder: (context, state) => const Onboarding14StepsPage(),
-      ),
-      GoRoute(
-        path: RouteNames.onboardingResults,
-        name: 'onboarding-results',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final cubit = extra?['cubit'] as OnboardingCubit?;
 
-          if (cubit == null) {
-            // Fallback: criar novo cubit se não foi passado
-            final newCubit = getIt<OnboardingCubit>();
-            return OnboardingResultsPage(
-              cubit: newCubit,
-              nextAction: extra?['nextAction'] ?? '',
-              criticalAlerts: extra?['criticalAlerts'] ?? [],
-              checklistsByRoom: extra?['checklistsByRoom'] ?? {},
-              healthScore: extra?['healthScore'] ?? 0,
-              estimatedDuration: extra?['estimatedDuration'] ?? 0,
-            );
-          }
-
-          return OnboardingResultsPage(
-            cubit: cubit,
-            nextAction: extra?['nextAction'] ?? '',
-            criticalAlerts: extra?['criticalAlerts'] ?? [],
-            checklistsByRoom: extra?['checklistsByRoom'] ?? {},
-            healthScore: extra?['healthScore'] ?? 0,
-            estimatedDuration: extra?['estimatedDuration'] ?? 0,
-          );
-        },
+      // Conversational Onboarding (Novo fluxo)
+      GoRoute(
+        path: RouteNames.conversationalWelcome,
+        name: 'conversational-welcome',
+        builder: (context, state) => BlocProvider(
+          create: (context) =>
+              getIt<ConversationalOnboardingCubit>()..startOnboarding(),
+          child: const WelcomePage(),
+        ),
       ),
       GoRoute(
-        path: RouteNames.reformRisks,
-        name: 'reform-risks',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final risks = extra?['risks'] as List? ?? [];
-          final onContinue = extra?['onContinue'] as VoidCallback?;
-
-          return ReformRisksPage(
-            risks: risks.cast(),
-            onContinue: onContinue ?? () => context.go(RouteNames.home),
-          );
-        },
+        path: RouteNames.conversationalCurrentMoment,
+        name: 'conversational-current-moment',
+        builder: (context, state) => const CurrentMomentPage(),
       ),
       GoRoute(
-        path: RouteNames.retroactiveOnboarding,
-        name: 'retroactive-onboarding',
-        builder: (context, state) {
-          // Parâmetros vindos do onboarding normal
-          final extra = state.extra as Map<String, dynamic>?;
-          return BlocProvider(
-            create: (context) => getIt<RetroactiveCubit>(),
-            child: RetroactiveOnboardingPage(
-              userId: extra?['userId'] ?? '',
-              projectName: extra?['projectName'] ?? '',
-              address: extra?['address'] ?? '',
-              area: extra?['area'] ?? 0.0,
-              deliveryDate: extra?['deliveryDate'] ?? DateTime.now(),
-              contractDate: extra?['contractDate'] ?? DateTime.now(),
-              constructorName: extra?['constructorName'] ?? '',
-            ),
-          );
-        },
+        path: RouteNames.conversationalCriticalItems,
+        name: 'conversational-critical-items',
+        builder: (context, state) => const CriticalItemsPage(),
       ),
+      GoRoute(
+        path: RouteNames.conversationalPriorities,
+        name: 'conversational-priorities',
+        builder: (context, state) => const PrioritiesPage(),
+      ),
+      // ResultsPage não precisa de rota - navegação direta com dados
 
       // Auth
       GoRoute(
@@ -237,18 +186,102 @@ class AppRouter {
         name: 'phase-detail',
         builder: (context, state) {
           final phaseId = state.pathParameters['id']!;
-          // A fase deve ser passada via extra no GoRouter.push
-          final phase = state.extra as PhaseEntity?;
+
+          // A fase pode vir diretamente ou dentro de um Map
+          PhaseEntity? phase;
+
+          if (state.extra is PhaseEntity) {
+            phase = state.extra as PhaseEntity;
+          } else if (state.extra is Map) {
+            final map = state.extra as Map;
+            phase = map['phase'] as PhaseEntity?;
+          }
 
           if (phase == null) {
-            return const Scaffold(
+            return Scaffold(
               body: Center(
-                child: Text('Fase não encontrada'),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Fase não encontrada',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'ID: $phaseId',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             );
           }
 
-          return PhaseDetailPage(phase: phase);
+          // Extrair projectId do Map se disponível
+          String? projectId;
+          if (state.extra is Map) {
+            final map = state.extra as Map;
+            projectId = map['projectId'] as String?;
+          }
+
+          return BlocProvider(
+            create: (context) {
+              final cubit = getIt<PhasesCubit>();
+              cubit.loadPhases(projectId ?? phase!.projectId);
+              return cubit;
+            },
+            child: BlocBuilder<PhasesCubit, PhasesState>(
+              builder: (context, state) {
+                // Aguarda o carregamento das fases
+                if (state is PhasesLoading || state is PhasesInitial) {
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                // Se houver erro, mostra mensagem
+                if (state is PhasesError) {
+                  return Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline,
+                              size: 64, color: Colors.red),
+                          SizedBox(height: 16),
+                          Text(
+                            'Erro ao carregar fases',
+                            style: TextStyle(fontSize: 18, color: Colors.red),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            state.message,
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                // Fases carregadas, mostra a página
+                return PhaseDetailPage(
+                  phase: phase!,
+                  onToggleSubtask: (phaseId, subtask) {
+                    context.read<PhasesCubit>().toggleSubtask(
+                          phaseId,
+                          subtask,
+                        );
+                  },
+                );
+              },
+            ),
+          );
         },
       ),
       GoRoute(
@@ -706,7 +739,7 @@ class _PhasesPageWrapper extends StatelessWidget {
 
         return BlocProvider(
           create: (context) => getIt<PhasesCubit>()..loadPhases(projectId),
-          child: PhasesPage(projectId: projectId),
+          child: PhasesPageImproved(projectId: projectId),
         );
       },
     );

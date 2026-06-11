@@ -12,6 +12,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart' as _i974;
 import 'package:contruttore/core/services/brasilapi_service.dart' as _i335;
 import 'package:contruttore/core/services/notification_service.dart' as _i128;
+import 'package:contruttore/core/services/personalization_service.dart'
+    as _i753;
+import 'package:contruttore/core/services/reform_health_service.dart' as _i106;
 import 'package:contruttore/core/services/sinapi_service.dart' as _i180;
 import 'package:contruttore/core/services/viacep_service.dart' as _i149;
 import 'package:contruttore/core/services/weather_service.dart' as _i1048;
@@ -157,14 +160,10 @@ import 'package:contruttore/features/installments/domain/usecases/mark_payment_a
     as _i396;
 import 'package:contruttore/features/installments/presentation/cubit/installments_cubit.dart'
     as _i224;
-import 'package:contruttore/features/onboarding/domain/usecases/generate_onboarding_results_usecase.dart'
-    as _i439;
-import 'package:contruttore/features/onboarding/domain/usecases/generate_reform_risks_usecase.dart'
-    as _i806;
-import 'package:contruttore/features/onboarding/presentation/cubit/onboarding_cubit.dart'
-    as _i916;
-import 'package:contruttore/features/onboarding/presentation/cubit/retroactive_cubit.dart'
-    as _i480;
+import 'package:contruttore/features/onboarding/data/services/onboarding_progress_service.dart'
+    as _i416;
+import 'package:contruttore/features/onboarding/presentation/cubit/conversational_onboarding_cubit.dart'
+    as _i502;
 import 'package:contruttore/features/payments/data/repositories/payment_repository_impl.dart'
     as _i478;
 import 'package:contruttore/features/payments/domain/repositories/payment_repository.dart'
@@ -177,6 +176,8 @@ import 'package:contruttore/features/phases/data/repositories/phase_repository_i
     as _i323;
 import 'package:contruttore/features/phases/domain/repositories/phase_repository.dart'
     as _i909;
+import 'package:contruttore/features/phases/domain/services/phase_ordering_service.dart'
+    as _i171;
 import 'package:contruttore/features/phases/domain/usecases/complete_phase_usecase.dart'
     as _i129;
 import 'package:contruttore/features/phases/domain/usecases/get_phases_usecase.dart'
@@ -185,8 +186,6 @@ import 'package:contruttore/features/phases/domain/usecases/mark_phases_retroact
     as _i1049;
 import 'package:contruttore/features/phases/domain/usecases/toggle_subtask_usecase.dart'
     as _i864;
-import 'package:contruttore/features/phases/presentation/cubit/phases_cubit.dart'
-    as _i499;
 import 'package:contruttore/features/problems/data/repositories/problem_repository_impl.dart'
     as _i674;
 import 'package:contruttore/features/problems/domain/repositories/problem_repository.dart'
@@ -205,6 +204,8 @@ import 'package:contruttore/features/projects/domain/repositories/phase_reposito
     as _i340;
 import 'package:contruttore/features/projects/domain/repositories/project_repository.dart'
     as _i236;
+import 'package:contruttore/features/projects/domain/usecases/complete_phase_usecase.dart'
+    as _i807;
 import 'package:contruttore/features/projects/domain/usecases/create_project_usecase.dart'
     as _i756;
 import 'package:contruttore/features/projects/domain/usecases/generate_phases_usecase.dart'
@@ -343,28 +344,27 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart'
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:http/http.dart' as _i519;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:uuid/uuid.dart' as _i706;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(
       this,
       environment,
       environmentFilter,
     );
+    final storageModule = _$StorageModule();
     final firebaseModule = _$FirebaseModule();
     final externalModule = _$ExternalModule();
     final networkModule = _$NetworkModule();
     final notificationModule = _$NotificationModule();
+    final onboardingModule = _$OnboardingModule();
     gh.factory<_i702.GeneratePdfUseCase>(() => _i702.GeneratePdfUseCase());
-    gh.factory<_i439.GenerateOnboardingResultsUseCase>(
-        () => _i439.GenerateOnboardingResultsUseCase());
-    gh.factory<_i806.GenerateReformRisksUseCase>(
-        () => _i806.GenerateReformRisksUseCase());
     gh.factory<_i219.CalendarEventsDetector>(
         () => _i219.CalendarEventsDetector());
     gh.factory<_i951.MilestonesDetector>(() => _i951.MilestonesDetector());
@@ -378,7 +378,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1002.ReformWeekGenerator>(() => _i1002.ReformWeekGenerator());
     gh.factory<_i792.UpcomingPurchasesDetector>(
         () => _i792.UpcomingPurchasesDetector());
+    await gh.factoryAsync<_i460.SharedPreferences>(
+      () => storageModule.sharedPreferences,
+      preResolve: true,
+    );
+    gh.lazySingleton<_i753.PersonalizationService>(
+        () => _i753.PersonalizationService());
+    gh.lazySingleton<_i106.ReformHealthService>(
+        () => _i106.ReformHealthService());
     gh.lazySingleton<_i180.SinapiService>(() => _i180.SinapiService());
+    gh.lazySingleton<_i171.PhaseOrderingService>(
+        () => _i171.PhaseOrderingService());
     gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
     gh.lazySingleton<_i974.FirebaseFirestore>(() => firebaseModule.firestore);
     gh.lazySingleton<_i457.FirebaseStorage>(
@@ -509,6 +519,14 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i1049.InstallmentRepository>(
         () => _i1016.InstallmentRepositoryImpl(gh<_i974.FirebaseFirestore>()));
+    gh.lazySingleton<_i416.OnboardingProgressService>(() => onboardingModule
+        .onboardingProgressService(gh<_i460.SharedPreferences>()));
+    gh.factory<_i420.GetHomeDataUseCase>(() => _i420.GetHomeDataUseCase(
+          gh<_i250.AuthRepository>(),
+          gh<_i236.ProjectRepository>(),
+          gh<_i974.FirebaseFirestore>(),
+          gh<_i106.ReformHealthService>(),
+        ));
     gh.factory<_i551.GetGlossaryTermsUseCase>(
         () => _i551.GetGlossaryTermsUseCase(gh<_i464.GlossaryRepository>()));
     gh.factory<_i730.SearchGlossaryUseCase>(
@@ -602,17 +620,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i902.GetUnreadCountUseCase(gh<_i469.AlertsRepository>()));
     gh.factory<_i133.MarkAsReadUseCase>(
         () => _i133.MarkAsReadUseCase(gh<_i469.AlertsRepository>()));
-    gh.factory<_i499.PhasesCubit>(() => _i499.PhasesCubit(
-          gh<_i832.GetPhasesUseCase>(),
-          gh<_i864.ToggleSubtaskUseCase>(),
-          gh<_i129.CompletePhaseUseCase>(),
-          gh<_i1049.MarkPhasesRetroactiveUseCase>(),
-        ));
-    gh.factory<_i420.GetHomeDataUseCase>(() => _i420.GetHomeDataUseCase(
-          gh<_i250.AuthRepository>(),
-          gh<_i236.ProjectRepository>(),
-          gh<_i974.FirebaseFirestore>(),
-        ));
     gh.factory<_i183.CompareQuotesUseCase>(() => _i183.CompareQuotesUseCase(
           gh<_i1001.SupplierRepository>(),
           gh<_i180.SinapiService>(),
@@ -627,6 +634,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i984.PaymentRepository>(),
           gh<_i706.Uuid>(),
         ));
+    gh.factory<_i807.CompletePhaseUsecase>(
+        () => _i807.CompletePhaseUsecase(gh<_i340.PhaseRepository>()));
     gh.factory<_i820.DiaryCubit>(() => _i820.DiaryCubit(
           gh<_i830.GetDiaryEntriesUseCase>(),
           gh<_i80.AddDiaryEntryUseCase>(),
@@ -713,13 +722,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i236.ProjectRepository>(),
               gh<_i984.PaymentRepository>(),
             ));
-    gh.factory<_i480.RetroactiveCubit>(() => _i480.RetroactiveCubit(
-          projectRepository: gh<_i236.ProjectRepository>(),
-          phaseRepository: gh<_i909.PhaseRepository>(),
-          financialRepository: gh<_i794.FinancialRepository>(),
-          supplierRepository: gh<_i1001.SupplierRepository>(),
-          uuid: gh<_i706.Uuid>(),
-        ));
     gh.lazySingleton<_i207.UpdatePhaseFinancialsUseCase>(() =>
         _i207.UpdatePhaseFinancialsUseCase(gh<_i794.FinancialRepository>()));
     gh.factory<_i725.DeleteExpenseUseCase>(
@@ -744,13 +746,13 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i967.AppSettingsCubit>(
         () => _i967.AppSettingsCubit(gh<_i879.AppSettingsRepository>()));
-    gh.factory<_i916.OnboardingCubit>(() => _i916.OnboardingCubit(
-          gh<_i756.CreateProjectUseCase>(),
-          gh<_i41.GeneratePhasesUseCase>(),
-          gh<_i909.PhaseRepository>(),
-          gh<_i974.FirebaseFirestore>(),
-          gh<_i439.GenerateOnboardingResultsUseCase>(),
-          gh<_i806.GenerateReformRisksUseCase>(),
+    gh.factory<_i144.PhasesCubit>(() => _i144.PhasesCubit(
+          gh<_i373.GetPhasesUsecase>(),
+          gh<_i1005.UpdateSubtaskUsecase>(),
+          gh<_i807.CompletePhaseUsecase>(),
+          gh<_i207.UpdatePhaseFinancialsUseCase>(),
+          gh<_i1003.AddAutomaticEntryUseCase>(),
+          gh<_i128.NotificationService>(),
         ));
     gh.factory<_i386.GlossaryCubit>(() => _i386.GlossaryCubit(
           gh<_i551.GetGlossaryTermsUseCase>(),
@@ -772,6 +774,13 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i207.UpdatePhaseFinancialsUseCase>(),
           gh<_i1003.AddAutomaticEntryUseCase>(),
         ));
+    gh.factory<_i502.ConversationalOnboardingCubit>(
+        () => _i502.ConversationalOnboardingCubit(
+              gh<_i416.OnboardingProgressService>(),
+              gh<_i756.CreateProjectUseCase>(),
+              gh<_i41.GeneratePhasesUseCase>(),
+              gh<_i974.FirebaseFirestore>(),
+            ));
     gh.factory<_i396.MarkPaymentAsPaidUseCase>(
         () => _i396.MarkPaymentAsPaidUseCase(
               gh<_i1049.InstallmentRepository>(),
@@ -808,13 +817,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i627.GetProjectUsecase>(),
           gh<_i281.UpdateProjectUseCase>(),
         ));
-    gh.factory<_i144.PhasesCubit>(() => _i144.PhasesCubit(
-          gh<_i373.GetPhasesUsecase>(),
-          gh<_i1005.UpdateSubtaskUsecase>(),
-          gh<_i207.UpdatePhaseFinancialsUseCase>(),
-          gh<_i1003.AddAutomaticEntryUseCase>(),
-          gh<_i128.NotificationService>(),
-        ));
     gh.factory<_i1013.ShoppingCubit>(() => _i1013.ShoppingCubit(
           gh<_i893.GetShoppingItemsUseCase>(),
           gh<_i1017.AddShoppingItemUseCase>(),
@@ -839,6 +841,8 @@ extension GetItInjectableX on _i174.GetIt {
   }
 }
 
+class _$StorageModule extends _i166.StorageModule {}
+
 class _$FirebaseModule extends _i166.FirebaseModule {}
 
 class _$ExternalModule extends _i166.ExternalModule {}
@@ -846,3 +850,5 @@ class _$ExternalModule extends _i166.ExternalModule {}
 class _$NetworkModule extends _i166.NetworkModule {}
 
 class _$NotificationModule extends _i166.NotificationModule {}
+
+class _$OnboardingModule extends _i166.OnboardingModule {}

@@ -149,6 +149,7 @@ class FinancialSnapshotModel extends FinancialSnapshot {
   const FinancialSnapshotModel({
     required super.totalBudget,
     required super.totalSpent,
+    super.totalPending = 0.0,
     required super.remainingBudget,
     required super.percentageSpent,
     required super.pendingPayments,
@@ -160,6 +161,7 @@ class FinancialSnapshotModel extends FinancialSnapshot {
     return FinancialSnapshotModel(
       totalBudget: (map['totalBudget'] as num).toDouble(),
       totalSpent: (map['totalSpent'] as num).toDouble(),
+      totalPending: (map['totalPending'] as num?)?.toDouble() ?? 0.0,
       remainingBudget: (map['remainingBudget'] as num).toDouble(),
       percentageSpent: (map['percentageSpent'] as num).toDouble(),
       pendingPayments: map['pendingPayments'] as int,
@@ -174,6 +176,7 @@ class FinancialSnapshotModel extends FinancialSnapshot {
     return {
       'totalBudget': totalBudget,
       'totalSpent': totalSpent,
+      'totalPending': totalPending,
       'remainingBudget': remainingBudget,
       'percentageSpent': percentageSpent,
       'pendingPayments': pendingPayments,
@@ -186,6 +189,7 @@ class FinancialSnapshotModel extends FinancialSnapshot {
     return FinancialSnapshotModel(
       totalBudget: entity.totalBudget,
       totalSpent: entity.totalSpent,
+      totalPending: entity.totalPending,
       remainingBudget: entity.remainingBudget,
       percentageSpent: entity.percentageSpent,
       pendingPayments: entity.pendingPayments,

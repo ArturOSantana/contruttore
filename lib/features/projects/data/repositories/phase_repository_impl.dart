@@ -35,26 +35,24 @@ class PhaseRepositoryImpl implements PhaseRepository {
   }
 
   @override
-  Future<Either<Failure, PhaseEntity>> getPhase(String phaseId) async {
+  Future<Either<Failure, PhaseEntity>> getPhase(
+    String projectId,
+    String phaseId,
+  ) async {
     try {
-      // Buscar em todos os projetos (não ideal, mas funciona)
-      final projectsSnapshot = await _firestore.collection('projects').get();
+      final phaseDoc = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('phases')
+          .doc(phaseId)
+          .get();
 
-      for (final projectDoc in projectsSnapshot.docs) {
-        final phaseDoc = await _firestore
-            .collection('projects')
-            .doc(projectDoc.id)
-            .collection('phases')
-            .doc(phaseId)
-            .get();
-
-        if (phaseDoc.exists) {
-          final phase = PhaseModel.fromMap(phaseDoc.data()!, phaseDoc.id);
-          return Right(phase);
-        }
+      if (!phaseDoc.exists) {
+        return Left(ServerFailure('Fase não encontrada'));
       }
 
-      return Left(ServerFailure('Fase não encontrada'));
+      final phase = PhaseModel.fromMap(phaseDoc.data()!, phaseDoc.id);
+      return Right(phase);
     } catch (e) {
       return Left(ServerFailure('Erro ao buscar fase: $e'));
     }
@@ -80,12 +78,13 @@ class PhaseRepositoryImpl implements PhaseRepository {
 
   @override
   Future<Either<Failure, void>> updateSubtask(
+    String projectId,
     String phaseId,
     SubtaskEntity subtask,
   ) async {
     try {
       // Buscar a fase primeiro
-      final phaseResult = await getPhase(phaseId);
+      final phaseResult = await getPhase(projectId, phaseId);
 
       return phaseResult.fold(
         (failure) => Left(failure),
@@ -109,18 +108,61 @@ class PhaseRepositoryImpl implements PhaseRepository {
   }
 
   @override
-  Future<Either<Failure, void>> completePhase(String phaseId) async {
+  Future<Either<Failure, void>> completePhase(
+    String projectId,
+    String phaseId,
+  ) async {
     try {
-      final phaseResult = await getPhase(phaseId);
+      // 1. Buscar a fase atual
+      final phaseResult = await getPhase(projectId, phaseId);
 
       return phaseResult.fold(
         (failure) => Left(failure),
-        (phase) async {
-          final updatedPhase = phase.copyWith(
+        (currentPhase) async {
+          // 2. Marcar fase atual como concluída
+          final updatedPhase = currentPhase.copyWith(
             status: PhaseStatus.done,
             endDate: DateTime.now(),
           );
-          return await updatePhase(updatedPhase);
+          final updateResult = await updatePhase(updatedPhase);
+
+          // Se falhou ao atualizar, retornar erro
+          if (updateResult.isLeft()) {
+            return updateResult;
+          }
+
+          // 3. Buscar todas as fases para encontrar a próxima
+          final phasesResult = await getPhases(projectId);
+
+          return phasesResult.fold(
+            (failure) => Right(
+                null), // Fase concluída, mas não conseguiu desbloquear próxima
+            (allPhases) async {
+              // Ordenar por número
+              final sortedPhases = List<PhaseEntity>.from(allPhases)
+                ..sort((a, b) => a.number.compareTo(b.number));
+
+              // Encontrar índice da fase atual
+              final currentIndex =
+                  sortedPhases.indexWhere((p) => p.id == phaseId);
+
+              // Se existe próxima fase
+              if (currentIndex != -1 &&
+                  currentIndex < sortedPhases.length - 1) {
+                final nextPhase = sortedPhases[currentIndex + 1];
+
+                // Desbloquear e ativar próxima fase
+                final nextPhaseUpdated = nextPhase.copyWith(
+                  status: PhaseStatus.active,
+                  startDate: DateTime.now(),
+                );
+
+                await updatePhase(nextPhaseUpdated);
+              }
+
+              return Right(null);
+            },
+          );
         },
       );
     } catch (e) {
@@ -129,9 +171,12 @@ class PhaseRepositoryImpl implements PhaseRepository {
   }
 
   @override
-  Future<Either<Failure, void>> startPhase(String phaseId) async {
+  Future<Either<Failure, void>> startPhase(
+    String projectId,
+    String phaseId,
+  ) async {
     try {
-      final phaseResult = await getPhase(phaseId);
+      final phaseResult = await getPhase(projectId, phaseId);
 
       return phaseResult.fold(
         (failure) => Left(failure),

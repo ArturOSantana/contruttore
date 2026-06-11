@@ -6,12 +6,15 @@ class RouteNames {
   // Splash & Onboarding
   static const String splash = '/';
   static const String tutorial = '/tutorial';
-  static const String onboardingChoice = '/onboarding-choice';
-  static const String onboarding = '/onboarding';
-  static const String onboarding14Steps = '/onboarding-14';
-  static const String onboardingResults = '/onboarding-results';
-  static const String reformRisks = '/reform-risks';
-  static const String retroactiveOnboarding = '/retroactive-onboarding';
+
+  // Conversational Onboarding
+  // Nota: ResultsPage não tem rota - navegação direta com dados via Navigator
+  static const String conversationalWelcome = '/onboarding/welcome';
+  static const String conversationalCurrentMoment =
+      '/onboarding/current-moment';
+  static const String conversationalCriticalItems =
+      '/onboarding/critical-items';
+  static const String conversationalPriorities = '/onboarding/priorities';
 
   // Auth
   static const String login = '/login';

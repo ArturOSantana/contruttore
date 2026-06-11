@@ -42,8 +42,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Navegar para onboarding para criar novo projeto
-          await context.push(RouteNames.onboarding);
+          // Navegar para onboarding conversacional para criar novo projeto
+          await context.push(RouteNames.conversationalWelcome);
           // Recarregar lista após voltar
           if (mounted) {
             context.read<ProjectsListCubit>().loadProjects();
@@ -51,8 +51,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         },
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textInverse,
-        icon: const Icon(Icons.add),
-        label: const Text('Novo Projeto'),
+        icon: const Icon(Icons.home_work_rounded),
+        label: const Text('Nova Reforma'),
       ),
       body: BlocConsumer<ProjectsListCubit, ProjectsListState>(
         listener: (context, state) {
@@ -101,11 +101,12 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           if (state is ProjectsListLoaded) {
             if (state.projects.isEmpty) {
               return EmptyStateWidget(
-                icon: Icons.folder_open,
-                title: 'Nenhum projeto encontrado',
-                message: 'Crie seu primeiro projeto para começar',
-                actionLabel: 'Criar Projeto',
-                onAction: () => context.push(RouteNames.onboarding),
+                icon: Icons.home_work_rounded,
+                title: 'Bem-vindo ao Contruttore!',
+                message:
+                    'Vamos organizar sua reforma em menos de 3 minutos.\n\nDescubra o que fazer, quanto gastar e quando se mudar.',
+                actionLabel: 'Começar Agora',
+                onAction: () => context.push(RouteNames.conversationalWelcome),
               );
             }
 

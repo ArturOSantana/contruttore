@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../domain/entities/phase_entity.dart';
+import '../../presentation/cubit/phases_cubit.dart';
+import '../../presentation/cubit/phases_state.dart';
 
 class PhaseDetailPage extends StatelessWidget {
   final PhaseEntity phase;
@@ -17,67 +20,88 @@ class PhaseDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(phase.name),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Card de informações gerais
-            _buildInfoCard(context),
+    return BlocBuilder<PhasesCubit, PhasesState>(
+      builder: (context, state) {
+        // Busca a fase atualizada do estado
+        PhaseEntity currentPhase = phase;
 
-            const SizedBox(height: 24),
+        if (state is PhasesLoaded) {
+          try {
+            currentPhase = state.phases.firstWhere((p) => p.id == phase.id);
+          } catch (_) {
+            // Se não encontrar, usa a fase original
+            currentPhase = phase;
+          }
+        }
 
-            // Seção "O que acontece"
-            if (phase.description.isNotEmpty) ...[
-              _buildSectionTitle(context, 'Sobre esta fase'),
-              const SizedBox(height: 12),
-              _buildDescriptionCard(context),
-              const SizedBox(height: 24),
-            ],
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(currentPhase.name),
+            elevation: 0,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Card de informações gerais
+                _buildInfoCard(context, currentPhase),
 
-            // Seção de tarefas
-            _buildSectionTitle(context, 'Tarefas'),
-            const SizedBox(height: 12),
-            _buildSubtasksList(context),
+                const SizedBox(height: 24),
 
-            const SizedBox(height: 24),
+                // Seção "O que acontece"
+                if (currentPhase.description.isNotEmpty) ...[
+                  _buildSectionTitle(context, 'Sobre esta fase'),
+                  const SizedBox(height: 12),
+                  _buildDescriptionCard(context, currentPhase),
+                  const SizedBox(height: 24),
+                ],
 
-            // Seção financeira
-            if (phase.estimatedBudget > 0) ...[
-              _buildSectionTitle(context, 'Orçamento'),
-              const SizedBox(height: 12),
-              _buildBudgetCard(context),
-              const SizedBox(height: 24),
-            ],
+                // Seção de tarefas
+                _buildSectionTitle(context, 'Tarefas'),
+                const SizedBox(height: 12),
+                _buildSubtasksList(context, currentPhase),
 
-            // Erro comum
-            if (phase.commonMistake != null &&
-                phase.commonMistake!.isNotEmpty) ...[
-              _buildSectionTitle(context, '⚠️ Atenção'),
-              const SizedBox(height: 12),
-              _buildWarningCard(context),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 24),
 
-            // Informações adicionais
-            if (phase.expectedSupplierTypes.isNotEmpty ||
-                phase.expectedPurchaseCategories.isNotEmpty) ...[
-              _buildSectionTitle(context, 'Informações Adicionais'),
-              const SizedBox(height: 12),
-              _buildAdditionalInfoCard(context),
-            ],
-          ],
-        ),
-      ),
+                // Seção financeira
+                if (currentPhase.estimatedBudget > 0) ...[
+                  _buildSectionTitle(context, 'Orçamento'),
+                  const SizedBox(height: 12),
+                  _buildBudgetCard(context, currentPhase),
+                  const SizedBox(height: 24),
+                ],
+
+                // Erro comum
+                if (currentPhase.commonMistake != null &&
+                    currentPhase.commonMistake!.isNotEmpty) ...[
+                  _buildSectionTitle(context, '⚠️ Atenção'),
+                  const SizedBox(height: 12),
+                  _buildWarningCard(context, currentPhase),
+                  const SizedBox(height: 24),
+                ],
+
+                // Informações adicionais
+                if (currentPhase.expectedSupplierTypes.isNotEmpty ||
+                    currentPhase.expectedPurchaseCategories.isNotEmpty) ...[
+                  _buildSectionTitle(context, 'Informações Adicionais'),
+                  const SizedBox(height: 12),
+                  _buildAdditionalInfoCard(context, currentPhase),
+                  const SizedBox(height: 24),
+                ],
+
+                // Botões de ação
+                _buildActionButtons(context, currentPhase),
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildInfoCard(BuildContext context) {
+  Widget _buildInfoCard(BuildContext context, PhaseEntity phase) {
     final theme = Theme.of(context);
 
     return Card(
@@ -189,7 +213,7 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDescriptionCard(BuildContext context) {
+  Widget _buildDescriptionCard(BuildContext context, PhaseEntity phase) {
     final theme = Theme.of(context);
 
     return Card(
@@ -203,7 +227,7 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSubtasksList(BuildContext context) {
+  Widget _buildSubtasksList(BuildContext context, PhaseEntity phase) {
     if (phase.subtasks.isEmpty) {
       return Card(
         child: Padding(
@@ -232,7 +256,7 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBudgetCard(BuildContext context) {
+  Widget _buildBudgetCard(BuildContext context, PhaseEntity phase) {
     final theme = Theme.of(context);
 
     return Card(
@@ -299,7 +323,7 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildWarningCard(BuildContext context) {
+  Widget _buildWarningCard(BuildContext context, PhaseEntity phase) {
     final theme = Theme.of(context);
 
     return Card(
@@ -327,7 +351,7 @@ class PhaseDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAdditionalInfoCard(BuildContext context) {
+  Widget _buildAdditionalInfoCard(BuildContext context, PhaseEntity phase) {
     final theme = Theme.of(context);
 
     return Card(
@@ -380,6 +404,135 @@ class PhaseDetailPage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, PhaseEntity phase) {
+    final cubit = context.read<PhasesCubit>();
+
+    // Verifica se todas as tarefas obrigatórias estão concluídas
+    final requiredTasks = phase.subtasks.where((s) => s.isRequired).toList();
+    final completedRequiredTasks = requiredTasks.where((s) => s.isDone).length;
+    final allRequiredTasksCompleted =
+        requiredTasks.isEmpty || completedRequiredTasks == requiredTasks.length;
+
+    return Column(
+      children: [
+        // Botão "Concluir Fase" - só aparece quando todas tarefas obrigatórias estão concluídas
+        if (allRequiredTasksCompleted && phase.status != PhaseStatus.done) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Concluir Fase'),
+                    content: Text(
+                      'Tem certeza que deseja concluir a fase "${phase.name}"?\n\n'
+                      'A próxima fase será desbloqueada automaticamente.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Concluir'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true && context.mounted) {
+                  final nextPhase =
+                      await cubit.completePhase(phase.projectId, phase.id);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    // Se existe próxima fase, navegar para ela
+                    if (nextPhase != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PhaseDetailPage(phase: nextPhase),
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+              icon: const Icon(Icons.check_circle),
+              label: const Text('Concluir Fase'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Botão "Pular Fase" - sempre disponível
+        if (phase.status != PhaseStatus.done) ...[
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Pular Fase'),
+                    content: Text(
+                      'Deseja pular a fase "${phase.name}"?\n\n'
+                      'Você poderá voltar e completá-la depois.\n'
+                      'A próxima fase será desbloqueada.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.warning,
+                        ),
+                        child: const Text('Pular'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true && context.mounted) {
+                  final nextPhase =
+                      await cubit.skipPhase(phase.projectId, phase.id);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    // Se existe próxima fase, navegar para ela
+                    if (nextPhase != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PhaseDetailPage(phase: nextPhase),
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+              icon: const Icon(Icons.skip_next),
+              label: const Text('Pular Fase'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.warning,
+                side: const BorderSide(color: AppColors.warning),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 

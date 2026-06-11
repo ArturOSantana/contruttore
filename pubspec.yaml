@@ -35,6 +35,7 @@ dependencies:
 
   # Cache local
   hive_flutter: ^1.1.0
+  shared_preferences: ^2.3.3
 
   # UI
   google_fonts: ^6.2.1

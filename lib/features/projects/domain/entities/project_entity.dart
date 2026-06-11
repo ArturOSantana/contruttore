@@ -15,6 +15,13 @@ class ProjectEntity extends Equatable {
   final String
       currentSituation; // 'just_signed' | 'construction' | 'keys_received' | 'renovation'
   final DateTime? plannedMoveInDate; // Data planejada para mudança
+
+  // Dados do onboarding conversacional
+  final String?
+      mainPriority; // save_money, finish_fast, avoid_problems, best_finish, control_costs, organize_everything
+  final List<String>
+      criticalItems; // ar_conditioner, wired_internet, dishwasher, etc
+
   final DateTime createdAt;
 
   const ProjectEntity({
@@ -31,6 +38,8 @@ class ProjectEntity extends Equatable {
     this.propertyValue,
     required this.currentSituation,
     this.plannedMoveInDate,
+    this.mainPriority,
+    this.criticalItems = const [],
     required this.createdAt,
   });
 
@@ -48,6 +57,8 @@ class ProjectEntity extends Equatable {
     double? propertyValue,
     String? currentSituation,
     Object? plannedMoveInDate = _undefined,
+    String? mainPriority,
+    List<String>? criticalItems,
     DateTime? createdAt,
   }) {
     return ProjectEntity(
@@ -66,6 +77,8 @@ class ProjectEntity extends Equatable {
       plannedMoveInDate: plannedMoveInDate == _undefined
           ? this.plannedMoveInDate
           : plannedMoveInDate as DateTime?,
+      mainPriority: mainPriority ?? this.mainPriority,
+      criticalItems: criticalItems ?? this.criticalItems,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -85,6 +98,8 @@ class ProjectEntity extends Equatable {
         propertyValue,
         currentSituation,
         plannedMoveInDate,
+        mainPriority,
+        criticalItems,
         createdAt,
       ];
 }

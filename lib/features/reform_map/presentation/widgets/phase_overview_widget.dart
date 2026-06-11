@@ -27,7 +27,39 @@ class PhaseOverviewWidget extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 16),
-            ...phases.map((phase) => _buildPhaseItem(context, phase)),
+            if (phases.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.construction,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Nenhuma etapa encontrada',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'As 9 etapas padrão são criadas automaticamente quando você cria um projeto',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[500],
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...phases.map((phase) => _buildPhaseItem(context, phase)),
           ],
         ),
       ),

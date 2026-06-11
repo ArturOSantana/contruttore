@@ -49,8 +49,8 @@ class _SplashPageState extends State<SplashPage> {
           if (state.user.currentProjectId != null) {
             context.go(RouteNames.home);
           } else {
-            // Se não tem projeto, vai para onboarding
-            context.go(RouteNames.onboarding);
+            // Se não tem projeto, vai para onboarding conversacional
+            context.go(RouteNames.conversationalWelcome);
           }
         } else if (state is AuthUnauthenticated) {
           // Não autenticado, vai para login

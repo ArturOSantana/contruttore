@@ -14,6 +14,7 @@ class MoveInModeGenerator {
     required double overallProgress,
     DateTime? plannedMoveInDate,
     required List<String> criticalPendingItems,
+    List<String> userCriticalItems = const [],
   }) {
     // Calcula dias até a mudança
     final now = DateTime.now();
@@ -29,6 +30,7 @@ class MoveInModeGenerator {
       phases: phases,
       daysUntilMoveIn: daysUntilMoveIn,
       overallProgress: overallProgress,
+      userCriticalItems: userCriticalItems,
     );
 
     // Gera recomendações
@@ -84,8 +86,13 @@ class MoveInModeGenerator {
     required List<PhaseEntity> phases,
     required int daysUntilMoveIn,
     required double overallProgress,
+    List<String> userCriticalItems = const [],
   }) {
     final tasks = <MoveInTaskEntity>[];
+
+    // Adiciona tarefas personalizadas baseadas nos itens críticos do usuário
+    tasks
+        .addAll(_generatePersonalizedTasks(userCriticalItems, daysUntilMoveIn));
 
     // Limpeza pós-obra
     if (overallProgress >= 90) {
@@ -300,6 +307,179 @@ class MoveInModeGenerator {
 
     // Não está pronto
     return MoveInStatus.notReady;
+  }
+
+  /// Gera tarefas personalizadas baseadas nos itens críticos do usuário
+  List<MoveInTaskEntity> _generatePersonalizedTasks(
+    List<String> criticalItems,
+    int daysUntilMoveIn,
+  ) {
+    final tasks = <MoveInTaskEntity>[];
+
+    for (final item in criticalItems) {
+      switch (item) {
+        case 'ar_conditioner':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_ac',
+              title: 'Testar ar-condicionado',
+              description:
+                  'Ligar e testar todos os aparelhos de ar-condicionado',
+              category: MoveInTaskCategory.inspection,
+              isCompleted: false,
+              isCritical: true,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
+            ),
+          );
+          break;
+
+        case 'wired_internet':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_internet',
+              title: 'Testar pontos de internet',
+              description: 'Verificar todos os pontos de rede cabeada',
+              category: MoveInTaskCategory.inspection,
+              isCompleted: false,
+              isCritical: true,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 7)),
+            ),
+          );
+          break;
+
+        case 'dishwasher':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_dishwasher',
+              title: 'Instalar lava-louças',
+              description: 'Agendar instalação e teste da lava-louças',
+              category: MoveInTaskCategory.utilities,
+              isCompleted: false,
+              isCritical: true,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 10)),
+            ),
+          );
+          break;
+
+        case 'water_heater':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_heater',
+              title: 'Testar aquecedor',
+              description: 'Verificar funcionamento do aquecedor de água',
+              category: MoveInTaskCategory.inspection,
+              isCompleted: false,
+              isCritical: true,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
+            ),
+          );
+          break;
+
+        case 'home_automation':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_automation',
+              title: 'Configurar automação',
+              description:
+                  'Instalar e configurar sistema de automação residencial',
+              category: MoveInTaskCategory.utilities,
+              isCompleted: false,
+              isCritical: false,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 7)),
+            ),
+          );
+          break;
+
+        case 'smart_lock':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_lock',
+              title: 'Instalar fechadura eletrônica',
+              description: 'Instalar e configurar fechadura inteligente',
+              category: MoveInTaskCategory.utilities,
+              isCompleted: false,
+              isCritical: false,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
+            ),
+          );
+          break;
+
+        case 'security_cameras':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_cameras',
+              title: 'Instalar câmeras',
+              description:
+                  'Instalar e configurar sistema de câmeras de segurança',
+              category: MoveInTaskCategory.utilities,
+              isCompleted: false,
+              isCritical: false,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 7)),
+            ),
+          );
+          break;
+
+        case 'ambient_sound':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_sound',
+              title: 'Configurar som ambiente',
+              description: 'Instalar e testar sistema de som ambiente',
+              category: MoveInTaskCategory.decoration,
+              isCompleted: false,
+              isCritical: false,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 3)),
+            ),
+          );
+          break;
+
+        case 'ev_charger':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_ev_charger',
+              title: 'Instalar carregador de carro elétrico',
+              description: 'Instalar e testar carregador veicular',
+              category: MoveInTaskCategory.utilities,
+              isCompleted: false,
+              isCritical: true,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 10)),
+            ),
+          );
+          break;
+
+        case 'central_vacuum':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_vacuum',
+              title: 'Testar aspiração central',
+              description:
+                  'Verificar funcionamento do sistema de aspiração central',
+              category: MoveInTaskCategory.inspection,
+              isCompleted: false,
+              isCritical: false,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
+            ),
+          );
+          break;
+
+        case 'solar_energy':
+          tasks.add(
+            MoveInTaskEntity(
+              id: 'custom_solar',
+              title: 'Ativar energia solar',
+              description:
+                  'Finalizar instalação e ativar sistema de energia solar',
+              category: MoveInTaskCategory.utilities,
+              isCompleted: false,
+              isCritical: true,
+              dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 15)),
+            ),
+          );
+          break;
+      }
+    }
+
+    return tasks;
   }
 }
 

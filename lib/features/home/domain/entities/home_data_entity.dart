@@ -5,6 +5,7 @@ import 'package:contruttore/features/home/domain/entities/next_action_entity.dar
 import 'package:contruttore/features/home/domain/entities/financial_summary_entity.dart';
 import 'package:contruttore/features/home/domain/entities/alert_entity.dart';
 import 'package:contruttore/features/home/domain/entities/weather_entity.dart';
+import 'package:contruttore/core/services/reform_health_service.dart';
 
 /// Representa todos os dados necessários para a tela Home
 class HomeDataEntity extends Equatable {
@@ -14,6 +15,8 @@ class HomeDataEntity extends Equatable {
   final FinancialSummaryEntity financialSummary;
   final List<AlertEntity> activeAlerts;
   final WeatherEntity? weather;
+  final ReformHealthScore? healthScore;
+  final double? overallProgress;
 
   const HomeDataEntity({
     required this.user,
@@ -22,17 +25,21 @@ class HomeDataEntity extends Equatable {
     required this.financialSummary,
     required this.activeAlerts,
     this.weather,
+    this.healthScore,
+    this.overallProgress,
   });
 
   @override
   List<Object?> get props => [
-    user,
-    project,
-    nextAction,
-    financialSummary,
-    activeAlerts,
-    weather,
-  ];
+        user,
+        project,
+        nextAction,
+        financialSummary,
+        activeAlerts,
+        weather,
+        healthScore,
+        overallProgress,
+      ];
 }
 
 // Made with Bob

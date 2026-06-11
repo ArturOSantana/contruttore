@@ -91,6 +91,7 @@ class ReformMapRepositoryImpl implements ReformMapRepository {
       final financial = FinancialSnapshotModel(
         totalBudget: (projectData['totalBudget'] as num?)?.toDouble() ?? 0.0,
         totalSpent: (projectData['totalSpent'] as num?)?.toDouble() ?? 0.0,
+        totalPending: (projectData['totalPending'] as num?)?.toDouble() ?? 0.0,
         remainingBudget:
             (projectData['remainingBudget'] as num?)?.toDouble() ?? 0.0,
         percentageSpent:

@@ -193,15 +193,18 @@ class ReformProgress extends Equatable {
 class FinancialSnapshot extends Equatable {
   final double totalBudget;
   final double totalSpent;
-  final double remainingBudget; // Renomeado de remaining
-  final double percentageSpent; // Renomeado de percentageUsed
-  final int pendingPayments;
+  final double
+      totalPending; // Total de parcelas pendentes (comprometido mas não pago)
+  final double remainingBudget; // Orçamento restante (sem considerar pendentes)
+  final double percentageSpent; // Percentual gasto (apenas o que já foi pago)
+  final int pendingPayments; // Quantidade de parcelas pendentes
   final double nextPaymentAmount;
   final DateTime? nextPaymentDate;
 
   const FinancialSnapshot({
     required this.totalBudget,
     required this.totalSpent,
+    this.totalPending = 0.0,
     required this.remainingBudget,
     required this.percentageSpent,
     required this.pendingPayments,
@@ -209,14 +212,35 @@ class FinancialSnapshot extends Equatable {
     this.nextPaymentDate,
   });
 
-  bool get isHealthy => percentageSpent <= 80;
-  bool get isWarning => percentageSpent > 80 && percentageSpent <= 100;
-  bool get isCritical => percentageSpent > 100;
+  /// Total comprometido (gasto + pendente)
+  double get totalCommitted => totalSpent + totalPending;
+
+  /// Percentual comprometido (gasto + pendente)
+  double get percentageCommitted {
+    if (totalBudget == 0) return 0;
+    return (totalCommitted / totalBudget) * 100;
+  }
+
+  /// Orçamento realmente disponível (considerando pendentes)
+  double get availableBudget => totalBudget - totalCommitted;
+
+  /// Verifica se o orçamento comprometido está saudável
+  bool get isHealthy => percentageCommitted <= 80;
+
+  /// Verifica se o orçamento comprometido está em alerta
+  bool get isWarning => percentageCommitted > 80 && percentageCommitted <= 100;
+
+  /// Verifica se o orçamento comprometido está crítico
+  bool get isCritical => percentageCommitted > 100;
+
+  /// Verifica se há risco de estourar o orçamento
+  bool get hasRisk => percentageCommitted > 90;
 
   @override
   List<Object?> get props => [
         totalBudget,
         totalSpent,
+        totalPending,
         remainingBudget,
         percentageSpent,
         pendingPayments,

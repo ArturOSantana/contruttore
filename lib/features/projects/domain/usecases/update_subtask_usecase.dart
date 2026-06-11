@@ -14,21 +14,27 @@ class UpdateSubtaskUsecase implements UseCase<void, UpdateSubtaskParams> {
 
   @override
   Future<Either<Failure, void>> call(UpdateSubtaskParams params) async {
-    return await _repository.updateSubtask(params.phaseId, params.subtask);
+    return await _repository.updateSubtask(
+      params.projectId,
+      params.phaseId,
+      params.subtask,
+    );
   }
 }
 
 class UpdateSubtaskParams extends Equatable {
+  final String projectId;
   final String phaseId;
   final SubtaskEntity subtask;
 
   const UpdateSubtaskParams({
+    required this.projectId,
     required this.phaseId,
     required this.subtask,
   });
 
   @override
-  List<Object?> get props => [phaseId, subtask];
+  List<Object?> get props => [projectId, phaseId, subtask];
 }
 
 // Made with Bob

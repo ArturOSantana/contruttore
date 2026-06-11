@@ -132,114 +132,62 @@ class _ReformMapPageState extends State<ReformMapPage> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      // Distância até a Mudança (NOVO - Sprint 1.1)
+                      // ═══════════════════════════════════════════════════
+                      // 🎯 NÍVEL 1: HERO - O QUE FAZER AGORA (Laranja)
+                      // ═══════════════════════════════════════════════════
+
+                      // Próxima Ação Recomendada (MAIS IMPORTANTE)
+                      if (reformMap.nextAction != null)
+                        NextActionWidget(
+                          nextAction: reformMap.nextAction!,
+                          onActionTap: () {
+                            _executeAction(context, reformMap.nextAction!);
+                          },
+                        ),
+                      if (reformMap.nextAction != null)
+                        const SizedBox(height: 16),
+
+                      // Distância até a Mudança (MOTIVADOR)
                       if (reformMap.moveInDistance != null)
                         MoveInDistanceCard(
                           distance: reformMap.moveInDistance!,
                         ),
                       if (reformMap.moveInDistance != null)
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
 
-                      // Decisões Pendentes (NOVO - Sprint 1.2)
+                      // ═══════════════════════════════════════════════════
+                      // 📍 NÍVEL 2: ATUAL - ONDE VOCÊ ESTÁ (Azul)
+                      // ═══════════════════════════════════════════════════
+
+                      // Etapa Atual
+                      CurrentPhaseWidget(
+                        reformMap: reformMap,
+                        onPhaseTap: (phaseId) {
+                          _navigateToPhaseDetails(context, phaseId);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Saúde da Reforma
+                      HealthScoreWidget(
+                        health: reformMap.health,
+                        onTap: () {
+                          _showHealthDetails(context, reformMap.health);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // ═══════════════════════════════════════════════════
+                      // ⚠️ NÍVEL 3: URGENTE - REQUER ATENÇÃO (Vermelho/Laranja)
+                      // ═══════════════════════════════════════════════════
+
+                      // Decisões Pendentes
                       if (reformMap.pendingDecisions.isNotEmpty)
                         PendingDecisionsCard(
                           decisions: reformMap.pendingDecisions,
                         ),
                       if (reformMap.pendingDecisions.isNotEmpty)
                         const SizedBox(height: 16),
-
-                      // Próximas Compras (NOVO - Sprint 2.1)
-                      if (reformMap.upcomingPurchases.isNotEmpty)
-                        UpcomingPurchasesCard(
-                          purchases: reformMap.upcomingPurchases,
-                        ),
-                      if (reformMap.upcomingPurchases.isNotEmpty)
-                        const SizedBox(height: 16),
-
-                      // Preparação da Próxima Etapa (NOVO - Sprint 2.2)
-                      if (reformMap.nextPhasePreparation != null)
-                        NextPhasePreparationCard(
-                          preparation: reformMap.nextPhasePreparation!,
-                        ),
-                      if (reformMap.nextPhasePreparation != null)
-                        const SizedBox(height: 16),
-
-                      // Marcos da Reforma (NOVO - Sprint 2.3)
-                      if (reformMap.milestones.isNotEmpty)
-                        MilestonesCard(
-                          milestones: reformMap.milestones,
-                        ),
-                      if (reformMap.milestones.isNotEmpty)
-                        const SizedBox(height: 16),
-
-                      // Calendário Inteligente (NOVO - Sprint 3.1)
-                      if (reformMap.calendar != null)
-                        ReformCalendarCard(
-                          calendar: reformMap.calendar!,
-                          projectId: widget.projectId,
-                        ),
-                      if (reformMap.calendar != null)
-                        const SizedBox(height: 16),
-
-                      // Semana da Reforma (NOVO - Sprint 3.2)
-                      if (reformMap.week != null)
-                        ReformWeekCard(
-                          week: reformMap.week!,
-                        ),
-                      if (reformMap.week != null) const SizedBox(height: 16),
-
-                      // Modo Mudança (NOVO - Sprint 4.1)
-                      if (reformMap.moveInMode != null &&
-                          reformMap.moveInMode!.isActive)
-                        MoveInModeCard(
-                          moveInMode: reformMap.moveInMode!,
-                          onTaskTap: () {
-                            // TODO: Navegar para checklist completo
-                          },
-                        ),
-                      if (reformMap.moveInMode != null &&
-                          reformMap.moveInMode!.isActive)
-                        const SizedBox(height: 16),
-
-                      // Saúde da Reforma
-                      HealthScoreWidget(
-                        health: reformMap.health,
-                        onTap: () {
-                          // Navegar para detalhes da saúde
-                          _showHealthDetails(context, reformMap.health);
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Próxima Ação Recomendada
-                      if (reformMap.nextAction != null)
-                        NextActionWidget(
-                          nextAction: reformMap.nextAction!,
-                          onActionTap: () {
-                            // Executar a ação recomendada
-                            _executeAction(context, reformMap.nextAction!);
-                          },
-                        ),
-                      const SizedBox(height: 16),
-
-                      // Etapa Atual
-                      CurrentPhaseWidget(
-                        reformMap: reformMap,
-                        onPhaseTap: (phaseId) {
-                          // Navegar para detalhes da fase
-                          _navigateToPhaseDetails(context, phaseId);
-                        },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Visão Geral das Etapas
-                      PhaseOverviewWidget(
-                        phases: reformMap.phases,
-                        onPhaseTap: (phaseId) {
-                          _navigateToPhaseDetails(context, phaseId);
-                        },
-                      ),
-                      const SizedBox(height: 24),
 
                       // Problemas Ativos
                       if (reformMap.problems.isNotEmpty)
@@ -252,6 +200,85 @@ class _ReformMapPageState extends State<ReformMapPage> {
                             _showAddProblemDialog(context);
                           },
                         ),
+                      if (reformMap.problems.isNotEmpty)
+                        const SizedBox(height: 24),
+
+                      // ═══════════════════════════════════════════════════
+                      // 📦 NÍVEL 4: PREPARAÇÃO - PRÓXIMOS PASSOS (Roxo)
+                      // ═══════════════════════════════════════════════════
+
+                      // Próximas Compras
+                      if (reformMap.upcomingPurchases.isNotEmpty)
+                        UpcomingPurchasesCard(
+                          purchases: reformMap.upcomingPurchases,
+                        ),
+                      if (reformMap.upcomingPurchases.isNotEmpty)
+                        const SizedBox(height: 16),
+
+                      // Preparação da Próxima Etapa
+                      if (reformMap.nextPhasePreparation != null)
+                        NextPhasePreparationCard(
+                          preparation: reformMap.nextPhasePreparation!,
+                        ),
+                      if (reformMap.nextPhasePreparation != null)
+                        const SizedBox(height: 24),
+
+                      // ═══════════════════════════════════════════════════
+                      // 🎯 NÍVEL 5: PROGRESSO - CONQUISTAS (Verde)
+                      // ═══════════════════════════════════════════════════
+
+                      // Marcos da Reforma
+                      if (reformMap.milestones.isNotEmpty)
+                        MilestonesCard(
+                          milestones: reformMap.milestones,
+                        ),
+                      if (reformMap.milestones.isNotEmpty)
+                        const SizedBox(height: 16),
+
+                      // Modo Mudança (quando ativo)
+                      if (reformMap.moveInMode != null &&
+                          reformMap.moveInMode!.isActive)
+                        MoveInModeCard(
+                          moveInMode: reformMap.moveInMode!,
+                          onTaskTap: () {
+                            // TODO: Navegar para checklist completo
+                          },
+                        ),
+                      if (reformMap.moveInMode != null &&
+                          reformMap.moveInMode!.isActive)
+                        const SizedBox(height: 24),
+
+                      // ═══════════════════════════════════════════════════
+                      // 📅 NÍVEL 6: PLANEJAMENTO - CALENDÁRIO (Azul claro)
+                      // ═══════════════════════════════════════════════════
+
+                      // Semana da Reforma
+                      if (reformMap.week != null)
+                        ReformWeekCard(
+                          week: reformMap.week!,
+                        ),
+                      if (reformMap.week != null) const SizedBox(height: 16),
+
+                      // Calendário Inteligente
+                      if (reformMap.calendar != null)
+                        ReformCalendarCard(
+                          calendar: reformMap.calendar!,
+                          projectId: widget.projectId,
+                        ),
+                      if (reformMap.calendar != null)
+                        const SizedBox(height: 24),
+
+                      // ═══════════════════════════════════════════════════
+                      // 📊 NÍVEL 7: VISÃO GERAL - TODAS AS FASES (Cinza)
+                      // ═══════════════════════════════════════════════════
+
+                      // Visão Geral das Etapas (sempre mostra, mesmo vazio)
+                      PhaseOverviewWidget(
+                        phases: reformMap.phases,
+                        onPhaseTap: (phaseId) {
+                          _navigateToPhaseDetails(context, phaseId);
+                        },
+                      ),
 
                       const SizedBox(height: 80), // Espaço para o FAB
                     ],

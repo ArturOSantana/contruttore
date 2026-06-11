@@ -217,6 +217,7 @@ class SubtaskEntity extends Equatable {
     bool? isRequired,
     bool? isDone,
     DateTime? completedAt,
+    bool clearCompletedAt = false,
     String? notes,
   }) {
     return SubtaskEntity(
@@ -224,7 +225,7 @@ class SubtaskEntity extends Equatable {
       name: name ?? this.name,
       isRequired: isRequired ?? this.isRequired,
       isDone: isDone ?? this.isDone,
-      completedAt: completedAt ?? this.completedAt,
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       notes: notes ?? this.notes,
     );
   }

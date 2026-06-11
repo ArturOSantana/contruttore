@@ -12,6 +12,7 @@ import 'package:contruttore/features/home/domain/entities/next_action_entity.dar
 import 'package:contruttore/features/home/domain/entities/financial_summary_entity.dart';
 import 'package:contruttore/features/home/domain/entities/alert_entity.dart';
 import 'package:contruttore/features/home/domain/entities/weather_entity.dart';
+import 'package:contruttore/features/home/presentation/widgets/reform_health_card.dart';
 import 'package:contruttore/core/utils/currency_utils.dart';
 
 /// Tela Home - Hub central do aplicativo
@@ -78,6 +79,11 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     _buildGreeting(state.data),
                     SizedBox(height: AppSpacing.lg),
+                    // Card de Saúde da Reforma
+                    if (state.data.healthScore != null) ...[
+                      ReformHealthCard(healthScore: state.data.healthScore!),
+                      SizedBox(height: AppSpacing.lg),
+                    ],
                     if (state.data.nextAction != null) ...[
                       _buildNextActionCard(state.data.nextAction!),
                       SizedBox(height: AppSpacing.lg),

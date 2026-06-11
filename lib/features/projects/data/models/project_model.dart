@@ -16,6 +16,8 @@ class ProjectModel extends ProjectEntity {
     super.propertyValue,
     required super.currentSituation,
     super.plannedMoveInDate,
+    super.mainPriority,
+    super.criticalItems,
     required super.createdAt,
   });
 
@@ -40,6 +42,10 @@ class ProjectModel extends ProjectEntity {
       plannedMoveInDate: map['plannedMoveInDate'] != null
           ? (map['plannedMoveInDate'] as Timestamp).toDate()
           : null,
+      mainPriority: map['mainPriority'] as String?,
+      criticalItems: map['criticalItems'] != null
+          ? List<String>.from(map['criticalItems'] as List)
+          : const [],
       createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }
@@ -61,6 +67,8 @@ class ProjectModel extends ProjectEntity {
       'plannedMoveInDate': plannedMoveInDate != null
           ? Timestamp.fromDate(plannedMoveInDate!)
           : null,
+      'mainPriority': mainPriority,
+      'criticalItems': criticalItems,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -80,6 +88,8 @@ class ProjectModel extends ProjectEntity {
       propertyValue: entity.propertyValue,
       currentSituation: entity.currentSituation,
       plannedMoveInDate: entity.plannedMoveInDate,
+      mainPriority: entity.mainPriority,
+      criticalItems: entity.criticalItems,
       createdAt: entity.createdAt,
     );
   }

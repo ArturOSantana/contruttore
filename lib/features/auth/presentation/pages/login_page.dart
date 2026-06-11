@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage>
             if (state.user.currentProjectId != null) {
               context.go(RouteNames.home);
             } else {
-              context.go(RouteNames.onboarding);
+              context.go(RouteNames.conversationalWelcome);
             }
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(

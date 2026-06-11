@@ -36,10 +36,10 @@ class _RegisterPageState extends State<RegisterPage> {
   void _handleRegister() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthCubit>().register(
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+            _nameController.text.trim(),
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
     }
   }
 
@@ -58,8 +58,8 @@ class _RegisterPageState extends State<RegisterPage> {
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Após registro, vai para onboarding
-            context.go(RouteNames.onboarding);
+            // Após registro, vai para onboarding conversacional
+            context.go(RouteNames.conversationalWelcome);
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
