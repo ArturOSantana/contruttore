@@ -1,5 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
+import '../../../installments/domain/repositories/installment_repository.dart';
+import '../../../shopping/domain/repositories/shopping_repository.dart';
 import '../entities/milestone_entity.dart';
 import '../entities/reform_calendar_entity.dart';
 import '../entities/reform_map_entity.dart';
@@ -7,14 +9,26 @@ import '../entities/reform_map_entity.dart';
 /// Serviço que detecta e gera eventos do calendário da reforma
 ///
 /// Analisa o estado da reforma e gera eventos automaticamente:
-/// - Pagamentos pendentes
-/// - Entregas agendadas
+/// - Pagamentos pendentes (DADOS REAIS do Firestore)
+/// - Entregas agendadas (DADOS REAIS do Firestore)
+/// - Compras planejadas (DADOS REAIS do Firestore)
 /// - Início e fim de fases
 /// - Marcos importantes
 @injectable
 class CalendarEventsDetector {
-  /// Detecta todos os eventos do calendário
-  ReformCalendarEntity detect(ReformMapEntity reformMap) {
+  final InstallmentRepository _installmentRepository;
+  final ShoppingRepository _shoppingRepository;
+
+  CalendarEventsDetector(
+    this._installmentRepository,
+    this._shoppingRepository,
+  );
+
+  /// Detecta todos os eventos do calendário (AGORA ASSÍNCRONO)
+  Future<ReformCalendarEntity> detect(
+    ReformMapEntity reformMap,
+    String projectId,
+  ) async {
     final allEvents = <CalendarEventEntity>[];
 
     // Detecta eventos de fases
@@ -22,6 +36,14 @@ class CalendarEventsDetector {
 
     // Detecta eventos de marcos
     allEvents.addAll(_detectMilestoneEvents(reformMap));
+
+    // Detecta eventos de pagamentos REAIS do Firestore
+    final paymentEvents = await _detectPaymentEvents(projectId);
+    allEvents.addAll(paymentEvents);
+
+    // Detecta eventos de compras REAIS do Firestore
+    final shoppingEvents = await _detectShoppingEvents(projectId);
+    allEvents.addAll(shoppingEvents);
 
     // Ordena eventos por data
     allEvents.sort((a, b) => a.date.compareTo(b.date));
@@ -214,6 +236,145 @@ class CalendarEventsDetector {
     }
 
     return null;
+  }
+
+  /// Detecta eventos de pagamentos reais do Firestore
+  Future<List<CalendarEventEntity>> _detectPaymentEvents(
+      String projectId) async {
+    final events = <CalendarEventEntity>[];
+
+    final installmentsResult =
+        await _installmentRepository.getInstallments(projectId);
+
+    await installmentsResult.fold(
+      (failure) async => null,
+      (installments) async {
+        for (final installment in installments) {
+          for (final payment in installment.payments) {
+            // Apenas pagamentos não pagos
+            if (!payment.isPaid) {
+              // Determina prioridade baseada na data de vencimento
+              final daysUntilDue =
+                  payment.dueDate.difference(DateTime.now()).inDays;
+              EventPriority priority;
+
+              if (daysUntilDue < 0) {
+                priority = EventPriority.critical; // Atrasado
+              } else if (daysUntilDue <= 3) {
+                priority = EventPriority.high; // Vence em até 3 dias
+              } else if (daysUntilDue <= 7) {
+                priority = EventPriority.medium; // Vence em até 7 dias
+              } else {
+                priority = EventPriority.low; // Vence em mais de 7 dias
+              }
+
+              events.add(
+                CalendarEventEntity(
+                  id: 'payment_${installment.id}_${payment.number}',
+                  title: 'Pagamento: ${installment.supplierName}',
+                  description:
+                      'Parcela ${payment.number}/${installment.totalInstallments} - R\$ ${payment.amount.toStringAsFixed(2)}',
+                  date: payment.dueDate,
+                  type: CalendarEventType.payment,
+                  priority: priority,
+                  isCompleted: false,
+                  relatedId: installment.id,
+                  relatedType: 'installment',
+                  icon: '💰',
+                  color: priority == EventPriority.critical
+                      ? '#F44336'
+                      : '#2196F3',
+                ),
+              );
+            }
+          }
+        }
+      },
+    );
+
+    return events;
+  }
+
+  /// Detecta eventos de compras reais do Firestore
+  Future<List<CalendarEventEntity>> _detectShoppingEvents(
+      String projectId) async {
+    final events = <CalendarEventEntity>[];
+
+    final shoppingResult =
+        await _shoppingRepository.getShoppingItems(projectId);
+
+    await shoppingResult.fold(
+      (failure) async => null,
+      (items) async {
+        for (final item in items) {
+          // Compras realizadas recentemente (últimos 7 dias)
+          if (item.isPurchased && item.purchaseDate != null) {
+            final daysSincePurchase =
+                DateTime.now().difference(item.purchaseDate!).inDays;
+
+            // Apenas compras dos últimos 7 dias
+            if (daysSincePurchase <= 7) {
+              events.add(
+                CalendarEventEntity(
+                  id: 'purchase_${item.id}',
+                  title: 'Comprado: ${item.name}',
+                  description:
+                      'Qtd: ${item.quantity} ${item.unit}${item.store != null ? ' - ${item.store}' : ''}',
+                  date: item.purchaseDate!,
+                  type: CalendarEventType.delivery,
+                  priority: EventPriority.low,
+                  isCompleted: true,
+                  relatedId: item.id,
+                  relatedType: 'shopping',
+                  icon: '✅',
+                  color: '#4CAF50',
+                ),
+              );
+            }
+          }
+
+          // Compras parceladas - mostra primeira parcela
+          if (item.isPurchased &&
+              item.isInstallment &&
+              item.firstPaymentDate != null) {
+            final daysUntilPayment =
+                item.firstPaymentDate!.difference(DateTime.now()).inDays;
+
+            // Apenas se a primeira parcela ainda não venceu
+            if (daysUntilPayment >= 0) {
+              EventPriority priority;
+
+              if (daysUntilPayment <= 3) {
+                priority = EventPriority.high;
+              } else if (daysUntilPayment <= 7) {
+                priority = EventPriority.medium;
+              } else {
+                priority = EventPriority.low;
+              }
+
+              events.add(
+                CalendarEventEntity(
+                  id: 'installment_purchase_${item.id}',
+                  title: 'Parcela: ${item.name}',
+                  description:
+                      '${item.installments}x de R\$ ${(item.actualPrice ?? 0).toStringAsFixed(2)}${item.store != null ? ' - ${item.store}' : ''}',
+                  date: item.firstPaymentDate!,
+                  type: CalendarEventType.payment,
+                  priority: priority,
+                  isCompleted: false,
+                  relatedId: item.id,
+                  relatedType: 'shopping_installment',
+                  icon: '💳',
+                  color: '#2196F3',
+                ),
+              );
+            }
+          }
+        }
+      },
+    );
+
+    return events;
   }
 }
 

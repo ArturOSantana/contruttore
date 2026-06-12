@@ -3,17 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/router/route_names.dart';
 import '../../domain/entities/next_action_entity.dart';
+import '../../domain/entities/next_phase_preparation_entity.dart';
 import '../cubit/reform_map_cubit.dart';
 import '../cubit/reform_map_state.dart';
 import '../widgets/current_phase_widget.dart';
 import '../widgets/health_score_widget.dart';
-import '../widgets/milestones_card.dart';
 import '../widgets/move_in_distance_card.dart';
 import '../widgets/move_in_mode_card.dart';
 import '../widgets/next_action_widget.dart';
 import '../widgets/next_phase_preparation_card.dart';
 import '../widgets/pending_decisions_card.dart';
 import '../widgets/phase_overview_widget.dart';
+import '../widgets/phase_progress_card.dart';
 import '../widgets/problems_list_widget.dart';
 import '../widgets/reform_calendar_card.dart';
 import '../widgets/reform_week_card.dart';
@@ -215,34 +216,37 @@ class _ReformMapPageState extends State<ReformMapPage> {
                       if (reformMap.upcomingPurchases.isNotEmpty)
                         const SizedBox(height: 16),
 
-                      // Preparação da Próxima Etapa
-                      if (reformMap.nextPhasePreparation != null)
-                        NextPhasePreparationCard(
-                          preparation: reformMap.nextPhasePreparation!,
+                      // Progresso da Fase Atual (NOVO - Usa dados reais!)
+                      if (reformMap.currentPhase != null &&
+                          reformMap.phasesAnalysis
+                              .containsKey(reformMap.currentPhase!.id))
+                        PhaseProgressCard(
+                          phase: reformMap.currentPhase!,
+                          analysis: reformMap
+                              .phasesAnalysis[reformMap.currentPhase!.id]!,
+                          onTap: () {
+                            _navigateToPhaseDetails(
+                              context,
+                              reformMap.currentPhase!.id,
+                            );
+                          },
                         ),
-                      if (reformMap.nextPhasePreparation != null)
+                      if (reformMap.currentPhase != null &&
+                          reformMap.phasesAnalysis
+                              .containsKey(reformMap.currentPhase!.id))
                         const SizedBox(height: 24),
 
                       // ═══════════════════════════════════════════════════
                       // 🎯 NÍVEL 5: PROGRESSO - CONQUISTAS (Verde)
                       // ═══════════════════════════════════════════════════
 
-                      // Marcos da Reforma
-                      if (reformMap.milestones.isNotEmpty)
-                        MilestonesCard(
-                          milestones: reformMap.milestones,
-                        ),
-                      if (reformMap.milestones.isNotEmpty)
-                        const SizedBox(height: 16),
-
-                      // Modo Mudança (quando ativo)
-                      if (reformMap.moveInMode != null &&
-                          reformMap.moveInMode!.isActive)
+                      // Modo Mudança (quando ativo) - Agora com dados reais do Firestore
+                      if (reformMap.moveInDistance != null &&
+                          reformMap.moveInDistance!.daysRemaining <= 90)
                         MoveInModeCard(
-                          moveInMode: reformMap.moveInMode!,
-                          onTaskTap: () {
-                            // TODO: Navegar para checklist completo
-                          },
+                          daysUntilMoveIn:
+                              reformMap.moveInDistance!.daysRemaining,
+                          projectId: widget.projectId,
                         ),
                       if (reformMap.moveInMode != null &&
                           reformMap.moveInMode!.isActive)
@@ -461,6 +465,253 @@ class _ReformMapPageState extends State<ReformMapPage> {
     // Navegar para a página de reportar problema
     context.push(
       '${RouteNames.reportProblem}?projectId=${widget.projectId}',
+    );
+  }
+
+  void _showPreparationChecklist(
+    BuildContext context,
+    NextPhasePreparationEntity preparation,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.orange.shade400,
+                            Colors.deepOrange.shade600,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.rocket_launch,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Checklist de Preparação',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            preparation.nextPhaseName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Checklist
+              Expanded(
+                child: preparation.checklist.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 64,
+                              color: Colors.green[300],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Tudo pronto!',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Você está preparado para começar',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: preparation.checklist.length,
+                        itemBuilder: (context, index) {
+                          final item = preparation.checklist[index];
+                          return _buildChecklistItem(item);
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChecklistItem(PreparationItemEntity item) {
+    IconData categoryIcon;
+    Color categoryColor;
+
+    switch (item.category) {
+      case PreparationCategory.professional:
+        categoryIcon = Icons.person;
+        categoryColor = Colors.blue;
+        break;
+      case PreparationCategory.purchase:
+        categoryIcon = Icons.shopping_cart;
+        categoryColor = Colors.green;
+        break;
+      case PreparationCategory.decision:
+        categoryIcon = Icons.lightbulb;
+        categoryColor = Colors.orange;
+        break;
+      case PreparationCategory.document:
+        categoryIcon = Icons.description;
+        categoryColor = Colors.purple;
+        break;
+      case PreparationCategory.approval:
+        categoryIcon = Icons.check_circle;
+        categoryColor = Colors.teal;
+        break;
+      case PreparationCategory.measurement:
+        categoryIcon = Icons.straighten;
+        categoryColor = Colors.indigo;
+        break;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: categoryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            categoryIcon,
+            color: categoryColor,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          item.title,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            decoration: item.isDone ? TextDecoration.lineThrough : null,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(item.description),
+            if (item.tip != null && item.tip!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.amber.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.tips_and_updates,
+                      size: 16,
+                      color: Colors.amber.shade700,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item.tip!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.amber.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        trailing: item.priority == PreparationPriority.critical
+            ? Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: Colors.red.shade200,
+                  ),
+                ),
+                child: Text(
+                  'CRÍTICO',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              )
+            : null,
+        isThreeLine: true,
+      ),
     );
   }
 }

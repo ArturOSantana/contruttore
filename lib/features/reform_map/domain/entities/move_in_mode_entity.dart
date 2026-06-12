@@ -114,10 +114,11 @@ class MoveInTaskEntity extends Equatable {
 
 /// Categoria de tarefa de mudança
 enum MoveInTaskCategory {
+  essentials, // Essenciais (cama, geladeira, fogão)
+  utilities, // Serviços (água, luz, gás, internet)
   cleaning, // Limpeza
   inspection, // Vistoria
   documentation, // Documentação
-  utilities, // Serviços (água, luz, gás)
   moving, // Mudança
   decoration, // Decoração
 }
@@ -125,14 +126,16 @@ enum MoveInTaskCategory {
 extension MoveInTaskCategoryExtension on MoveInTaskCategory {
   String get label {
     switch (this) {
+      case MoveInTaskCategory.essentials:
+        return 'Essenciais';
+      case MoveInTaskCategory.utilities:
+        return 'Serviços';
       case MoveInTaskCategory.cleaning:
         return 'Limpeza';
       case MoveInTaskCategory.inspection:
         return 'Vistoria';
       case MoveInTaskCategory.documentation:
         return 'Documentação';
-      case MoveInTaskCategory.utilities:
-        return 'Serviços';
       case MoveInTaskCategory.moving:
         return 'Mudança';
       case MoveInTaskCategory.decoration:
@@ -142,18 +145,20 @@ extension MoveInTaskCategoryExtension on MoveInTaskCategory {
 
   String get emoji {
     switch (this) {
-      case MoveInTaskCategory.cleaning:
-        return '';
-      case MoveInTaskCategory.inspection:
-        return '';
-      case MoveInTaskCategory.documentation:
-        return '';
+      case MoveInTaskCategory.essentials:
+        return '🛏️';
       case MoveInTaskCategory.utilities:
-        return '';
+        return '⚡';
+      case MoveInTaskCategory.cleaning:
+        return '🧹';
+      case MoveInTaskCategory.inspection:
+        return '🔍';
+      case MoveInTaskCategory.documentation:
+        return '📄';
       case MoveInTaskCategory.moving:
-        return '';
+        return '📦';
       case MoveInTaskCategory.decoration:
-        return '';
+        return '🎨';
     }
   }
 }

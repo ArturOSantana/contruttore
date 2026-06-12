@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
+import '../../../projects/domain/entities/project_entity.dart';
 import 'reform_health_entity.dart';
 import 'next_action_entity.dart';
 import 'problem_entity.dart';
@@ -11,6 +12,7 @@ import 'next_phase_preparation_entity.dart';
 import 'milestone_entity.dart';
 import 'reform_calendar_entity.dart';
 import 'reform_week_entity.dart';
+import 'phase_analysis_entity.dart';
 
 /// Entidade principal do Mapa da Reforma
 /// Agrega todas as informações necessárias para exibir o estado completo da reforma
@@ -35,6 +37,9 @@ class ReformMapEntity extends Equatable {
   final List<String> positiveMessages;
   final DateTime lastUpdated;
   final DateTime? plannedMoveInDate;
+  final PropertyType propertyType; // Tipo de imóvel para checklist dinâmico
+  final Map<String, PhaseAnalysisEntity>
+      phasesAnalysis; // Análise detalhada de cada fase
 
   const ReformMapEntity({
     required this.projectId,
@@ -56,6 +61,8 @@ class ReformMapEntity extends Equatable {
     required this.positiveMessages,
     required this.lastUpdated,
     this.plannedMoveInDate,
+    this.propertyType = PropertyType.house, // Padrão: casa
+    this.phasesAnalysis = const {}, // Análises de fases
   }) : problems = openProblems;
 
   /// Retorna a fase atual ou a próxima disponível
@@ -106,6 +113,7 @@ class ReformMapEntity extends Equatable {
     List<String>? positiveMessages,
     DateTime? lastUpdated,
     DateTime? plannedMoveInDate,
+    Map<String, PhaseAnalysisEntity>? phasesAnalysis,
   }) {
     return ReformMapEntity(
       projectId: projectId ?? this.projectId,
@@ -127,6 +135,7 @@ class ReformMapEntity extends Equatable {
       positiveMessages: positiveMessages ?? this.positiveMessages,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       plannedMoveInDate: plannedMoveInDate ?? this.plannedMoveInDate,
+      phasesAnalysis: phasesAnalysis ?? this.phasesAnalysis,
     );
   }
 
@@ -151,6 +160,7 @@ class ReformMapEntity extends Equatable {
         positiveMessages,
         lastUpdated,
         plannedMoveInDate,
+        phasesAnalysis,
       ];
 }
 

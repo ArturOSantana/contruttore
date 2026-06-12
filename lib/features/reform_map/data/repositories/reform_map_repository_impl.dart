@@ -3,8 +3,8 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../../../projects/data/models/phase_model.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
+import '../../../projects/domain/entities/project_entity.dart';
 import '../../../../core/error/failures.dart';
-import '../../../projects/domain/entities/phase_entity.dart';
 import '../../domain/entities/next_action_entity.dart';
 import '../../domain/entities/next_step_preparation_entity.dart';
 import '../../domain/entities/problem_entity.dart';
@@ -115,6 +115,14 @@ class ReformMapRepositoryImpl implements ReformMapRepository {
           ? (projectData['plannedMoveInDate'] as Timestamp).toDate()
           : null;
 
+      // Buscar tipo de propriedade
+      final propertyType = projectData['propertyType'] != null
+          ? PropertyType.values.firstWhere(
+              (e) => e.name == projectData['propertyType'],
+              orElse: () => PropertyType.house,
+            )
+          : PropertyType.house;
+
       final reformMap = ReformMapModel(
         projectId: projectId,
         phases: phases.cast<PhaseEntity>(),
@@ -128,6 +136,7 @@ class ReformMapRepositoryImpl implements ReformMapRepository {
             _generatePositiveMessages(progress, financial, problems),
         lastUpdated: DateTime.now(),
         plannedMoveInDate: plannedMoveInDate,
+        propertyType: propertyType,
       );
 
       return Right(reformMap);
@@ -546,26 +555,41 @@ class ReformMapRepositoryImpl implements ReformMapRepository {
             ? HealthLevel.attention
             : HealthLevel.critical;
 
-    // Gerar mensagem amigável
-    final message = _getHealthMessage(score, problems.isEmpty);
+    // Gerar mensagem amigável baseada nos dados reais
+    final message = _getHealthMessage(
+      score,
+      deadlineScore,
+      budgetScore,
+      problemsScore,
+      tasksScore,
+      paymentsScore,
+    );
 
-    // Gerar lista de issues
-    final issues = <String>[];
-    if (problems.isNotEmpty) {
-      issues.add('${problems.length} problema(s) ativo(s)');
-    }
-    if (score < 80) {
-      issues.add('Alguns pontos precisam de atenção');
-    }
+    // Gerar lista de issues baseada nos dados reais
+    final issues = _generateIssues(
+      deadlineScore,
+      budgetScore,
+      problemsScore,
+      tasksScore,
+      paymentsScore,
+      problems,
+      overdueCount,
+      totalBudget,
+      totalSpent,
+      totalPending,
+      estimatedEndDate,
+    );
 
-    // Gerar lista de positives
-    final positives = <String>[];
-    if (problems.isEmpty) {
-      positives.add('Nenhum problema ativo');
-    }
-    if (score >= 80) {
-      positives.add('Reforma está no caminho certo');
-    }
+    // Gerar lista de positives baseada nos dados reais
+    final positives = _generatePositives(
+      deadlineScore,
+      budgetScore,
+      problemsScore,
+      tasksScore,
+      paymentsScore,
+      completedSubtasks,
+      totalSubtasks,
+    );
 
     return ReformHealthModel(
       score: score,
@@ -601,16 +625,168 @@ class ReformMapRepositoryImpl implements ReformMapRepository {
     );
   }
 
-  String _getHealthMessage(double score, bool noIssues) {
-    if (score >= 80 && noIssues) {
-      return 'Sua reforma está sob controle';
+  String _getHealthMessage(
+    double score,
+    double deadlineScore,
+    double budgetScore,
+    double problemsScore,
+    double tasksScore,
+    double paymentsScore,
+  ) {
+    // Identificar o fator mais crítico
+    final factors = {
+      'prazo': deadlineScore,
+      'orçamento': budgetScore,
+      'problemas': problemsScore,
+      'tarefas': tasksScore,
+      'pagamentos': paymentsScore,
+    };
+
+    final lowestFactor =
+        factors.entries.reduce((a, b) => a.value < b.value ? a : b);
+
+    if (score >= 90) {
+      return 'Excelente! Sua reforma está indo muito bem';
     } else if (score >= 80) {
-      return 'Sua reforma está indo bem';
+      return 'Tudo está no caminho certo. Continue assim!';
+    } else if (score >= 70) {
+      if (lowestFactor.key == 'prazo') {
+        return 'Atenção ao cronograma para manter o prazo';
+      } else if (lowestFactor.key == 'orçamento') {
+        return 'Fique atento aos gastos para não estourar o orçamento';
+      } else if (lowestFactor.key == 'problemas') {
+        return 'Resolva os problemas pendentes para evitar atrasos';
+      } else if (lowestFactor.key == 'pagamentos') {
+        return 'Organize os pagamentos pendentes';
+      } else {
+        return 'Conclua as tarefas pendentes para avançar';
+      }
     } else if (score >= 50) {
-      return 'Existem alguns pontos para acompanhar';
+      return 'Alguns pontos precisam de atenção urgente';
     } else {
-      return 'Existem pendências que podem impactar prazo e custo';
+      return 'Ação imediata necessária para evitar problemas maiores';
     }
+  }
+
+  List<String> _generateIssues(
+    double deadlineScore,
+    double budgetScore,
+    double problemsScore,
+    double tasksScore,
+    double paymentsScore,
+    List<ProblemEntity> problems,
+    int overdueCount,
+    double totalBudget,
+    double totalSpent,
+    double totalPending,
+    DateTime? estimatedEndDate,
+  ) {
+    final issues = <String>[];
+
+    // Issues de prazo
+    if (deadlineScore < 70 && estimatedEndDate != null) {
+      final daysRemaining = estimatedEndDate.difference(DateTime.now()).inDays;
+      if (daysRemaining < 0) {
+        issues.add('Obra atrasada em ${daysRemaining.abs()} dias');
+      } else if (daysRemaining < 7) {
+        issues.add('Apenas $daysRemaining dias até o prazo final');
+      } else if (daysRemaining < 15) {
+        issues.add('Prazo se aproximando: $daysRemaining dias restantes');
+      }
+    }
+
+    // Issues de orçamento
+    if (budgetScore < 70 && totalBudget > 0) {
+      final totalCommitted = totalSpent + totalPending;
+      final percentageUsed = (totalCommitted / totalBudget) * 100;
+      if (percentageUsed > 100) {
+        final overBudget = totalCommitted - totalBudget;
+        issues
+            .add('Orçamento estourado em R\$ ${overBudget.toStringAsFixed(2)}');
+      } else if (percentageUsed > 90) {
+        final remaining = totalBudget - totalCommitted;
+        issues.add(
+            'Apenas R\$ ${remaining.toStringAsFixed(2)} restantes no orçamento');
+      } else if (percentageUsed > 80) {
+        issues.add(
+            '${percentageUsed.toStringAsFixed(0)}% do orçamento já comprometido');
+      }
+    }
+
+    // Issues de problemas
+    if (problems.isNotEmpty) {
+      final criticalCount =
+          problems.where((p) => p.severity == ProblemSeverity.critical).length;
+      final highCount =
+          problems.where((p) => p.severity == ProblemSeverity.high).length;
+
+      if (criticalCount > 0) {
+        issues.add(
+            '$criticalCount problema(s) crítico(s) requer atenção imediata');
+      } else if (highCount > 0) {
+        issues.add('$highCount problema(s) de alta prioridade');
+      } else {
+        issues.add('${problems.length} problema(s) ativo(s)');
+      }
+    }
+
+    // Issues de tarefas
+    if (tasksScore < 70) {
+      issues.add(
+          'Muitas tarefas pendentes (${(100 - tasksScore).toStringAsFixed(0)}% incompletas)');
+    }
+
+    // Issues de pagamentos
+    if (overdueCount > 0) {
+      issues.add('$overdueCount pagamento(s) atrasado(s)');
+    }
+
+    return issues;
+  }
+
+  List<String> _generatePositives(
+    double deadlineScore,
+    double budgetScore,
+    double problemsScore,
+    double tasksScore,
+    double paymentsScore,
+    int completedSubtasks,
+    int totalSubtasks,
+  ) {
+    final positives = <String>[];
+
+    // Positivos de prazo
+    if (deadlineScore >= 85) {
+      positives.add('Cronograma dentro do prazo');
+    }
+
+    // Positivos de orçamento
+    if (budgetScore >= 80) {
+      positives.add('Orçamento sob controle');
+    }
+
+    // Positivos de problemas
+    if (problemsScore >= 90) {
+      positives.add('Nenhum problema crítico identificado');
+    }
+
+    // Positivos de tarefas
+    if (tasksScore >= 80 && totalSubtasks > 0) {
+      positives
+          .add('${completedSubtasks} de ${totalSubtasks} tarefas concluídas');
+    }
+
+    // Positivos de pagamentos
+    if (paymentsScore >= 90) {
+      positives.add('Todos os pagamentos em dia');
+    }
+
+    // Se não houver positivos específicos, adicionar mensagem genérica
+    if (positives.isEmpty) {
+      positives.add('Continue trabalhando para melhorar a saúde da reforma');
+    }
+
+    return positives;
   }
 
   Future<NextActionModel?> _calculateNextAction(

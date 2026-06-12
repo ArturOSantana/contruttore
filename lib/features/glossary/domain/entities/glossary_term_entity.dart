@@ -7,7 +7,13 @@ enum GlossaryCategory {
   installations('Instalações'),
   finishing('Acabamento'),
   financial('Financeiro'),
-  condominium('Condomínio');
+  condominium('Condomínio'),
+  safety('Segurança e Saúde'),
+  sustainability('Sustentabilidade'),
+  maintenance('Manutenção'),
+  technology('Tecnologia e Automação'),
+  landscaping('Paisagismo'),
+  accessibility('Acessibilidade');
 
   final String label;
   const GlossaryCategory(this.label);
@@ -41,17 +47,17 @@ class GlossaryTermEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    term,
-    definition,
-    whyItMatters,
-    commonMistake,
-    relatedPhase,
-    category,
-    relatedTerms,
-    createdAt,
-    updatedAt,
-  ];
+        id,
+        term,
+        definition,
+        whyItMatters,
+        commonMistake,
+        relatedPhase,
+        category,
+        relatedTerms,
+        createdAt,
+        updatedAt,
+      ];
 
   /// Retorna o termo em formato de busca (lowercase, sem acentos)
   String get searchableTerm => term.toLowerCase();

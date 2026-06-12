@@ -1,29 +1,46 @@
 import 'package:injectable/injectable.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
+import '../../../shopping/domain/repositories/shopping_repository.dart';
+import '../../../installments/domain/repositories/installment_repository.dart';
+import '../../../problems/domain/repositories/problem_repository.dart';
 import '../entities/move_in_mode_entity.dart';
 
 /// Serviço que gera o Modo Mudança
 ///
 /// Ativa quando a reforma está próxima da conclusão
 /// e gera checklist de preparação para mudança
+///
+/// Agora integrado com dados reais de compras, parcelas e problemas
 @injectable
 class MoveInModeGenerator {
+  final ShoppingRepository _shoppingRepository;
+  final InstallmentRepository _installmentRepository;
+  final ProblemRepository _problemRepository;
+
+  MoveInModeGenerator(
+    this._shoppingRepository,
+    this._installmentRepository,
+    this._problemRepository,
+  );
+
   /// Gera o modo mudança baseado no estado da reforma
-  MoveInModeEntity generate({
+  Future<MoveInModeEntity> generate({
+    required String projectId,
     required List<PhaseEntity> phases,
     required double overallProgress,
     DateTime? plannedMoveInDate,
-    required List<String> criticalPendingItems,
     List<String> userCriticalItems = const [],
-  }) {
+  }) async {
+    // Detecta pendências reais
+    final criticalPendingItems = await _detectRealPendingItems(projectId);
     // Calcula dias até a mudança
     final now = DateTime.now();
     final moveInDate = plannedMoveInDate ?? _estimateMoveInDate(phases, now);
     final daysUntilMoveIn = moveInDate.difference(now).inDays;
 
     // Determina se o modo está ativo
-    // Ativa quando: progresso >= 80% OU faltam <= 30 dias
-    final isActive = overallProgress >= 80 || daysUntilMoveIn <= 30;
+    // Ativa quando: progresso >= 80% OU faltam <= 90 dias (3 meses)
+    final isActive = overallProgress >= 80 || daysUntilMoveIn <= 90;
 
     // Gera tarefas de preparação
     final tasks = _generateTasks(
@@ -93,6 +110,145 @@ class MoveInModeGenerator {
     // Adiciona tarefas personalizadas baseadas nos itens críticos do usuário
     tasks
         .addAll(_generatePersonalizedTasks(userCriticalItems, daysUntilMoveIn));
+    // ESSENCIAIS - Itens básicos para morar (PRIORIDADE MÁXIMA)
+    if (daysUntilMoveIn <= 60) {
+      // 2 meses antes
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'essentials_1',
+          title: 'Comprar cama e colchão',
+          description: 'Item essencial para o primeiro dia',
+          category: MoveInTaskCategory.essentials,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 30)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'essentials_2',
+          title: 'Comprar geladeira',
+          description: 'Essencial para conservar alimentos',
+          category: MoveInTaskCategory.essentials,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 25)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'essentials_3',
+          title: 'Comprar fogão',
+          description: 'Necessário para preparar refeições',
+          category: MoveInTaskCategory.essentials,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 25)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'essentials_4',
+          title: 'Comprar máquina de lavar',
+          description: 'Importante para o dia a dia',
+          category: MoveInTaskCategory.essentials,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 20)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'essentials_5',
+          title: 'Comprar micro-ondas',
+          description: 'Facilita o preparo de refeições',
+          category: MoveInTaskCategory.essentials,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 15)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'essentials_6',
+          title: 'Comprar chuveiro elétrico',
+          description: 'Se não tiver aquecedor a gás',
+          category: MoveInTaskCategory.essentials,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 20)),
+        ),
+      );
+    }
+
+    // SERVIÇOS - Água, Luz, Gás, Internet (CRÍTICO)
+    if (daysUntilMoveIn <= 45) {
+      // 1.5 mês antes
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'utilities_water',
+          title: 'Transferir conta de água',
+          description: 'Transferir para seu nome ou solicitar nova ligação',
+          category: MoveInTaskCategory.utilities,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 30)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'utilities_power',
+          title: 'Transferir conta de luz',
+          description: 'Transferir para seu nome ou solicitar nova ligação',
+          category: MoveInTaskCategory.utilities,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 30)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'utilities_gas',
+          title: 'Contratar gás (se aplicável)',
+          description: 'Gás encanado ou botijão',
+          category: MoveInTaskCategory.utilities,
+          isCompleted: false,
+          isCritical: false,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 25)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'utilities_internet',
+          title: 'Contratar internet',
+          description: 'Agendar instalação com antecedência (pode demorar)',
+          category: MoveInTaskCategory.utilities,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 20)),
+        ),
+      );
+
+      tasks.add(
+        MoveInTaskEntity(
+          id: 'utilities_activate',
+          title: 'Ativar energia elétrica',
+          description: 'Garantir que a energia esteja funcionando',
+          category: MoveInTaskCategory.utilities,
+          isCompleted: false,
+          isCritical: true,
+          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 15)),
+        ),
+      );
+    }
 
     // Limpeza pós-obra
     if (overallProgress >= 90) {
@@ -160,33 +316,6 @@ class MoveInModeGenerator {
         dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
       ),
     );
-
-    // Serviços (água, luz, gás)
-    if (daysUntilMoveIn <= 15) {
-      tasks.add(
-        MoveInTaskEntity(
-          id: 'utilities_1',
-          title: 'Transferir contas',
-          description: 'Transferir água, luz e gás para seu nome',
-          category: MoveInTaskCategory.utilities,
-          isCompleted: false,
-          isCritical: true,
-          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 7)),
-        ),
-      );
-
-      tasks.add(
-        MoveInTaskEntity(
-          id: 'utilities_2',
-          title: 'Ativar internet',
-          description: 'Agendar instalação da internet',
-          category: MoveInTaskCategory.utilities,
-          isCompleted: false,
-          isCritical: false,
-          dueDate: DateTime.now().add(Duration(days: daysUntilMoveIn - 5)),
-        ),
-      );
-    }
 
     // Mudança
     if (daysUntilMoveIn <= 20) {
@@ -480,6 +609,59 @@ class MoveInModeGenerator {
     }
 
     return tasks;
+  }
+
+  /// Detecta pendências críticas reais baseadas em dados do Firestore
+  Future<List<String>> _detectRealPendingItems(String projectId) async {
+    final pendingItems = <String>[];
+
+    // Buscar compras pendentes
+    final shoppingResult =
+        await _shoppingRepository.getShoppingItems(projectId);
+    await shoppingResult.fold(
+      (failure) async => null,
+      (items) async {
+        final pendingPurchases =
+            items.where((item) => !item.isPurchased).toList();
+        if (pendingPurchases.isNotEmpty) {
+          pendingItems.add('${pendingPurchases.length} compras pendentes');
+        }
+      },
+    );
+
+    // Buscar parcelas pendentes
+    final installmentsResult =
+        await _installmentRepository.getInstallments(projectId);
+    await installmentsResult.fold(
+      (failure) async => null,
+      (installments) async {
+        int overduePayments = 0;
+        for (final installment in installments) {
+          final overduePaymentsInInstallment = installment.payments
+              .where((p) => !p.isPaid && p.dueDate.isBefore(DateTime.now()))
+              .length;
+          overduePayments += overduePaymentsInInstallment;
+        }
+        if (overduePayments > 0) {
+          pendingItems.add('$overduePayments parcelas atrasadas');
+        }
+      },
+    );
+
+    // Buscar problemas críticos abertos
+    final problemsResult = await _problemRepository.getProblems(projectId);
+    await problemsResult.fold(
+      (failure) async => null,
+      (problems) async {
+        final criticalProblems =
+            problems.where((p) => p.isOpen && p.isCritical).toList();
+        if (criticalProblems.isNotEmpty) {
+          pendingItems.add('${criticalProblems.length} problemas críticos');
+        }
+      },
+    );
+
+    return pendingItems;
   }
 }
 

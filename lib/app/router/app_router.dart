@@ -24,6 +24,7 @@ import '../../features/projects/data/models/phase_model.dart';
 import '../../features/reform_map/presentation/pages/reform_map_page.dart';
 import '../../features/reform_map/presentation/pages/report_problem_page.dart';
 import '../../features/reform_map/presentation/cubit/reform_map_cubit.dart';
+import '../../features/move_in/presentation/pages/move_in_page.dart';
 import '../../features/alerts/presentation/cubit/alerts_cubit.dart';
 import '../../features/shopping/presentation/cubit/shopping_cubit.dart';
 import '../../features/suppliers/presentation/cubit/suppliers_cubit.dart';
@@ -172,6 +173,16 @@ class AppRouter {
               phaseName: phaseName,
             ),
           );
+        },
+      ),
+
+      // Move-In Mode (Modo Mudança)
+      GoRoute(
+        path: '${RouteNames.moveIn}/:projectId',
+        name: 'move-in',
+        builder: (context, state) {
+          final projectId = state.pathParameters['projectId'] ?? '';
+          return MoveInPage(projectId: projectId);
         },
       ),
 

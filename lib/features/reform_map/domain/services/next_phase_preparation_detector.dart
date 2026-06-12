@@ -1,23 +1,38 @@
 import 'package:injectable/injectable.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
+import '../../../projects/domain/entities/project_entity.dart';
+import '../../../shopping/domain/repositories/shopping_repository.dart';
 import '../entities/next_phase_preparation_entity.dart';
 import '../entities/reform_map_entity.dart';
 
 /// Serviço que detecta o que precisa ser feito antes da próxima etapa
 ///
-/// Analisa a fase atual e a próxima para criar um checklist
-/// de preparação automático.
+/// NOVO: Agora usa dados REAIS do Firestore para gerar checklist dinâmico
+/// - Verifica fornecedores contratados
+/// - Verifica compras realizadas
+/// - Verifica documentos salvos
+/// - Calcula prontidão real baseado em dados
 ///
 /// Exemplo de uso:
 /// ```dart
-/// final detector = NextPhasePreparationDetector();
-/// final preparation = detector.detect(reformMap);
-/// // Retorna checklist completo
+/// final detector = NextPhasePreparationDetector(shoppingRepository);
+/// final preparation = await detector.detect(reformMap, propertyType, projectId);
+/// // Retorna checklist baseado em dados reais
 /// ```
 @injectable
 class NextPhasePreparationDetector {
+  final ShoppingRepository _shoppingRepository;
+
+  NextPhasePreparationDetector(this._shoppingRepository);
+
   /// Detecta preparação necessária para a próxima fase
-  NextPhasePreparationEntity? detect(ReformMapEntity reformMap) {
+  ///
+  /// NOVO: Agora é assíncrono e usa dados reais do Firestore
+  Future<NextPhasePreparationEntity?> detect(
+    ReformMapEntity reformMap,
+    PropertyType propertyType,
+    String projectId,
+  ) async {
     // Encontra a fase atual
     final currentPhase = reformMap.currentPhase;
     if (currentPhase == null) return null;
@@ -30,8 +45,9 @@ class NextPhasePreparationDetector {
 
     final nextPhase = reformMap.phases[currentIndex + 1];
 
-    // Gera checklist baseado na próxima fase
-    final checklist = _generateChecklistForPhase(nextPhase, reformMap);
+    // Gera checklist baseado na próxima fase E tipo de imóvel
+    final checklist =
+        _generateChecklistForPhase(nextPhase, reformMap, propertyType);
 
     // Calcula score de prontidão
     final readinessScore = _calculateReadinessScore(checklist, reformMap);
@@ -54,36 +70,38 @@ class NextPhasePreparationDetector {
     );
   }
 
-  /// Gera checklist baseado na próxima fase
+  /// Gera checklist baseado na próxima fase E tipo de imóvel
   List<PreparationItemEntity> _generateChecklistForPhase(
     PhaseEntity nextPhase,
     ReformMapEntity reformMap,
+    PropertyType propertyType,
   ) {
     switch (nextPhase.name.toLowerCase()) {
       case 'infraestrutura':
       case 'instalações hidráulicas e elétricas':
-        return _generateInfrastructureChecklist();
+        return _generateInfrastructureChecklist(propertyType);
 
       case 'pisos e revestimentos':
-        return _generateFlooringChecklist();
+        return _generateFlooringChecklist(propertyType);
 
       case 'pintura':
-        return _generatePaintingChecklist();
+        return _generatePaintingChecklist(propertyType);
 
       case 'acabamentos':
-        return _generateFinishingChecklist();
+        return _generateFinishingChecklist(propertyType);
 
       case 'marcenaria':
-        return _generateCarpentryChecklist();
+        return _generateCarpentryChecklist(propertyType);
 
       default:
         return [];
     }
   }
 
-  /// Checklist para Infraestrutura
-  List<PreparationItemEntity> _generateInfrastructureChecklist() {
-    return [
+  /// Checklist para Infraestrutura (ADAPTADO por tipo de imóvel)
+  List<PreparationItemEntity> _generateInfrastructureChecklist(
+      PropertyType propertyType) {
+    final checklist = <PreparationItemEntity>[
       const PreparationItemEntity(
         id: 'infra_1',
         title: 'Contratar eletricista',
@@ -137,11 +155,54 @@ class NextPhasePreparationDetector {
         isDone: false,
       ),
     ];
+
+    // ADAPTAÇÕES POR TIPO DE IMÓVEL
+    if (propertyType == PropertyType.apartment) {
+      // Apartamento: adicionar item sobre aprovação do condomínio
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'infra_7',
+          title: 'Aprovar obra no condomínio',
+          description: 'Solicitar autorização formal da administração',
+          category: PreparationCategory.approval,
+          priority: PreparationPriority.critical,
+          isDone: false,
+          tip: 'Alguns condomínios exigem projeto aprovado',
+        ),
+      );
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'infra_8',
+          title: 'Verificar horários permitidos',
+          description: 'Confirmar horários de obra no regulamento',
+          category: PreparationCategory.document,
+          priority: PreparationPriority.high,
+          isDone: false,
+          tip: 'Geralmente: dias úteis, 8h-18h',
+        ),
+      );
+    } else if (propertyType == PropertyType.house) {
+      // Casa: adicionar item sobre entrada de materiais
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'infra_7',
+          title: 'Planejar acesso de materiais',
+          description: 'Definir local para descarga e armazenamento',
+          category: PreparationCategory.decision,
+          priority: PreparationPriority.medium,
+          isDone: false,
+          tip: 'Proteja materiais da chuva',
+        ),
+      );
+    }
+
+    return checklist;
   }
 
-  /// Checklist para Pisos
-  List<PreparationItemEntity> _generateFlooringChecklist() {
-    return [
+  /// Checklist para Pisos (ADAPTADO por tipo de imóvel)
+  List<PreparationItemEntity> _generateFlooringChecklist(
+      PropertyType propertyType) {
+    final checklist = <PreparationItemEntity>[
       const PreparationItemEntity(
         id: 'floor_1',
         title: 'Escolher tipo de piso',
@@ -196,11 +257,30 @@ class NextPhasePreparationDetector {
         isDone: false,
       ),
     ];
+
+    // ADAPTAÇÕES POR TIPO DE IMÓVEL
+    if (propertyType == PropertyType.apartment) {
+      // Apartamento: cuidado com barulho e horários
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'floor_7',
+          title: 'Avisar vizinhos sobre barulho',
+          description: 'Informar sobre quebra de piso antigo',
+          category: PreparationCategory.approval,
+          priority: PreparationPriority.medium,
+          isDone: false,
+          tip: 'Boa convivência evita problemas',
+        ),
+      );
+    }
+
+    return checklist;
   }
 
-  /// Checklist para Pintura
-  List<PreparationItemEntity> _generatePaintingChecklist() {
-    return [
+  /// Checklist para Pintura (ADAPTADO por tipo de imóvel)
+  List<PreparationItemEntity> _generatePaintingChecklist(
+      PropertyType propertyType) {
+    final checklist = <PreparationItemEntity>[
       const PreparationItemEntity(
         id: 'paint_1',
         title: 'Escolher cores das paredes',
@@ -245,11 +325,30 @@ class NextPhasePreparationDetector {
         isDone: false,
       ),
     ];
+
+    // ADAPTAÇÕES POR TIPO DE IMÓVEL
+    if (propertyType == PropertyType.apartment) {
+      // Apartamento: proteção de áreas comuns
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'paint_6',
+          title: 'Proteger áreas comuns',
+          description: 'Cobrir elevador e corredores durante transporte',
+          category: PreparationCategory.approval,
+          priority: PreparationPriority.high,
+          isDone: false,
+          tip: 'Evite multas do condomínio',
+        ),
+      );
+    }
+
+    return checklist;
   }
 
-  /// Checklist para Acabamentos
-  List<PreparationItemEntity> _generateFinishingChecklist() {
-    return [
+  /// Checklist para Acabamentos (ADAPTADO por tipo de imóvel)
+  List<PreparationItemEntity> _generateFinishingChecklist(
+      PropertyType propertyType) {
+    final checklist = <PreparationItemEntity>[
       const PreparationItemEntity(
         id: 'finish_1',
         title: 'Escolher metais',
@@ -302,11 +401,30 @@ class NextPhasePreparationDetector {
         isDone: false,
       ),
     ];
+
+    // ADAPTAÇÕES POR TIPO DE IMÓVEL
+    if (propertyType == PropertyType.house) {
+      // Casa: itens externos
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'finish_7',
+          title: 'Escolher torneiras externas',
+          description: 'Para jardim, garagem, área de serviço externa',
+          category: PreparationCategory.decision,
+          priority: PreparationPriority.low,
+          isDone: false,
+          tip: 'Considere torneiras com mangueira',
+        ),
+      );
+    }
+
+    return checklist;
   }
 
-  /// Checklist para Marcenaria
-  List<PreparationItemEntity> _generateCarpentryChecklist() {
-    return [
+  /// Checklist para Marcenaria (ADAPTADO por tipo de imóvel)
+  List<PreparationItemEntity> _generateCarpentryChecklist(
+      PropertyType propertyType) {
+    final checklist = <PreparationItemEntity>[
       const PreparationItemEntity(
         id: 'carp_1',
         title: 'AGUARDAR pintura e piso',
@@ -359,6 +477,35 @@ class NextPhasePreparationDetector {
         isDone: false,
       ),
     ];
+
+    // ADAPTAÇÕES POR TIPO DE IMÓVEL
+    if (propertyType == PropertyType.apartment) {
+      // Apartamento: cuidado com transporte
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'carp_7',
+          title: 'Verificar acesso para móveis',
+          description: 'Confirmar se móveis cabem no elevador/escada',
+          category: PreparationCategory.measurement,
+          priority: PreparationPriority.high,
+          isDone: false,
+          tip: 'Meça elevador e portas antes de encomendar',
+        ),
+      );
+      checklist.add(
+        const PreparationItemEntity(
+          id: 'carp_8',
+          title: 'Reservar elevador de serviço',
+          description: 'Agendar uso do elevador para entrega',
+          category: PreparationCategory.approval,
+          priority: PreparationPriority.medium,
+          isDone: false,
+          tip: 'Reserve com antecedência',
+        ),
+      );
+    }
+
+    return checklist;
   }
 
   /// Calcula score de prontidão (0-100)

@@ -732,6 +732,723 @@ final List<Map<String, dynamic>> glossarySeedData = [
     'category': 'condominium',
     'relatedTerms': ['Taxa de Condomínio', 'Assembleia'],
   },
+  // ========== SEGURANÇA (12 termos) ==========
+  {
+    'term': 'EPI',
+    'definition':
+        'Equipamento de Proteção Individual - conjunto de dispositivos de uso pessoal para proteger trabalhadores de riscos na obra.',
+    'whyItMatters':
+        'Obrigatório por lei e essencial para prevenir acidentes. Obra sem EPIs pode ser embargada e gerar multas pesadas.',
+    'commonMistake':
+        'Não fornecer EPIs adequados ou permitir trabalho sem equipamentos de proteção.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Capacete de Segurança',
+    'definition':
+        'EPI que protege a cabeça contra impactos de objetos em queda e choques elétricos.',
+    'whyItMatters':
+        'Previne traumatismos cranianos, principal causa de acidentes fatais em obras.',
+    'commonMistake':
+        'Usar capacete vencido, danificado ou não ajustado corretamente.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Cinto de Segurança',
+    'definition':
+        'EPI para trabalho em altura que prende o trabalhador a ponto de ancoragem, evitando quedas.',
+    'whyItMatters':
+        'Obrigatório para trabalhos acima de 2 metros. Previne quedas fatais.',
+    'commonMistake':
+        'Usar cinto sem ponto de ancoragem adequado ou não inspecionar antes do uso.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Andaime',
+    'definition':
+        'Estrutura temporária para trabalho em altura, com plataformas, guarda-corpos e escadas.',
+    'whyItMatters':
+        'Permite trabalho seguro em altura. Deve ser montado por profissional qualificado e inspecionado diariamente.',
+    'commonMistake':
+        'Usar andaime improvisado, sem guarda-corpo ou com sobrecarga.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Guarda-Corpo',
+    'definition':
+        'Proteção coletiva instalada em bordas de lajes, escadas e aberturas para prevenir quedas.',
+    'whyItMatters':
+        'Obrigatório em qualquer desnível acima de 2 metros. Protege todos os trabalhadores simultaneamente.',
+    'commonMistake':
+        'Não instalar guarda-corpo ou usar material inadequado que não suporta impacto.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Tela de Proteção',
+    'definition':
+        'Rede instalada em fachadas e aberturas para conter queda de materiais e pessoas.',
+    'whyItMatters':
+        'Protege pedestres e trabalhadores de objetos em queda. Obrigatória em obras urbanas.',
+    'commonMistake':
+        'Usar tela danificada ou não fixá-la adequadamente, perdendo eficácia.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Sinalização de Obra',
+    'definition':
+        'Placas, faixas e dispositivos que alertam sobre riscos e orientam circulação na obra.',
+    'whyItMatters':
+        'Previne acidentes alertando sobre perigos. Obrigatória e deve ser visível.',
+    'commonMistake':
+        'Não sinalizar adequadamente ou usar placas pequenas e ilegíveis.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Tapume',
+    'definition':
+        'Cerca que isola a obra da rua, protegendo pedestres e evitando invasões.',
+    'whyItMatters':
+        'Obrigatório em obras urbanas. Protege público e evita furtos de materiais.',
+    'commonMistake':
+        'Fazer tapume frágil ou com aberturas que permitem acesso não autorizado.',
+    'relatedPhase': 2,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Extintor de Incêndio',
+    'definition':
+        'Equipamento para combate inicial a princípios de incêndio, obrigatório em obras.',
+    'whyItMatters':
+        'Pode evitar que pequeno foco vire incêndio grande. Deve estar acessível e com carga válida.',
+    'commonMistake':
+        'Não ter extintores suficientes ou deixá-los vencidos e inacessíveis.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'CIPA',
+    'definition':
+        'Comissão Interna de Prevenção de Acidentes - grupo de trabalhadores que promove segurança na obra.',
+    'whyItMatters':
+        'Obrigatória em obras com mais de 20 trabalhadores. Reduz acidentes significativamente.',
+    'commonMistake':
+        'Não formar CIPA quando obrigatório ou não dar poder de atuação à comissão.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'NR-18',
+    'definition':
+        'Norma Regulamentadora que estabelece diretrizes de segurança e saúde no trabalho na construção civil.',
+    'whyItMatters':
+        'Lei que deve ser cumprida. Não seguir gera multas, embargos e responsabilização por acidentes.',
+    'commonMistake':
+        'Desconhecer ou ignorar requisitos da NR-18, expondo trabalhadores a riscos.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Primeiros Socorros',
+    'definition':
+        'Atendimento inicial a vítimas de acidentes antes da chegada de socorro especializado.',
+    'whyItMatters':
+        'Pode salvar vidas. Obra deve ter kit de primeiros socorros e pessoas treinadas.',
+    'commonMistake':
+        'Não ter kit completo ou ninguém treinado para atendimento emergencial.',
+    'relatedPhase': null,
+    'category': 'safety',
+    'relatedTerms': [],
+  },
+
+  // ========== SUSTENTABILIDADE (10 termos) ==========
+  {
+    'term': 'Captação de Água da Chuva',
+    'definition':
+        'Sistema que coleta, filtra e armazena água pluvial para usos não potáveis.',
+    'whyItMatters':
+        'Reduz consumo de água tratada em até 50%. Economia na conta e sustentabilidade.',
+    'commonMistake':
+        'Dimensionar cisterna muito pequena ou não separar usos potáveis de não potáveis.',
+    'relatedPhase': 9,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Energia Solar Fotovoltaica',
+    'definition':
+        'Sistema que converte luz solar em energia elétrica através de painéis fotovoltaicos.',
+    'whyItMatters':
+        'Reduz conta de luz em até 95%. Investimento se paga em 4-6 anos e valoriza imóvel.',
+    'commonMistake':
+        'Dimensionar sistema incorretamente ou instalar em telhado com sombreamento.',
+    'relatedPhase': 14,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Aquecedor Solar',
+    'definition':
+        'Sistema que usa energia solar para aquecer água, reduzindo consumo de energia elétrica ou gás.',
+    'whyItMatters':
+        'Reduz gasto com aquecimento de água em até 80%. Retorno do investimento em 2-3 anos.',
+    'commonMistake':
+        'Não dimensionar boiler adequadamente ou instalar sem backup para dias nublados.',
+    'relatedPhase': 9,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Isolamento Térmico',
+    'definition':
+        'Materiais e técnicas que reduzem troca de calor entre interior e exterior da edificação.',
+    'whyItMatters':
+        'Reduz necessidade de ar-condicionado e aquecimento, economizando energia e aumentando conforto.',
+    'commonMistake':
+        'Não isolar laje de cobertura ou usar materiais inadequados para o clima local.',
+    'relatedPhase': 8,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Telhado Verde',
+    'definition':
+        'Cobertura com camada de vegetação sobre impermeabilização, drenagem e substrato.',
+    'whyItMatters':
+        'Melhora isolamento térmico, retém água da chuva, reduz ilhas de calor e embeleza.',
+    'commonMistake':
+        'Não fazer impermeabilização adequada ou escolher plantas inadequadas para o clima.',
+    'relatedPhase': 8,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Materiais Reciclados',
+    'definition':
+        'Produtos de construção feitos total ou parcialmente com materiais reaproveitados.',
+    'whyItMatters':
+        'Reduz impacto ambiental e pode ser mais econômico. Exemplos: tijolos de entulho, madeira de demolição.',
+    'commonMistake':
+        'Usar materiais reciclados sem verificar qualidade e adequação estrutural.',
+    'relatedPhase': null,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Madeira Certificada',
+    'definition':
+        'Madeira de reflorestamento ou manejo sustentável com certificação FSC ou similar.',
+    'whyItMatters':
+        'Garante origem legal e sustentável. Evita contribuir com desmatamento ilegal.',
+    'commonMistake':
+        'Comprar madeira sem certificação por preço menor, contribuindo com desmatamento.',
+    'relatedPhase': null,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Gestão de Resíduos',
+    'definition':
+        'Plano para separar, reduzir, reutilizar e destinar corretamente resíduos da obra.',
+    'whyItMatters':
+        'Obrigatório por lei. Reduz custos com caçambas e evita multas ambientais.',
+    'commonMistake':
+        'Misturar todos os resíduos ou descartar em locais irregulares.',
+    'relatedPhase': null,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Lâmpadas LED',
+    'definition':
+        'Tecnologia de iluminação que consome até 80% menos energia que lâmpadas incandescentes.',
+    'whyItMatters':
+        'Reduz drasticamente consumo de energia e dura muito mais. Investimento se paga rapidamente.',
+    'commonMistake':
+        'Comprar LEDs muito baratos de baixa qualidade que queimam rápido.',
+    'relatedPhase': 14,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Sensor de Presença',
+    'definition':
+        'Dispositivo que liga/desliga luzes automaticamente detectando movimento.',
+    'whyItMatters':
+        'Economiza energia evitando luzes acesas desnecessariamente. Ideal para áreas de circulação.',
+    'commonMistake':
+        'Instalar em ambientes onde pessoas ficam paradas, causando apagões inconvenientes.',
+    'relatedPhase': 14,
+    'category': 'sustainability',
+    'relatedTerms': [],
+  },
+
+  // ========== MANUTENÇÃO (8 termos) ==========
+  {
+    'term': 'Manutenção Preventiva',
+    'definition':
+        'Inspeções e serviços periódicos para evitar problemas antes que ocorram.',
+    'whyItMatters':
+        'Previne defeitos maiores e mais caros. Prolonga vida útil de sistemas e equipamentos.',
+    'commonMistake':
+        'Só fazer manutenção quando algo quebra, gastando muito mais com reparos emergenciais.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Manutenção Corretiva',
+    'definition': 'Reparos realizados após falha ou defeito já ter ocorrido.',
+    'whyItMatters':
+        'Necessária quando preventiva falha. Geralmente mais cara e causa transtornos.',
+    'commonMistake':
+        'Adiar reparos necessários, agravando problemas e aumentando custos.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Manual do Proprietário',
+    'definition':
+        'Documento com instruções de uso, manutenção e garantias de todos os sistemas da casa.',
+    'whyItMatters':
+        'Essencial para manutenção adequada. Deve incluir cronograma de manutenções e contatos.',
+    'commonMistake': 'Não exigir manual completo do construtor ou perdê-lo.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Inspeção Predial',
+    'definition':
+        'Vistoria técnica completa para identificar problemas, riscos e necessidades de manutenção.',
+    'whyItMatters':
+        'Recomendada a cada 2-3 anos. Identifica problemas antes que se tornem graves.',
+    'commonMistake':
+        'Nunca fazer inspeção profissional, descobrindo problemas graves tarde demais.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Limpeza de Calhas',
+    'definition':
+        'Remoção periódica de folhas e detritos que obstruem calhas e condutores.',
+    'whyItMatters':
+        'Previne entupimentos que causam infiltrações. Deve ser feita antes da época de chuvas.',
+    'commonMistake':
+        'Nunca limpar calhas, causando transbordamento e infiltrações.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Limpeza de Caixa d\'Água',
+    'definition':
+        'Higienização completa do reservatório de água, obrigatória a cada 6 meses.',
+    'whyItMatters':
+        'Previne contaminação da água e doenças. É obrigação legal do proprietário.',
+    'commonMistake':
+        'Não limpar regularmente ou fazer limpeza inadequada sem desinfecção.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Revisão Elétrica',
+    'definition':
+        'Inspeção periódica de instalações elétricas para identificar problemas e riscos.',
+    'whyItMatters':
+        'Previne curtos-circuitos, choques e incêndios. Recomendada a cada 5 anos.',
+    'commonMistake':
+        'Nunca revisar instalação elétrica até que ocorra problema grave.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Pintura de Manutenção',
+    'definition':
+        'Repintura periódica para proteger superfícies e manter aparência.',
+    'whyItMatters':
+        'Protege paredes contra umidade e desgaste. Deve ser feita a cada 3-5 anos.',
+    'commonMistake':
+        'Esperar pintura descascar completamente, tendo que refazer preparação da parede.',
+    'relatedPhase': 15,
+    'category': 'maintenance',
+    'relatedTerms': [],
+  },
+
+  // ========== TECNOLOGIA (10 termos) ==========
+  {
+    'term': 'Automação Residencial',
+    'definition':
+        'Sistema que permite controlar iluminação, climatização, segurança e outros através de dispositivos inteligentes.',
+    'whyItMatters':
+        'Aumenta conforto, segurança e eficiência energética. Valoriza o imóvel.',
+    'commonMistake':
+        'Instalar sistemas incompatíveis entre si ou muito complexos de usar.',
+    'relatedPhase': 14,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Smart Home',
+    'definition':
+        'Casa inteligente com dispositivos conectados à internet que podem ser controlados remotamente.',
+    'whyItMatters':
+        'Permite controle remoto, automações e economia de energia. Tendência crescente.',
+    'commonMistake':
+        'Não planejar infraestrutura de rede adequada desde o projeto.',
+    'relatedPhase': 14,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'BIM',
+    'definition':
+        'Building Information Modeling - metodologia que usa modelo 3D digital com todas as informações da construção.',
+    'whyItMatters':
+        'Reduz erros, facilita coordenação entre projetos e melhora planejamento.',
+    'commonMistake':
+        'Contratar profissionais que não usam BIM, perdendo benefícios da tecnologia.',
+    'relatedPhase': 1,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Câmeras de Segurança',
+    'definition':
+        'Sistema de vigilância por vídeo com gravação e acesso remoto.',
+    'whyItMatters':
+        'Aumenta segurança e permite monitoramento remoto. Pode reduzir seguro.',
+    'commonMistake':
+        'Instalar câmeras sem planejamento de pontos de rede e energia.',
+    'relatedPhase': 14,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Interfone com Vídeo',
+    'definition':
+        'Sistema de comunicação com câmera que permite ver visitantes antes de abrir.',
+    'whyItMatters':
+        'Aumenta segurança permitindo identificação visual. Pode ter acesso remoto via celular.',
+    'commonMistake':
+        'Instalar interfone básico sem vídeo, perdendo recurso importante de segurança.',
+    'relatedPhase': 14,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Fechadura Digital',
+    'definition':
+        'Fechadura eletrônica que abre com senha, biometria, cartão ou celular.',
+    'whyItMatters':
+        'Elimina necessidade de chaves, permite acesso temporário e registra entradas.',
+    'commonMistake':
+        'Não ter backup de energia ou chave mecânica para emergências.',
+    'relatedPhase': 14,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Rede Estruturada',
+    'definition':
+        'Cabeamento organizado de dados que distribui internet e telefone por toda a casa.',
+    'whyItMatters':
+        'Garante internet rápida e estável em todos os ambientes. Essencial para smart home.',
+    'commonMistake': 'Depender só de WiFi ou fazer cabeamento inadequado.',
+    'relatedPhase': 9,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Termostato Inteligente',
+    'definition':
+        'Dispositivo que controla temperatura automaticamente aprendendo hábitos e economizando energia.',
+    'whyItMatters':
+        'Reduz consumo de ar-condicionado em até 30% mantendo conforto.',
+    'commonMistake':
+        'Instalar em local inadequado que não representa temperatura real do ambiente.',
+    'relatedPhase': 14,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Assistente Virtual',
+    'definition':
+        'Dispositivo com inteligência artificial que controla casa por comandos de voz.',
+    'whyItMatters':
+        'Facilita controle de automação, especialmente para idosos e pessoas com mobilidade reduzida.',
+    'commonMistake':
+        'Não verificar compatibilidade com outros dispositivos antes de comprar.',
+    'relatedPhase': 14,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Carregador Veicular',
+    'definition':
+        'Ponto de recarga para carros elétricos instalado em garagem.',
+    'whyItMatters':
+        'Essencial para quem tem ou planeja ter carro elétrico. Valoriza imóvel.',
+    'commonMistake':
+        'Não prever infraestrutura elétrica adequada desde o projeto.',
+    'relatedPhase': 9,
+    'category': 'technology',
+    'relatedTerms': [],
+  },
+
+  // ========== PAISAGISMO (10 termos) ==========
+  {
+    'term': 'Projeto Paisagístico',
+    'definition':
+        'Planejamento técnico de jardins, áreas verdes e elementos decorativos externos.',
+    'whyItMatters':
+        'Garante harmonia, funcionalidade e manutenção adequada. Evita erros caros.',
+    'commonMistake':
+        'Plantar sem projeto, escolhendo espécies inadequadas para o clima e espaço.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Drenagem de Jardim',
+    'definition':
+        'Sistema que remove excesso de água do solo, evitando encharcamento.',
+    'whyItMatters':
+        'Previne morte de plantas e problemas estruturais. Essencial em terrenos com má drenagem.',
+    'commonMistake':
+        'Não fazer drenagem adequada, causando morte de plantas e infiltrações.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Irrigação por Gotejamento',
+    'definition':
+        'Sistema que fornece água diretamente às raízes gota a gota, economizando água.',
+    'whyItMatters':
+        'Economiza até 70% de água comparado a irrigação convencional. Mais eficiente.',
+    'commonMistake': 'Usar mangueira manual, desperdiçando água e tempo.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Grama',
+    'definition': 'Cobertura vegetal rasteira para jardins e áreas de lazer.',
+    'whyItMatters':
+        'Embeleza, reduz temperatura e permite uso recreativo. Requer manutenção regular.',
+    'commonMistake':
+        'Escolher tipo de grama inadequado para clima, sol/sombra e uso.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Deck',
+    'definition': 'Piso elevado de madeira ou composto para áreas externas.',
+    'whyItMatters':
+        'Cria área de convivência confortável e bonita. Requer manutenção periódica.',
+    'commonMistake':
+        'Usar madeira não tratada ou sem impermeabilização, apodrecendo rapidamente.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Pergolado',
+    'definition':
+        'Estrutura de madeira ou metal com cobertura parcial para sombreamento.',
+    'whyItMatters':
+        'Cria área sombreada agradável. Pode ter plantas trepadeiras.',
+    'commonMistake':
+        'Não tratar madeira adequadamente ou não dimensionar estrutura corretamente.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Iluminação de Jardim',
+    'definition':
+        'Sistema de luminárias externas para valorizar paisagismo e permitir uso noturno.',
+    'whyItMatters': 'Valoriza jardim, aumenta segurança e permite uso à noite.',
+    'commonMistake':
+        'Usar luminárias não apropriadas para externo ou iluminação excessiva.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Muro Verde',
+    'definition': 'Parede coberta com vegetação, criando jardim vertical.',
+    'whyItMatters':
+        'Embeleza, melhora isolamento térmico e acústico. Ideal para espaços pequenos.',
+    'commonMistake':
+        'Não fazer impermeabilização adequada da parede ou escolher plantas inadequadas.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Horta',
+    'definition': 'Área para cultivo de hortaliças, temperos e ervas.',
+    'whyItMatters':
+        'Fornece alimentos frescos e orgânicos. Atividade terapêutica e educativa.',
+    'commonMistake':
+        'Plantar em local com pouco sol ou sem preparar solo adequadamente.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Cerca Viva',
+    'definition': 'Barreira natural formada por arbustos plantados em linha.',
+    'whyItMatters':
+        'Delimita espaço, dá privacidade e embeleza. Mais bonita que muro.',
+    'commonMistake':
+        'Escolher espécie de crescimento muito lento ou que requer muita manutenção.',
+    'relatedPhase': 15,
+    'category': 'landscaping',
+    'relatedTerms': [],
+  },
+
+  // ========== ACESSIBILIDADE (10 termos) ==========
+  {
+    'term': 'NBR 9050',
+    'definition':
+        'Norma brasileira que estabelece critérios de acessibilidade em edificações.',
+    'whyItMatters':
+        'Obrigatória em edifícios públicos e recomendada em residências. Garante acesso universal.',
+    'commonMistake':
+        'Ignorar norma em projeto residencial, dificultando uso futuro por idosos ou pessoas com deficiência.',
+    'relatedPhase': 1,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Rampa de Acesso',
+    'definition':
+        'Plano inclinado que permite acesso de cadeirantes e pessoas com mobilidade reduzida.',
+    'whyItMatters':
+        'Essencial para acessibilidade. Deve ter inclinação máxima de 8,33% e corrimão.',
+    'commonMistake':
+        'Fazer rampa muito íngreme ou sem corrimão, tornando-a perigosa.',
+    'relatedPhase': 15,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Corrimão',
+    'definition': 'Barra de apoio instalada em escadas, rampas e corredores.',
+    'whyItMatters':
+        'Essencial para segurança de idosos e pessoas com mobilidade reduzida.',
+    'commonMistake': 'Instalar apenas de um lado ou em altura inadequada.',
+    'relatedPhase': 15,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Barra de Apoio',
+    'definition':
+        'Barra fixada em paredes de banheiros para auxiliar transferências e equilíbrio.',
+    'whyItMatters':
+        'Previne quedas em banheiros, local de maior risco para idosos.',
+    'commonMistake':
+        'Instalar em parede sem reforço estrutural, soltando quando usada.',
+    'relatedPhase': 15,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Piso Tátil',
+    'definition':
+        'Piso com textura diferenciada para orientar pessoas com deficiência visual.',
+    'whyItMatters':
+        'Obrigatório em espaços públicos. Orienta e alerta sobre obstáculos.',
+    'commonMistake':
+        'Instalar piso tátil apenas decorativamente, sem seguir padrões corretos.',
+    'relatedPhase': 15,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Piso Antiderrapante',
+    'definition': 'Revestimento com textura que reduz risco de escorregões.',
+    'whyItMatters':
+        'Essencial em áreas molhadas. Previne quedas, especialmente de idosos.',
+    'commonMistake': 'Usar porcelanato polido em banheiros e áreas externas.',
+    'relatedPhase': 11,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Porta Larga',
+    'definition':
+        'Vão de porta com mínimo 80cm para permitir passagem de cadeira de rodas.',
+    'whyItMatters':
+        'Essencial para acessibilidade. Facilita também passagem de móveis.',
+    'commonMistake':
+        'Fazer portas de 70cm, padrão antigo que impede acesso de cadeirantes.',
+    'relatedPhase': 12,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Banheiro Acessível',
+    'definition':
+        'Banheiro com dimensões e equipamentos adequados para uso por cadeirantes.',
+    'whyItMatters':
+        'Permite autonomia e dignidade. Deve ter área de manobra, barras e altura adequada.',
+    'commonMistake':
+        'Fazer banheiro pequeno demais ou instalar barras em posições inadequadas.',
+    'relatedPhase': 12,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Elevador Residencial',
+    'definition':
+        'Equipamento para transporte vertical, essencial em casas com múltiplos pavimentos.',
+    'whyItMatters':
+        'Garante acessibilidade e valoriza imóvel. Essencial para idosos e pessoas com mobilidade reduzida.',
+    'commonMistake':
+        'Não prever espaço para elevador no projeto, impossibilitando instalação futura.',
+    'relatedPhase': 1,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
+  {
+    'term': 'Iluminação Adequada',
+    'definition':
+        'Sistema de iluminação que garante visibilidade segura em todos os ambientes.',
+    'whyItMatters':
+        'Previne quedas e acidentes, especialmente para idosos com visão reduzida.',
+    'commonMistake':
+        'Deixar áreas escuras ou com iluminação insuficiente em circulações.',
+    'relatedPhase': 14,
+    'category': 'accessibility',
+    'relatedTerms': [],
+  },
 ];
 
 // Made with Bob

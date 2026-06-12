@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../phases/presentation/cubit/phases_cubit.dart';
+import '../../../phases/domain/usecases/mark_phases_retroactive_usecase.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
+import '../../../../injection_container.dart';
 
 /// Página de diagnóstico inicial do Mapa da Reforma
 ///
@@ -103,13 +103,31 @@ class _ReformMapOnboardingPageState extends State<ReformMapOnboardingPage> {
     final completedPhases = stage['completedPhases'] as List<String>;
 
     // Marcar fases como concluídas retroativamente
-    context.read<PhasesCubit>().markPhasesRetroactive(
-          projectId: widget.projectId,
-          phaseNames: completedPhases,
-        );
+    final markPhasesUseCase = getIt<MarkPhasesRetroactiveUseCase>();
+    final result = await markPhasesUseCase(
+      projectId: widget.projectId,
+      phaseNames: completedPhases,
+    );
 
-    // Voltar para o Mapa da Reforma
-    Navigator.of(context).pop(true);
+    result.fold(
+      (failure) {
+        // Mostrar erro
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao marcar fases: ${failure.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      (_) {
+        // Sucesso - voltar para o Mapa da Reforma
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      },
+    );
   }
 
   @override

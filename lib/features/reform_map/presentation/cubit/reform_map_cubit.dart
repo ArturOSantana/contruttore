@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/problem_entity.dart';
 import '../../domain/entities/reform_calendar_entity.dart';
+import '../../domain/entities/phase_analysis_entity.dart';
 import '../../domain/services/move_in_distance_calculator.dart';
 import '../../domain/services/move_in_mode_generator.dart';
 import '../../domain/services/pending_decisions_detector.dart';
@@ -10,6 +11,7 @@ import '../../domain/services/next_phase_preparation_detector.dart';
 import '../../domain/services/milestones_detector.dart';
 import '../../domain/services/calendar_events_detector.dart';
 import '../../domain/services/reform_week_generator.dart';
+import '../../domain/services/phase_progress_analyzer.dart';
 import '../../domain/usecases/add_problem_usecase.dart';
 import '../../domain/usecases/add_calendar_event_usecase.dart';
 import '../../domain/usecases/calculate_health_usecase.dart';
@@ -28,6 +30,7 @@ import 'reform_map_state.dart';
 /// - Calcula a saúde da reforma
 /// - Sugere a próxima ação
 /// - Gerencia problemas
+/// - Analisa progresso de cada fase
 @injectable
 class ReformMapCubit extends Cubit<ReformMapState> {
   final GetReformMapUseCase getReformMapUseCase;
@@ -46,6 +49,7 @@ class ReformMapCubit extends Cubit<ReformMapState> {
   final MilestonesDetector milestonesDetector;
   final CalendarEventsDetector calendarEventsDetector;
   final ReformWeekGenerator reformWeekGenerator;
+  final PhaseProgressAnalyzer phaseProgressAnalyzer;
   final AddCalendarEventUseCase addCalendarEventUseCase;
 
   ReformMapCubit({
@@ -65,6 +69,7 @@ class ReformMapCubit extends Cubit<ReformMapState> {
     required this.milestonesDetector,
     required this.calendarEventsDetector,
     required this.reformWeekGenerator,
+    required this.phaseProgressAnalyzer,
     required this.addCalendarEventUseCase,
   }) : super(const ReformMapInitial());
 
@@ -74,42 +79,55 @@ class ReformMapCubit extends Cubit<ReformMapState> {
 
     final result = await getReformMapUseCase(projectId);
 
-    result.fold(
-      (failure) => emit(ReformMapError(failure.message)),
-      (reformMap) {
+    await result.fold(
+      (failure) async => emit(ReformMapError(failure.message)),
+      (reformMap) async {
         // Calcula a distância até a mudança
         final moveInDistance = moveInDistanceCalculator.calculate(reformMap);
 
         // Detecta decisões pendentes
         final pendingDecisions = pendingDecisionsDetector.detect(reformMap);
 
-        // Detecta próximas compras
-        final upcomingPurchases = upcomingPurchasesDetector.detect(reformMap);
+        // Detecta próximas compras (AGORA ASSÍNCRONO - busca dados reais da lista de compras)
+        final upcomingPurchases =
+            await upcomingPurchasesDetector.detect(reformMap);
 
-        // Detecta preparação da próxima fase
-        final nextPhasePreparation =
-            nextPhasePreparationDetector.detect(reformMap);
+        // Detecta preparação da próxima fase (ADAPTADO por tipo de imóvel)
+        final nextPhasePreparation = await nextPhasePreparationDetector.detect(
+            reformMap, reformMap.propertyType, projectId);
 
-        // Detecta marcos da reforma
-        final milestones = milestonesDetector.detect(reformMap);
+        // Detecta marcos da reforma (AGORA COM DADOS REAIS)
+        final milestones =
+            await milestonesDetector.detect(reformMap, projectId);
 
-        // Detecta eventos do calendário
-        final calendar = calendarEventsDetector.detect(reformMap);
+        // Detecta eventos do calendário (AGORA ASSÍNCRONO - busca pagamentos e compras reais)
+        final calendar =
+            await calendarEventsDetector.detect(reformMap, projectId);
 
         // Gera a semana da reforma a partir do calendário
-        final week =
-            calendar != null ? reformWeekGenerator.generate(calendar) : null;
+        final week = reformWeekGenerator.generate(calendar);
 
         // Gera o modo mudança (ativa quando progresso >= 80% ou faltam <= 30 dias)
-        final moveInMode = moveInModeGenerator.generate(
+        // AGORA ASSÍNCRONO - detecta pendências reais de compras, parcelas e problemas
+        final moveInMode = await moveInModeGenerator.generate(
+          projectId: projectId,
           phases: reformMap.phases,
           overallProgress: reformMap.progress.completedPercentage,
           plannedMoveInDate: moveInDistance?.estimatedMoveDate,
-          criticalPendingItems: reformMap.openProblems
+          userCriticalItems: reformMap.openProblems
               .where((p) => p.severity == ProblemSeverity.critical)
               .map((p) => p.title)
               .toList(),
         );
+
+        // Analisa progresso de cada fase (NOVO - Sprint 6)
+        // Compara fornecedores, compras, documentos e pagamentos esperados vs realizados
+        final phasesAnalysis = <String, PhaseAnalysisEntity>{};
+        for (final phase in reformMap.phases) {
+          final analysis =
+              await phaseProgressAnalyzer.analyze(phase, projectId);
+          phasesAnalysis[phase.id] = analysis;
+        }
 
         // Atualiza o mapa com os dados calculados
         final updatedMap = reformMap.copyWith(
@@ -121,6 +139,7 @@ class ReformMapCubit extends Cubit<ReformMapState> {
           milestones: milestones,
           calendar: calendar,
           week: week,
+          phasesAnalysis: phasesAnalysis,
         );
 
         emit(ReformMapLoaded(updatedMap));

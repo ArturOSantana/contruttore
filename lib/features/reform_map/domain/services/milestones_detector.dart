@@ -1,23 +1,40 @@
 import 'package:injectable/injectable.dart';
 import '../entities/milestone_entity.dart';
 import '../entities/reform_map_entity.dart';
+import '../entities/problem_entity.dart';
 import '../../../projects/domain/entities/phase_entity.dart';
+import '../../../shopping/domain/repositories/shopping_repository.dart';
+import '../../../installments/domain/repositories/installment_repository.dart';
+import '../../../installments/domain/entities/installment_entity.dart';
 
 /// Serviço que detecta marcos alcançados na reforma
 ///
 /// Analisa o estado da reforma e identifica quais marcos
 /// foram alcançados, estão próximos ou ainda não foram atingidos.
 ///
+/// Agora integrado com dados reais de compras, parcelas e problemas.
+///
 /// Exemplo de uso:
 /// ```dart
-/// final detector = MilestonesDetector();
-/// final milestones = detector.detect(reformMap);
-/// // Retorna lista de marcos com status atualizado
+/// final detector = MilestonesDetector(shoppingRepo, installmentRepo, reformMapRepo);
+/// final milestones = await detector.detect(reformMap, projectId);
+/// // Retorna lista de marcos com status atualizado baseado em dados reais
 /// ```
 @injectable
 class MilestonesDetector {
+  final ShoppingRepository _shoppingRepository;
+  final InstallmentRepository _installmentRepository;
+
+  MilestonesDetector(
+    this._shoppingRepository,
+    this._installmentRepository,
+  );
+
   /// Detecta todos os marcos e seus status
-  List<MilestoneEntity> detect(ReformMapEntity reformMap) {
+  Future<List<MilestoneEntity>> detect(
+    ReformMapEntity reformMap,
+    String projectId,
+  ) async {
     final milestones = <MilestoneEntity>[];
 
     // Detecta marcos de progresso
@@ -35,22 +52,40 @@ class MilestonesDetector {
     // Detecta marcos especiais
     milestones.addAll(_detectSpecialMilestones(reformMap));
 
+    // Detecta marcos de conquistas (compras, parcelas)
+    milestones.addAll(await _detectAchievementMilestones(projectId));
+
+    // Detecta marcos de qualidade (sem problemas, no prazo)
+    milestones.addAll(_detectQualityMilestones(reformMap));
+
     return milestones;
   }
 
   /// Detecta apenas marcos alcançados
-  List<MilestoneEntity> detectAchieved(ReformMapEntity reformMap) {
-    return detect(reformMap).where((m) => m.isAchieved).toList();
+  Future<List<MilestoneEntity>> detectAchieved(
+    ReformMapEntity reformMap,
+    String projectId,
+  ) async {
+    final all = await detect(reformMap, projectId);
+    return all.where((m) => m.isAchieved).toList();
   }
 
   /// Detecta apenas marcos próximos (faltam menos de 10%)
-  List<MilestoneEntity> detectNear(ReformMapEntity reformMap) {
-    return detect(reformMap).where((m) => m.isNear).toList();
+  Future<List<MilestoneEntity>> detectNear(
+    ReformMapEntity reformMap,
+    String projectId,
+  ) async {
+    final all = await detect(reformMap, projectId);
+    return all.where((m) => m.isNear).toList();
   }
 
   /// Detecta apenas marcos recentes (últimos 7 dias)
-  List<MilestoneEntity> detectRecent(ReformMapEntity reformMap) {
-    return detect(reformMap).where((m) => m.isRecent).toList();
+  Future<List<MilestoneEntity>> detectRecent(
+    ReformMapEntity reformMap,
+    String projectId,
+  ) async {
+    final all = await detect(reformMap, projectId);
+    return all.where((m) => m.isRecent).toList();
   }
 
   /// Detecta marcos de progresso geral
@@ -211,8 +246,7 @@ class MilestonesDetector {
                 paintingPhase.status == PhaseStatus.doneNoRecord
             ? DateTime.now()
             : null,
-        celebrationMessage:
-            ' As cores deram vida ao ambiente! Ficou incrível!',
+        celebrationMessage: ' As cores deram vida ao ambiente! Ficou incrível!',
         progressPercentage: paintingPhase.progressPercentage.round(),
         icon: '',
       ));
@@ -394,6 +428,252 @@ class MilestonesDetector {
     }
     return null;
   }
-}
 
-// Made with Bob
+  /// Detecta marcos de conquistas (compras, parcelas)
+  Future<List<MilestoneEntity>> _detectAchievementMilestones(
+    String projectId,
+  ) async {
+    final milestones = <MilestoneEntity>[];
+
+    // Buscar dados reais
+    final shoppingResult =
+        await _shoppingRepository.getShoppingItems(projectId);
+    final installmentsResult =
+        await _installmentRepository.getInstallments(projectId);
+
+    await shoppingResult.fold(
+      (failure) async => null,
+      (shoppingItems) async {
+        final purchasedItems =
+            shoppingItems.where((item) => item.isPurchased).toList();
+        final totalItems = shoppingItems.length;
+
+        // Primeira compra realizada
+        if (purchasedItems.isNotEmpty) {
+          milestones.add(MilestoneEntity(
+            id: 'achievement_first_purchase',
+            title: 'Primeira Compra Realizada',
+            description: 'Primeira compra marcada como concluída',
+            type: MilestoneType.achievement,
+            isAchieved: true,
+            achievedAt: purchasedItems.first.purchaseDate,
+            celebrationMessage:
+                '🛒 Primeira compra feita! A reforma está saindo do papel!',
+            progressPercentage: totalItems > 0
+                ? (purchasedItems.length / totalItems * 100).round()
+                : 0,
+            icon: '🛒',
+          ));
+        }
+
+        // 10 compras realizadas
+        if (purchasedItems.length >= 10) {
+          milestones.add(MilestoneEntity(
+            id: 'achievement_10_purchases',
+            title: '10 Compras Realizadas',
+            description: '10 itens comprados',
+            type: MilestoneType.achievement,
+            isAchieved: true,
+            achievedAt: purchasedItems.length >= 10
+                ? purchasedItems[9].purchaseDate
+                : null,
+            celebrationMessage:
+                '🎯 10 compras realizadas! Você está organizando tudo muito bem!',
+            progressPercentage: totalItems > 0
+                ? (purchasedItems.length / totalItems * 100).round()
+                : 0,
+            icon: '🎯',
+          ));
+        }
+
+        // 50% das compras concluídas
+        if (totalItems > 0 && purchasedItems.length >= totalItems / 2) {
+          milestones.add(MilestoneEntity(
+            id: 'achievement_50_purchases',
+            title: '50% das Compras Concluídas',
+            description: 'Metade dos itens foram comprados',
+            type: MilestoneType.achievement,
+            isAchieved: true,
+            achievedAt: purchasedItems.length >= totalItems / 2
+                ? purchasedItems[(totalItems / 2).floor() - 1].purchaseDate
+                : null,
+            celebrationMessage: '📦 Metade das compras feitas! Continue assim!',
+            progressPercentage:
+                (purchasedItems.length / totalItems * 100).round(),
+            icon: '📦',
+          ));
+        }
+
+        // Todas as compras realizadas
+        if (totalItems > 0 && purchasedItems.length == totalItems) {
+          milestones.add(MilestoneEntity(
+            id: 'achievement_all_purchases',
+            title: 'Todas as Compras Realizadas',
+            description: '100% dos itens comprados',
+            type: MilestoneType.achievement,
+            isAchieved: true,
+            achievedAt: purchasedItems.last.purchaseDate,
+            celebrationMessage:
+                '✅ Todas as compras concluídas! Tudo pronto para a reforma!',
+            progressPercentage: 100,
+            icon: '✅',
+          ));
+        }
+      },
+    );
+
+    await installmentsResult.fold(
+      (failure) async => null,
+      (installments) async {
+        // Coletar todos os pagamentos pagos de todos os parcelamentos
+        final allPaidPayments = <PaymentEntity>[];
+        for (final installment in installments) {
+          allPaidPayments.addAll(
+            installment.payments.where((p) => p.isPaid),
+          );
+        }
+
+        // Ordenar por data de pagamento (remover nulls primeiro)
+        allPaidPayments.removeWhere((p) => p.paidAt == null);
+        allPaidPayments.sort((a, b) => a.paidAt!.compareTo(b.paidAt!));
+
+        // Contar total de parcelas
+        final totalPayments = installments.fold<int>(
+          0,
+          (sum, i) => sum + i.totalInstallments,
+        );
+
+        // Primeira parcela paga
+        if (allPaidPayments.isNotEmpty) {
+          milestones.add(MilestoneEntity(
+            id: 'achievement_first_payment',
+            title: 'Primeira Parcela Paga',
+            description: 'Primeira parcela quitada',
+            type: MilestoneType.achievement,
+            isAchieved: true,
+            achievedAt: allPaidPayments.first.paidAt,
+            celebrationMessage:
+                '💳 Primeira parcela paga! Compromisso cumprido!',
+            progressPercentage: totalPayments > 0
+                ? (allPaidPayments.length / totalPayments * 100).round()
+                : 0,
+            icon: '💳',
+          ));
+        }
+
+        // 50% das parcelas pagas
+        if (totalPayments > 0 && allPaidPayments.length >= totalPayments / 2) {
+          milestones.add(MilestoneEntity(
+            id: 'achievement_50_payments',
+            title: '50% das Parcelas Pagas',
+            description: 'Metade das parcelas quitadas',
+            type: MilestoneType.achievement,
+            isAchieved: true,
+            achievedAt: allPaidPayments.length >= totalPayments / 2
+                ? allPaidPayments[(totalPayments / 2).floor() - 1].paidAt
+                : null,
+            celebrationMessage:
+                '💵 Metade das parcelas pagas! Você está em dia!',
+            progressPercentage:
+                (allPaidPayments.length / totalPayments * 100).round(),
+            icon: '💵',
+          ));
+        }
+
+        // Todas as parcelas pagas
+        if (totalPayments > 0 && allPaidPayments.length == totalPayments) {
+          milestones.add(MilestoneEntity(
+            id: 'achievement_all_payments',
+            title: 'Todas as Parcelas Pagas',
+            description: '100% das parcelas quitadas',
+            type: MilestoneType.achievement,
+            isAchieved: true,
+            achievedAt: allPaidPayments.last.paidAt,
+            celebrationMessage: '🎉 Todas as parcelas pagas! Reforma quitada!',
+            progressPercentage: 100,
+            icon: '🎉',
+          ));
+        }
+      },
+    );
+
+    return milestones;
+  }
+
+  /// Detecta marcos de qualidade (sem problemas, no prazo)
+  List<MilestoneEntity> _detectQualityMilestones(ReformMapEntity reformMap) {
+    final milestones = <MilestoneEntity>[];
+    final progress = reformMap.progress.completedPercentage;
+    final percentageSpent = reformMap.financial.percentageSpent;
+    final hasNoProblems = reformMap.openProblems.isEmpty;
+    final isOnSchedule = reformMap.progress.daysDelayed == 0;
+
+    // Primeira semana sem problemas
+    if (hasNoProblems) {
+      milestones.add(MilestoneEntity(
+        id: 'quality_week_no_problems',
+        title: 'Primeira Semana Sem Problemas',
+        description: '7 dias sem problemas abertos',
+        type: MilestoneType.quality,
+        isAchieved: hasNoProblems,
+        achievedAt: hasNoProblems ? DateTime.now() : null,
+        celebrationMessage:
+            '🌟 Uma semana sem problemas! A reforma está fluindo bem!',
+        progressPercentage: progress.round(),
+        icon: '🌟',
+      ));
+    }
+
+    // Mês sem atrasos
+    if (isOnSchedule && progress >= 30) {
+      milestones.add(MilestoneEntity(
+        id: 'quality_month_on_schedule',
+        title: 'Mês Sem Atrasos',
+        description: '30 dias sem atrasos',
+        type: MilestoneType.quality,
+        isAchieved: true,
+        achievedAt: DateTime.now(),
+        celebrationMessage:
+            '⏰ Um mês no prazo! Você está gerenciando muito bem!',
+        progressPercentage: progress.round(),
+        icon: '⏰',
+      ));
+    }
+
+    // Orçamento sob controle (50% da reforma com menos de 55% do orçamento)
+    if (progress >= 50 && percentageSpent < 55) {
+      milestones.add(MilestoneEntity(
+        id: 'quality_budget_control',
+        title: 'Orçamento Sob Controle',
+        description: '50% da reforma com menos de 55% do orçamento gasto',
+        type: MilestoneType.quality,
+        isAchieved: true,
+        achievedAt: DateTime.now(),
+        celebrationMessage:
+            '💰 Orçamento sob controle! Você está economizando!',
+        progressPercentage: percentageSpent.round(),
+        icon: '💰',
+      ));
+    }
+
+    // Reforma sem problemas graves (100% concluída sem problemas críticos)
+    final hadNoCriticalProblems = reformMap.openProblems
+        .where((p) => p.severity == ProblemSeverity.critical)
+        .isEmpty;
+    if (progress >= 100 && hadNoCriticalProblems) {
+      milestones.add(MilestoneEntity(
+        id: 'quality_no_critical_problems',
+        title: 'Reforma Sem Problemas Graves',
+        description: 'Nenhum problema crítico durante toda a reforma',
+        type: MilestoneType.quality,
+        isAchieved: true,
+        achievedAt: DateTime.now(),
+        celebrationMessage: '🏆 Reforma impecável! Nenhum problema grave!',
+        progressPercentage: 100,
+        icon: '🏆',
+      ));
+    }
+
+    return milestones;
+  }
+}

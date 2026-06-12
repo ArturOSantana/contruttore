@@ -6,6 +6,7 @@ import '../../../../core/error/failures.dart';
 import '../../domain/entities/glossary_term_entity.dart';
 import '../../domain/repositories/glossary_repository.dart';
 import '../models/glossary_term_model.dart';
+import '../seed/glossary_seed_data.dart';
 
 /// Implementação do repositório de glossário
 @LazySingleton(as: GlossaryRepository)
@@ -19,10 +20,16 @@ class GlossaryRepositoryImpl implements GlossaryRepository {
   @override
   Future<Either<Failure, List<GlossaryTermEntity>>> getAllTerms() async {
     try {
-      final snapshot = await firestore
-          .collection(_glossaryCollection)
-          .orderBy('term')
-          .get();
+      final snapshot =
+          await firestore.collection(_glossaryCollection).orderBy('term').get();
+
+      // Se não houver dados no Firestore, usa dados locais de seed
+      if (snapshot.docs.isEmpty) {
+        final localTerms = glossarySeedData
+            .map((data) => GlossaryTermModel.fromMap(data))
+            .toList();
+        return Right(localTerms);
+      }
 
       final terms = snapshot.docs
           .map((doc) => GlossaryTermModel.fromFirestore(doc))
@@ -30,19 +37,33 @@ class GlossaryRepositoryImpl implements GlossaryRepository {
 
       return Right(terms);
     } on FirebaseException catch (e) {
-      return Left(ServerFailure('Erro ao buscar termos: ${e.message}'));
+      // Em caso de erro do Firebase, tenta usar dados locais
+      try {
+        final localTerms = glossarySeedData
+            .map((data) => GlossaryTermModel.fromMap(data))
+            .toList();
+        return Right(localTerms);
+      } catch (localError) {
+        return Left(ServerFailure('Erro ao buscar termos: ${e.message}'));
+      }
     } catch (e) {
-      return Left(ServerFailure('Erro inesperado: $e'));
+      // Em caso de erro genérico, tenta usar dados locais
+      try {
+        final localTerms = glossarySeedData
+            .map((data) => GlossaryTermModel.fromMap(data))
+            .toList();
+        return Right(localTerms);
+      } catch (localError) {
+        return Left(ServerFailure('Erro inesperado: $e'));
+      }
     }
   }
 
   @override
   Future<Either<Failure, GlossaryTermEntity>> getTermById(String termId) async {
     try {
-      final doc = await firestore
-          .collection(_glossaryCollection)
-          .doc(termId)
-          .get();
+      final doc =
+          await firestore.collection(_glossaryCollection).doc(termId).get();
 
       if (!doc.exists) {
         return Left(NotFoundFailure('Termo não encontrado'));
@@ -90,9 +111,8 @@ class GlossaryRepositoryImpl implements GlossaryRepository {
       final allTermsResult = await getAllTerms();
 
       return allTermsResult.fold((failure) => Left(failure), (terms) {
-        final filteredTerms = terms
-            .where((term) => term.matchesSearch(query))
-            .toList();
+        final filteredTerms =
+            terms.where((term) => term.matchesSearch(query)).toList();
         return Right(filteredTerms);
       });
     } catch (e) {

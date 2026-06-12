@@ -27,6 +27,7 @@ class RouteNames {
   // Reform Map (substitui Phases)
   static const String reformMap = '/reform-map';
   static const String reportProblem = '/report-problem';
+  static const String moveIn = '/move-in';
 
   // Phases (mantido para compatibilidade)
   static const String phases = '/phases';

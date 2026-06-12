@@ -28,6 +28,18 @@ class GlossaryTermPage extends StatelessWidget {
         return AppColors.success;
       case GlossaryCategory.condominium:
         return const Color(0xFF607D8B); // Blue Grey
+      case GlossaryCategory.safety:
+        return const Color(0xFFF44336); // Red
+      case GlossaryCategory.sustainability:
+        return const Color(0xFF4CAF50); // Green
+      case GlossaryCategory.maintenance:
+        return const Color(0xFF2196F3); // Blue
+      case GlossaryCategory.technology:
+        return const Color(0xFF00BCD4); // Cyan
+      case GlossaryCategory.landscaping:
+        return const Color(0xFF8BC34A); // Light Green
+      case GlossaryCategory.accessibility:
+        return const Color(0xFF673AB7); // Deep Purple
     }
   }
 
@@ -357,8 +369,8 @@ class GlossaryTermPage extends StatelessWidget {
               label: Text(relatedTerm.term),
               onPressed: () {
                 context.pushReplacementNamed(
-                  RouteNames.glossaryTerm,
-                  pathParameters: {'termId': relatedTerm.id},
+                  'glossary-term',
+                  pathParameters: {'term': relatedTerm.id},
                 );
               },
               backgroundColor: AppColors.surface,

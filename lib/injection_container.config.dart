@@ -160,6 +160,18 @@ import 'package:contruttore/features/installments/domain/usecases/mark_payment_a
     as _i396;
 import 'package:contruttore/features/installments/presentation/cubit/installments_cubit.dart'
     as _i224;
+import 'package:contruttore/features/move_in/data/repositories/move_in_repository_impl.dart'
+    as _i383;
+import 'package:contruttore/features/move_in/domain/repositories/move_in_repository.dart'
+    as _i845;
+import 'package:contruttore/features/move_in/domain/usecases/add_move_in_task_usecase.dart'
+    as _i752;
+import 'package:contruttore/features/move_in/domain/usecases/get_move_in_tasks_usecase.dart'
+    as _i1022;
+import 'package:contruttore/features/move_in/domain/usecases/toggle_task_completion_usecase.dart'
+    as _i986;
+import 'package:contruttore/features/move_in/domain/usecases/update_move_in_task_usecase.dart'
+    as _i634;
 import 'package:contruttore/features/onboarding/data/services/onboarding_progress_service.dart'
     as _i416;
 import 'package:contruttore/features/onboarding/presentation/cubit/conversational_onboarding_cubit.dart'
@@ -242,6 +254,8 @@ import 'package:contruttore/features/reform_map/domain/services/next_phase_prepa
     as _i629;
 import 'package:contruttore/features/reform_map/domain/services/pending_decisions_detector.dart'
     as _i124;
+import 'package:contruttore/features/reform_map/domain/services/phase_progress_analyzer.dart'
+    as _i165;
 import 'package:contruttore/features/reform_map/domain/services/reform_map_integration_service.dart'
     as _i667;
 import 'package:contruttore/features/reform_map/domain/services/reform_week_generator.dart'
@@ -365,19 +379,11 @@ extension GetItInjectableX on _i174.GetIt {
     final notificationModule = _$NotificationModule();
     final onboardingModule = _$OnboardingModule();
     gh.factory<_i702.GeneratePdfUseCase>(() => _i702.GeneratePdfUseCase());
-    gh.factory<_i219.CalendarEventsDetector>(
-        () => _i219.CalendarEventsDetector());
-    gh.factory<_i951.MilestonesDetector>(() => _i951.MilestonesDetector());
     gh.factory<_i51.MoveInDistanceCalculator>(
         () => _i51.MoveInDistanceCalculator());
-    gh.factory<_i934.MoveInModeGenerator>(() => _i934.MoveInModeGenerator());
-    gh.factory<_i629.NextPhasePreparationDetector>(
-        () => _i629.NextPhasePreparationDetector());
     gh.factory<_i124.PendingDecisionsDetector>(
         () => _i124.PendingDecisionsDetector());
     gh.factory<_i1002.ReformWeekGenerator>(() => _i1002.ReformWeekGenerator());
-    gh.factory<_i792.UpcomingPurchasesDetector>(
-        () => _i792.UpcomingPurchasesDetector());
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => storageModule.sharedPreferences,
       preResolve: true,
@@ -491,8 +497,18 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i253.PhaseRepositoryImpl(gh<_i974.FirebaseFirestore>()));
     gh.factory<_i991.EditProfileCubit>(
         () => _i991.EditProfileCubit(gh<_i755.UpdateProfileUseCase>()));
+    gh.lazySingleton<_i845.MoveInRepository>(() =>
+        _i383.MoveInRepositoryImpl(firestore: gh<_i974.FirebaseFirestore>()));
     gh.lazySingleton<_i356.TransactionRepository>(
         () => _i286.TransactionRepositoryImpl(gh<_i974.FirebaseFirestore>()));
+    gh.lazySingleton<_i752.AddMoveInTaskUseCase>(
+        () => _i752.AddMoveInTaskUseCase(gh<_i845.MoveInRepository>()));
+    gh.lazySingleton<_i1022.GetMoveInTasksUseCase>(
+        () => _i1022.GetMoveInTasksUseCase(gh<_i845.MoveInRepository>()));
+    gh.lazySingleton<_i986.ToggleTaskCompletionUseCase>(
+        () => _i986.ToggleTaskCompletionUseCase(gh<_i845.MoveInRepository>()));
+    gh.lazySingleton<_i634.UpdateMoveInTaskUseCase>(
+        () => _i634.UpdateMoveInTaskUseCase(gh<_i845.MoveInRepository>()));
     gh.lazySingleton<_i925.WishlistRepository>(
         () => _i863.WishlistRepositoryImpl(gh<_i974.FirebaseFirestore>()));
     gh.factory<_i179.AddWishlistItemUseCase>(
@@ -579,29 +595,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i984.PaymentRepository>(),
           gh<_i706.Uuid>(),
         ));
-    gh.factory<_i123.ReformMapCubit>(() => _i123.ReformMapCubit(
-          getReformMapUseCase: gh<_i314.GetReformMapUseCase>(),
-          calculateHealthUseCase: gh<_i246.CalculateHealthUseCase>(),
-          calculateNextActionUseCase: gh<_i421.CalculateNextActionUseCase>(),
-          addProblemUseCase: gh<_i806.AddProblemUseCase>(),
-          calculateUpcomingExpensesUseCase:
-              gh<_i210.CalculateUpcomingExpensesUseCase>(),
-          getNextStepPreparationUseCase:
-              gh<_i1014.GetNextStepPreparationUseCase>(),
-          updatePreparationItemUseCase:
-              gh<_i374.UpdatePreparationItemUseCase>(),
-          resolveProblemUseCase: gh<_i745.ResolveProblemUseCase>(),
-          moveInDistanceCalculator: gh<_i51.MoveInDistanceCalculator>(),
-          moveInModeGenerator: gh<_i934.MoveInModeGenerator>(),
-          pendingDecisionsDetector: gh<_i124.PendingDecisionsDetector>(),
-          upcomingPurchasesDetector: gh<_i792.UpcomingPurchasesDetector>(),
-          nextPhasePreparationDetector:
-              gh<_i629.NextPhasePreparationDetector>(),
-          milestonesDetector: gh<_i951.MilestonesDetector>(),
-          calendarEventsDetector: gh<_i219.CalendarEventsDetector>(),
-          reformWeekGenerator: gh<_i1002.ReformWeekGenerator>(),
-          addCalendarEventUseCase: gh<_i952.AddCalendarEventUseCase>(),
-        ));
+    gh.factory<_i629.NextPhasePreparationDetector>(() =>
+        _i629.NextPhasePreparationDetector(gh<_i911.ShoppingRepository>()));
+    gh.factory<_i792.UpcomingPurchasesDetector>(
+        () => _i792.UpcomingPurchasesDetector(gh<_i911.ShoppingRepository>()));
     gh.factory<_i129.CompletePhaseUseCase>(
         () => _i129.CompletePhaseUseCase(gh<_i909.PhaseRepository>()));
     gh.factory<_i832.GetPhasesUseCase>(
@@ -612,6 +609,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1049.MarkPhasesRetroactiveUseCase(gh<_i909.PhaseRepository>()));
     gh.factory<_i441.DeleteShoppingItemUseCase>(
         () => _i441.DeleteShoppingItemUseCase(gh<_i911.ShoppingRepository>()));
+    gh.factory<_i934.MoveInModeGenerator>(() => _i934.MoveInModeGenerator(
+          gh<_i911.ShoppingRepository>(),
+          gh<_i1049.InstallmentRepository>(),
+          gh<_i357.ProblemRepository>(),
+        ));
     gh.factory<_i1063.AddAlertUseCase>(
         () => _i1063.AddAlertUseCase(gh<_i469.AlertsRepository>()));
     gh.factory<_i282.GetAlertsUseCase>(
@@ -633,6 +635,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i356.TransactionRepository>(),
           gh<_i984.PaymentRepository>(),
           gh<_i706.Uuid>(),
+        ));
+    gh.factory<_i951.MilestonesDetector>(() => _i951.MilestonesDetector(
+          gh<_i911.ShoppingRepository>(),
+          gh<_i1049.InstallmentRepository>(),
         ));
     gh.factory<_i807.CompletePhaseUsecase>(
         () => _i807.CompletePhaseUsecase(gh<_i340.PhaseRepository>()));
@@ -744,6 +750,15 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i1049.InstallmentRepository>(),
           gh<_i706.Uuid>(),
         ));
+    gh.factory<_i165.PhaseProgressAnalyzer>(() => _i165.PhaseProgressAnalyzer(
+          gh<_i911.ShoppingRepository>(),
+          gh<_i1001.SupplierRepository>(),
+          gh<_i1049.InstallmentRepository>(),
+        ));
+    gh.factory<_i219.CalendarEventsDetector>(() => _i219.CalendarEventsDetector(
+          gh<_i1049.InstallmentRepository>(),
+          gh<_i911.ShoppingRepository>(),
+        ));
     gh.factory<_i967.AppSettingsCubit>(
         () => _i967.AppSettingsCubit(gh<_i879.AppSettingsRepository>()));
     gh.factory<_i144.PhasesCubit>(() => _i144.PhasesCubit(
@@ -827,6 +842,30 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i984.PaymentRepository>(),
           gh<_i207.UpdatePhaseFinancialsUseCase>(),
           gh<_i1003.AddAutomaticEntryUseCase>(),
+        ));
+    gh.factory<_i123.ReformMapCubit>(() => _i123.ReformMapCubit(
+          getReformMapUseCase: gh<_i314.GetReformMapUseCase>(),
+          calculateHealthUseCase: gh<_i246.CalculateHealthUseCase>(),
+          calculateNextActionUseCase: gh<_i421.CalculateNextActionUseCase>(),
+          addProblemUseCase: gh<_i806.AddProblemUseCase>(),
+          calculateUpcomingExpensesUseCase:
+              gh<_i210.CalculateUpcomingExpensesUseCase>(),
+          getNextStepPreparationUseCase:
+              gh<_i1014.GetNextStepPreparationUseCase>(),
+          updatePreparationItemUseCase:
+              gh<_i374.UpdatePreparationItemUseCase>(),
+          resolveProblemUseCase: gh<_i745.ResolveProblemUseCase>(),
+          moveInDistanceCalculator: gh<_i51.MoveInDistanceCalculator>(),
+          moveInModeGenerator: gh<_i934.MoveInModeGenerator>(),
+          pendingDecisionsDetector: gh<_i124.PendingDecisionsDetector>(),
+          upcomingPurchasesDetector: gh<_i792.UpcomingPurchasesDetector>(),
+          nextPhasePreparationDetector:
+              gh<_i629.NextPhasePreparationDetector>(),
+          milestonesDetector: gh<_i951.MilestonesDetector>(),
+          calendarEventsDetector: gh<_i219.CalendarEventsDetector>(),
+          reformWeekGenerator: gh<_i1002.ReformWeekGenerator>(),
+          phaseProgressAnalyzer: gh<_i165.PhaseProgressAnalyzer>(),
+          addCalendarEventUseCase: gh<_i952.AddCalendarEventUseCase>(),
         ));
     gh.factory<_i224.InstallmentsCubit>(() => _i224.InstallmentsCubit(
           gh<_i356.GetInstallmentsUseCase>(),

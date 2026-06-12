@@ -1,4 +1,5 @@
 import '../../../projects/data/models/phase_model.dart';
+import '../../../projects/domain/entities/project_entity.dart';
 import '../../domain/entities/reform_map_entity.dart';
 import 'next_action_model.dart';
 import 'problem_model.dart';
@@ -18,6 +19,7 @@ class ReformMapModel extends ReformMapEntity {
     required super.positiveMessages,
     required super.lastUpdated,
     super.plannedMoveInDate,
+    super.propertyType,
   });
 
   factory ReformMapModel.fromMap(Map<String, dynamic> map) {
@@ -49,6 +51,12 @@ class ReformMapModel extends ReformMapEntity {
       plannedMoveInDate: map['plannedMoveInDate'] != null
           ? DateTime.parse(map['plannedMoveInDate'] as String)
           : null,
+      propertyType: map['propertyType'] != null
+          ? PropertyType.values.firstWhere(
+              (e) => e.name == map['propertyType'],
+              orElse: () => PropertyType.house,
+            )
+          : PropertyType.house,
     );
   }
 
@@ -68,6 +76,7 @@ class ReformMapModel extends ReformMapEntity {
       'positiveMessages': positiveMessages,
       'lastUpdated': lastUpdated.toIso8601String(),
       'plannedMoveInDate': plannedMoveInDate?.toIso8601String(),
+      'propertyType': propertyType.name,
     };
   }
 
@@ -89,6 +98,7 @@ class ReformMapModel extends ReformMapEntity {
       positiveMessages: entity.positiveMessages,
       lastUpdated: entity.lastUpdated,
       plannedMoveInDate: entity.plannedMoveInDate,
+      propertyType: entity.propertyType,
     );
   }
 }

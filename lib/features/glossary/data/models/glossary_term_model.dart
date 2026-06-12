@@ -34,6 +34,41 @@ class GlossaryTermModel extends GlossaryTermEntity {
     );
   }
 
+  /// Cria um modelo a partir de um mapa (para dados locais)
+  factory GlossaryTermModel.fromMap(Map<String, dynamic> data) {
+    // Gera ID a partir do termo se não existir
+    String generateId(String term) {
+      return term
+          .toLowerCase()
+          .replaceAll(RegExp(r'[áàãâ]'), 'a')
+          .replaceAll(RegExp(r'[éêè]'), 'e')
+          .replaceAll(RegExp(r'[íì]'), 'i')
+          .replaceAll(RegExp(r'[óôõò]'), 'o')
+          .replaceAll(RegExp(r'[úùü]'), 'u')
+          .replaceAll('ç', 'c')
+          .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
+          .replaceAll(RegExp(r'\s+'), '_')
+          .replaceAll(RegExp(r'-+'), '_')
+          .trim();
+    }
+
+    final term = data['term'] ?? '';
+    return GlossaryTermModel(
+      id: data['id'] ?? generateId(term),
+      term: term,
+      definition: data['definition'] ?? '',
+      whyItMatters: data['whyItMatters'] ?? '',
+      commonMistake: data['commonMistake'],
+      relatedPhase: data['relatedPhase'],
+      category: _categoryFromString(data['category'] ?? 'documentation'),
+      relatedTerms: data['relatedTerms'] != null
+          ? List<String>.from(data['relatedTerms'])
+          : [],
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
   /// Converte o modelo para um mapa para salvar no Firestore
   Map<String, dynamic> toFirestore() {
     return {
@@ -64,6 +99,18 @@ class GlossaryTermModel extends GlossaryTermEntity {
         return GlossaryCategory.financial;
       case 'condominium':
         return GlossaryCategory.condominium;
+      case 'safety':
+        return GlossaryCategory.safety;
+      case 'sustainability':
+        return GlossaryCategory.sustainability;
+      case 'maintenance':
+        return GlossaryCategory.maintenance;
+      case 'technology':
+        return GlossaryCategory.technology;
+      case 'landscaping':
+        return GlossaryCategory.landscaping;
+      case 'accessibility':
+        return GlossaryCategory.accessibility;
       default:
         return GlossaryCategory.documentation;
     }
@@ -84,6 +131,18 @@ class GlossaryTermModel extends GlossaryTermEntity {
         return 'financial';
       case GlossaryCategory.condominium:
         return 'condominium';
+      case GlossaryCategory.safety:
+        return 'safety';
+      case GlossaryCategory.sustainability:
+        return 'sustainability';
+      case GlossaryCategory.maintenance:
+        return 'maintenance';
+      case GlossaryCategory.technology:
+        return 'technology';
+      case GlossaryCategory.landscaping:
+        return 'landscaping';
+      case GlossaryCategory.accessibility:
+        return 'accessibility';
     }
   }
 

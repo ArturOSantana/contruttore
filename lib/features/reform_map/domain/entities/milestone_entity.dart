@@ -80,6 +80,12 @@ enum MilestoneType {
 
   /// Marcos especiais
   special,
+
+  /// Marcos de conquistas reais (compras, fornecedores, documentos)
+  achievement,
+
+  /// Marcos de qualidade (sem problemas, dentro do prazo/orçamento)
+  quality,
 }
 
 /// Extensão para obter informações sobre o tipo de marco
@@ -97,6 +103,10 @@ extension MilestoneTypeExtension on MilestoneType {
         return 'Prazo';
       case MilestoneType.special:
         return 'Especial';
+      case MilestoneType.achievement:
+        return 'Conquista';
+      case MilestoneType.quality:
+        return 'Qualidade';
     }
   }
 
@@ -113,6 +123,10 @@ extension MilestoneTypeExtension on MilestoneType {
         return '#9C27B0'; // Roxo
       case MilestoneType.special:
         return '#F44336'; // Vermelho
+      case MilestoneType.achievement:
+        return '#00BCD4'; // Ciano
+      case MilestoneType.quality:
+        return '#8BC34A'; // Verde claro
     }
   }
 }
@@ -140,8 +154,7 @@ class PredefinedMilestones {
         description: '25% da reforma concluída',
         type: MilestoneType.progress,
         isAchieved: false,
-        celebrationMessage:
-            ' Você já está em 1/4 da jornada! Continue assim!',
+        celebrationMessage: ' Você já está em 1/4 da jornada! Continue assim!',
         progressPercentage: 25,
         icon: '',
       ),
@@ -217,8 +230,7 @@ class PredefinedMilestones {
         description: 'Todas as paredes foram pintadas',
         type: MilestoneType.phase,
         isAchieved: false,
-        celebrationMessage:
-            ' As cores deram vida ao ambiente! Ficou incrível!',
+        celebrationMessage: ' As cores deram vida ao ambiente! Ficou incrível!',
         progressPercentage: 0,
         icon: '',
       ),
@@ -309,8 +321,7 @@ class PredefinedMilestones {
         description: 'Primeira festa na casa reformada',
         type: MilestoneType.special,
         isAchieved: false,
-        celebrationMessage:
-            ' Hora de comemorar com quem você ama! Aproveite!',
+        celebrationMessage: ' Hora de comemorar com quem você ama! Aproveite!',
         progressPercentage: 0,
         icon: '',
       ),

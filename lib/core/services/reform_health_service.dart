@@ -5,11 +5,11 @@ import '../../features/projects/domain/entities/project_entity.dart';
 /// Serviço que calcula a "saúde" da reforma
 ///
 /// Analisa múltiplos fatores para determinar se a reforma está saudável:
-/// - Progresso das fases
-/// - Orçamento vs gastos
-/// - Prazos vs datas reais
-/// - Pendências críticas
-/// - Qualidade da execução
+/// - Prazo (25%)
+/// - Orçamento (30%)
+/// - Problemas (20%)
+/// - Tarefas (15%)
+/// - Pagamentos (10%)
 @lazySingleton
 class ReformHealthService {
   /// Calcula a saúde geral da reforma (0-100)
@@ -23,55 +23,84 @@ class ReformHealthService {
     required int criticalAlertsCount,
     required int delayedPhasesCount,
   }) {
-    // 1. Score de Progresso (30 pontos)
-    final progressScore = _calculateProgressScore(phases);
+    // FATOR 1: PRAZO (25%)
+    final deadlineScore = _calculateDeadlineScore(project);
 
-    // 2. Score Financeiro (25 pontos)
-    final financialScore = _calculateFinancialScore(
-      project: project,
+    // FATOR 2: ORÇAMENTO (30%)
+    final budgetScore = _calculateBudgetScore(
+      totalBudget: project.totalBudget ?? 0.0,
       totalSpent: totalSpent,
       totalPending: totalPending,
     );
 
-    // 3. Score de Prazo (25 pontos)
-    final timelineScore = _calculateTimelineScore(
-      project: project,
-      phases: phases,
-      delayedPhasesCount: delayedPhasesCount,
-    );
+    // FATOR 3: PROBLEMAS (20%)
+    final problemsScore = _calculateProblemsScore(criticalAlertsCount);
 
-    // 4. Score de Qualidade (20 pontos)
-    final qualityScore = _calculateQualityScore(
-      phases: phases,
-      criticalAlertsCount: criticalAlertsCount,
-    );
+    // FATOR 4: TAREFAS (15%)
+    final tasksScore = _calculateTasksScore(phases);
+
+    // FATOR 5: PAGAMENTOS (10%)
+    final paymentsScore = _calculatePaymentsScore(delayedPhasesCount);
 
     // Calcula score total
-    final totalScore =
-        progressScore + financialScore + timelineScore + qualityScore;
+    final totalScore = (deadlineScore * 0.25) +
+        (budgetScore * 0.30) +
+        (problemsScore * 0.20) +
+        (tasksScore * 0.15) +
+        (paymentsScore * 0.10);
 
     // Determina status
     final status = _determineHealthStatus(totalScore);
 
-    // Gera recomendações
-    final recommendations = _generateRecommendations(
-      status: status,
-      progressScore: progressScore,
-      financialScore: financialScore,
-      timelineScore: timelineScore,
-      qualityScore: qualityScore,
-      project: project,
+    // Gera mensagem inteligente
+    final message = _getHealthMessage(
+      totalScore,
+      deadlineScore,
+      budgetScore,
+      problemsScore,
+      tasksScore,
+      paymentsScore,
+    );
+
+    // Gera issues e positives
+    final issues = _generateIssues(
+      deadlineScore: deadlineScore,
+      budgetScore: budgetScore,
+      problemsScore: problemsScore,
+      tasksScore: tasksScore,
+      paymentsScore: paymentsScore,
+      criticalAlertsCount: criticalAlertsCount,
+      delayedPhasesCount: delayedPhasesCount,
+      totalBudget: project.totalBudget ?? 0.0,
+      totalSpent: totalSpent,
+      totalPending: totalPending,
+      estimatedEndDate: project.deliveryDate,
       phases: phases,
     );
+
+    final positives = _generatePositives(
+      deadlineScore: deadlineScore,
+      budgetScore: budgetScore,
+      problemsScore: problemsScore,
+      tasksScore: tasksScore,
+      paymentsScore: paymentsScore,
+      phases: phases,
+    );
+
+    // Gera recomendações (mantém compatibilidade)
+    final recommendations = [message, ...issues.take(2)];
 
     return ReformHealthScore(
       totalScore: totalScore,
       status: status,
-      progressScore: progressScore,
-      financialScore: financialScore,
-      timelineScore: timelineScore,
-      qualityScore: qualityScore,
+      progressScore: tasksScore, // Mantém compatibilidade
+      financialScore: budgetScore, // Mantém compatibilidade
+      timelineScore: deadlineScore, // Mantém compatibilidade
+      qualityScore: problemsScore, // Mantém compatibilidade
       recommendations: recommendations,
+      message: message,
+      issues: issues,
+      positives: positives,
     );
   }
 
@@ -127,84 +156,114 @@ class ReformHealthService {
     return List.filled(totalPhases, weight);
   }
 
-  /// Calcula score de progresso (0-30)
-  double _calculateProgressScore(List<PhaseEntity> phases) {
-    if (phases.isEmpty) return 0;
+  /// Calcula score de prazo (0-100)
+  double _calculateDeadlineScore(ProjectEntity project) {
+    double deadlineScore = 100.0;
+    final estimatedEndDate = project.deliveryDate;
 
-    final overallProgress = calculateOverallProgress(phases);
+    final now = DateTime.now();
+    final daysRemaining = estimatedEndDate.difference(now).inDays;
 
-    // Converte progresso 0-100 para score 0-30
-    return (overallProgress * 30) / 100;
+    if (daysRemaining < 0) {
+      // Atrasado
+      final daysDelayed = daysRemaining.abs();
+      if (daysDelayed > 30) {
+        deadlineScore = 0.0; // Muito atrasado
+      } else if (daysDelayed > 15) {
+        deadlineScore = 30.0; // Atrasado
+      } else {
+        deadlineScore = 60.0; // Levemente atrasado
+      }
+    } else if (daysRemaining < 7) {
+      deadlineScore = 70.0; // Prazo apertado
+    } else if (daysRemaining < 15) {
+      deadlineScore = 85.0; // Prazo próximo
+    }
+
+    return deadlineScore;
   }
 
-  /// Calcula score financeiro (0-25)
-  double _calculateFinancialScore({
-    required ProjectEntity project,
+  /// Calcula score de orçamento (0-100)
+  double _calculateBudgetScore({
+    required double totalBudget,
     required double totalSpent,
     required double totalPending,
   }) {
-    final budget = project.totalBudget ?? 0;
-    if (budget == 0) return 25; // Se não tem orçamento, não penaliza
+    double budgetScore = 100.0;
 
-    final totalCommitted = totalSpent + totalPending;
-    final usagePercentage = (totalCommitted / budget) * 100;
+    if (totalBudget > 0) {
+      final totalCommitted = totalSpent + totalPending;
+      final percentageUsed = (totalCommitted / totalBudget) * 100;
 
-    // Score baseado no uso do orçamento
-    if (usagePercentage <= 80) {
-      return 25; // Excelente - dentro do orçamento
-    } else if (usagePercentage <= 95) {
-      return 20; // Bom - próximo do limite
-    } else if (usagePercentage <= 105) {
-      return 15; // Atenção - no limite
-    } else if (usagePercentage <= 120) {
-      return 10; // Ruim - estourou o orçamento
-    } else {
-      return 5; // Crítico - muito acima do orçamento
-    }
-  }
-
-  /// Calcula score de prazo (0-25)
-  double _calculateTimelineScore({
-    required ProjectEntity project,
-    required List<PhaseEntity> phases,
-    required int delayedPhasesCount,
-  }) {
-    if (phases.isEmpty) return 25;
-
-    // Penaliza por fases atrasadas
-    final delayPenalty = delayedPhasesCount * 5.0;
-
-    // Verifica se está próximo da data de mudança
-    if (project.plannedMoveInDate != null) {
-      final now = DateTime.now();
-      final daysUntilMoveIn = project.plannedMoveInDate!.difference(now).inDays;
-      final overallProgress = calculateOverallProgress(phases);
-
-      // Se falta pouco tempo e o progresso está baixo, penaliza
-      if (daysUntilMoveIn <= 30 && overallProgress < 80) {
-        return (25 - delayPenalty - 10).clamp(0, 25);
-      } else if (daysUntilMoveIn <= 60 && overallProgress < 60) {
-        return (25 - delayPenalty - 5).clamp(0, 25);
+      if (percentageUsed > 110) {
+        budgetScore = 0.0; // Muito acima do orçamento
+      } else if (percentageUsed > 100) {
+        budgetScore = 30.0; // Acima do orçamento
+      } else if (percentageUsed > 90) {
+        budgetScore = 60.0; // Próximo do limite
+      } else if (percentageUsed > 80) {
+        budgetScore = 80.0; // Atenção
+      } else if (percentageUsed > 70) {
+        budgetScore = 90.0; // Bom
       }
     }
 
-    return (25 - delayPenalty).clamp(0, 25);
+    return budgetScore;
   }
 
-  /// Calcula score de qualidade (0-20)
-  double _calculateQualityScore({
-    required List<PhaseEntity> phases,
-    required int criticalAlertsCount,
-  }) {
-    // Penaliza por alertas críticos
-    final alertPenalty = criticalAlertsCount * 3.0;
+  /// Calcula score de problemas (0-100)
+  double _calculateProblemsScore(int criticalAlertsCount) {
+    double problemsScore = 100.0;
 
-    // Penaliza por fases sem registro (doneNoRecord)
-    final noRecordPhases =
-        phases.where((p) => p.status == PhaseStatus.doneNoRecord).length;
-    final noRecordPenalty = noRecordPhases * 2.0;
+    if (criticalAlertsCount > 0) {
+      // Penalizar por alertas críticos (cada um vale 30 pontos)
+      final problemImpact = criticalAlertsCount * 30;
+      problemsScore = (100.0 - problemImpact).clamp(0.0, 100.0);
+    }
 
-    return (20 - alertPenalty - noRecordPenalty).clamp(0, 20);
+    return problemsScore;
+  }
+
+  /// Calcula score de tarefas (0-100)
+  double _calculateTasksScore(List<PhaseEntity> phases) {
+    double tasksScore = 100.0;
+    int totalSubtasks = 0;
+    int completedSubtasks = 0;
+
+    for (final phase in phases) {
+      for (final subtask in phase.subtasks) {
+        totalSubtasks++;
+        if (subtask.isDone) {
+          completedSubtasks++;
+        }
+      }
+    }
+
+    if (totalSubtasks > 0) {
+      final completionRate = (completedSubtasks / totalSubtasks) * 100;
+      tasksScore = completionRate;
+    }
+
+    return tasksScore;
+  }
+
+  /// Calcula score de pagamentos (0-100)
+  double _calculatePaymentsScore(int delayedPhasesCount) {
+    double paymentsScore = 100.0;
+
+    if (delayedPhasesCount > 0) {
+      if (delayedPhasesCount > 5) {
+        paymentsScore = 0.0; // Muitos pagamentos atrasados
+      } else if (delayedPhasesCount > 3) {
+        paymentsScore = 40.0; // Vários pagamentos atrasados
+      } else if (delayedPhasesCount > 1) {
+        paymentsScore = 70.0; // Alguns pagamentos atrasados
+      } else {
+        paymentsScore = 85.0; // Um pagamento atrasado
+      }
+    }
+
+    return paymentsScore;
   }
 
   /// Determina o status de saúde baseado no score
@@ -222,76 +281,170 @@ class ReformHealthService {
     }
   }
 
-  /// Gera recomendações baseadas nos scores
-  List<String> _generateRecommendations({
-    required ReformHealthStatus status,
-    required double progressScore,
-    required double financialScore,
-    required double timelineScore,
-    required double qualityScore,
-    required ProjectEntity project,
+  /// Gera mensagem inteligente baseada nos scores
+  String _getHealthMessage(
+    double score,
+    double deadlineScore,
+    double budgetScore,
+    double problemsScore,
+    double tasksScore,
+    double paymentsScore,
+  ) {
+    // Identificar o fator mais crítico
+    final factors = {
+      'prazo': deadlineScore,
+      'orçamento': budgetScore,
+      'problemas': problemsScore,
+      'tarefas': tasksScore,
+      'pagamentos': paymentsScore,
+    };
+
+    final lowestFactor =
+        factors.entries.reduce((a, b) => a.value < b.value ? a : b);
+
+    if (score >= 90) {
+      return 'Excelente! Sua reforma está indo muito bem';
+    } else if (score >= 80) {
+      return 'Tudo está no caminho certo. Continue assim!';
+    } else if (score >= 70) {
+      if (lowestFactor.key == 'prazo') {
+        return 'Atenção ao cronograma para manter o prazo';
+      } else if (lowestFactor.key == 'orçamento') {
+        return 'Fique atento aos gastos para não estourar o orçamento';
+      } else if (lowestFactor.key == 'problemas') {
+        return 'Resolva os problemas pendentes para evitar atrasos';
+      } else if (lowestFactor.key == 'pagamentos') {
+        return 'Organize os pagamentos pendentes';
+      } else {
+        return 'Conclua as tarefas pendentes para avançar';
+      }
+    } else if (score >= 50) {
+      return 'Alguns pontos precisam de atenção urgente';
+    } else {
+      return 'Ação imediata necessária para evitar problemas maiores';
+    }
+  }
+
+  /// Gera lista de issues baseada nos dados reais
+  List<String> _generateIssues({
+    required double deadlineScore,
+    required double budgetScore,
+    required double problemsScore,
+    required double tasksScore,
+    required double paymentsScore,
+    required int criticalAlertsCount,
+    required int delayedPhasesCount,
+    required double totalBudget,
+    required double totalSpent,
+    required double totalPending,
+    required DateTime estimatedEndDate,
     required List<PhaseEntity> phases,
   }) {
-    final recommendations = <String>[];
+    final issues = <String>[];
 
-    // Recomendações de progresso
-    if (progressScore < 15) {
-      recommendations.add(
-          'A obra está avançando devagar. Considere aumentar a equipe ou revisar o cronograma.');
+    // Issues de prazo
+    if (deadlineScore < 70) {
+      final daysRemaining = estimatedEndDate.difference(DateTime.now()).inDays;
+      if (daysRemaining < 0) {
+        issues.add('Obra atrasada em ${daysRemaining.abs()} dias');
+      } else if (daysRemaining < 7) {
+        issues.add('Apenas $daysRemaining dias até o prazo final');
+      } else if (daysRemaining < 15) {
+        issues.add('Prazo se aproximando: $daysRemaining dias restantes');
+      }
     }
 
-    // Recomendações financeiras
-    if (financialScore < 15) {
-      recommendations.add(
-          'Orçamento crítico! Revise gastos e priorize apenas o essencial.');
-    } else if (financialScore < 20) {
-      recommendations
-          .add('Atenção ao orçamento. Evite gastos extras e negocie preços.');
+    // Issues de orçamento
+    if (budgetScore < 70 && totalBudget > 0) {
+      final totalCommitted = totalSpent + totalPending;
+      final percentageUsed = (totalCommitted / totalBudget) * 100;
+      if (percentageUsed > 100) {
+        final overBudget = totalCommitted - totalBudget;
+        issues
+            .add('Orçamento estourado em R\$ ${overBudget.toStringAsFixed(2)}');
+      } else if (percentageUsed > 90) {
+        final remaining = totalBudget - totalCommitted;
+        issues.add(
+            'Apenas R\$ ${remaining.toStringAsFixed(2)} restantes no orçamento');
+      } else if (percentageUsed > 80) {
+        issues.add(
+            '${percentageUsed.toStringAsFixed(0)}% do orçamento já comprometido');
+      }
     }
 
-    // Recomendações de prazo
-    if (timelineScore < 15) {
-      recommendations.add(
-          'Cronograma atrasado. Foque em resolver pendências críticas primeiro.');
-    } else if (timelineScore < 20) {
-      recommendations
-          .add('Algumas fases estão atrasadas. Monitore prazos de perto.');
+    // Issues de problemas
+    if (criticalAlertsCount > 0) {
+      issues.add(
+          '$criticalAlertsCount problema(s) crítico(s) requer atenção imediata');
     }
 
-    // Recomendações de qualidade
-    if (qualityScore < 12) {
-      recommendations.add(
-          'Muitos alertas críticos! Resolva problemas urgentes antes de continuar.');
-    } else if (qualityScore < 16) {
-      recommendations
-          .add('Registre melhor o andamento da obra para ter mais controle.');
+    // Issues de tarefas
+    if (tasksScore < 70) {
+      issues.add(
+          'Muitas tarefas pendentes (${(100 - tasksScore).toStringAsFixed(0)}% incompletas)');
     }
 
-    // Recomendações gerais por status
-    switch (status) {
-      case ReformHealthStatus.excellent:
-        recommendations
-            .add('Parabéns! A reforma está indo muito bem. Continue assim!');
-        break;
-      case ReformHealthStatus.good:
-        recommendations
-            .add('A reforma está no caminho certo. Mantenha o controle.');
-        break;
-      case ReformHealthStatus.attention:
-        recommendations
-            .add('Alguns pontos precisam de atenção. Revise prioridades.');
-        break;
-      case ReformHealthStatus.critical:
-        recommendations.add(
-            'Situação crítica! Foque em resolver os problemas principais.');
-        break;
-      case ReformHealthStatus.emergency:
-        recommendations
-            .add('URGENTE: A reforma precisa de intervenção imediata!');
-        break;
+    // Issues de pagamentos
+    if (delayedPhasesCount > 0) {
+      issues.add('$delayedPhasesCount pagamento(s) atrasado(s)');
     }
 
-    return recommendations;
+    return issues;
+  }
+
+  /// Gera lista de positives baseada nos dados reais
+  List<String> _generatePositives({
+    required double deadlineScore,
+    required double budgetScore,
+    required double problemsScore,
+    required double tasksScore,
+    required double paymentsScore,
+    required List<PhaseEntity> phases,
+  }) {
+    final positives = <String>[];
+
+    // Positivos de prazo
+    if (deadlineScore >= 85) {
+      positives.add('Cronograma dentro do prazo');
+    }
+
+    // Positivos de orçamento
+    if (budgetScore >= 80) {
+      positives.add('Orçamento sob controle');
+    }
+
+    // Positivos de problemas
+    if (problemsScore >= 90) {
+      positives.add('Nenhum problema crítico identificado');
+    }
+
+    // Positivos de tarefas
+    int totalSubtasks = 0;
+    int completedSubtasks = 0;
+    for (final phase in phases) {
+      for (final subtask in phase.subtasks) {
+        totalSubtasks++;
+        if (subtask.isDone) {
+          completedSubtasks++;
+        }
+      }
+    }
+
+    if (tasksScore >= 80 && totalSubtasks > 0) {
+      positives.add('$completedSubtasks de $totalSubtasks tarefas concluídas');
+    }
+
+    // Positivos de pagamentos
+    if (paymentsScore >= 90) {
+      positives.add('Todos os pagamentos em dia');
+    }
+
+    // Se não houver positivos específicos, adicionar mensagem genérica
+    if (positives.isEmpty) {
+      positives.add('Continue trabalhando para melhorar a saúde da reforma');
+    }
+
+    return positives;
   }
 }
 
@@ -303,20 +456,29 @@ class ReformHealthScore {
   /// Status de saúde
   final ReformHealthStatus status;
 
-  /// Score de progresso (0-30)
+  /// Score de progresso (0-30) - mantido para compatibilidade
   final double progressScore;
 
-  /// Score financeiro (0-25)
+  /// Score financeiro (0-25) - mantido para compatibilidade
   final double financialScore;
 
-  /// Score de prazo (0-25)
+  /// Score de prazo (0-25) - mantido para compatibilidade
   final double timelineScore;
 
-  /// Score de qualidade (0-20)
+  /// Score de qualidade (0-20) - mantido para compatibilidade
   final double qualityScore;
 
-  /// Recomendações
+  /// Recomendações - mantido para compatibilidade
   final List<String> recommendations;
+
+  /// Mensagem principal
+  final String message;
+
+  /// Lista de issues (pontos de atenção)
+  final List<String> issues;
+
+  /// Lista de positives (pontos positivos)
+  final List<String> positives;
 
   const ReformHealthScore({
     required this.totalScore,
@@ -326,6 +488,9 @@ class ReformHealthScore {
     required this.timelineScore,
     required this.qualityScore,
     required this.recommendations,
+    required this.message,
+    required this.issues,
+    required this.positives,
   });
 
   /// Retorna a cor associada ao status

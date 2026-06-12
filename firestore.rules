@@ -278,6 +278,26 @@ service cloud.firestore {
         allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
         allow update, delete: if ownsProject(projectId);
       }
+
+      // ============================================
+      // EVENTOS DO CALENDÁRIO (Mapa da Reforma)
+      // ============================================
+      
+      match /calendar_events/{eventId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
+
+      // ============================================
+      // TAREFAS DO MODO MUDANÇA
+      // ============================================
+      
+      match /move_in_tasks/{taskId} {
+        allow read: if ownsProject(projectId);
+        allow create: if ownsProject(projectId) && hasCorrectProjectId(projectId);
+        allow update, delete: if ownsProject(projectId);
+      }
     }
 
     // ============================================

@@ -104,9 +104,8 @@ class _GlossaryPageState extends State<GlossaryPage> {
           // Filtros de categoria
           BlocBuilder<GlossaryCubit, GlossaryState>(
             builder: (context, state) {
-              final selectedCategory = state is GlossaryLoaded
-                  ? state.selectedCategory
-                  : null;
+              final selectedCategory =
+                  state is GlossaryLoaded ? state.selectedCategory : null;
 
               return Container(
                 height: 56,
@@ -135,8 +134,8 @@ class _GlossaryPageState extends State<GlossaryPage> {
                           isSelected: selectedCategory == category,
                           onTap: () {
                             context.read<GlossaryCubit>().filterByCategory(
-                              category.name,
-                            );
+                                  category.name,
+                                );
                           },
                         ),
                       );
@@ -212,10 +211,20 @@ class _GlossaryPageState extends State<GlossaryPage> {
                       return GlossaryTermCard(
                         term: term,
                         onTap: () {
-                          context.pushNamed(
-                            RouteNames.glossaryTerm,
-                            pathParameters: {'termId': term.id},
-                          );
+                          print(
+                              '🔍 Clicou no termo: ${term.term} (ID: ${term.id})');
+                          try {
+                            context.pushNamed(
+                              'glossary-term',
+                              pathParameters: {'term': term.id},
+                            );
+                          } catch (e) {
+                            print('❌ Erro ao navegar: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Erro ao abrir termo: $e')),
+                            );
+                          }
                         },
                         onFavoriteToggle: () {
                           context.read<GlossaryCubit>().toggleFavorite(term.id);
@@ -235,8 +244,7 @@ class _GlossaryPageState extends State<GlossaryPage> {
   }
 
   Widget _buildEmptyState(BuildContext context, GlossaryLoaded state) {
-    final hasFilters =
-        state.selectedCategory != null ||
+    final hasFilters = state.selectedCategory != null ||
         state.showOnlyFavorites ||
         _searchController.text.isNotEmpty;
 

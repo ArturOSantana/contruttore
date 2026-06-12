@@ -70,7 +70,7 @@ class GlossaryCubit extends Cubit<GlossaryState> {
     // Filtro de categoria
     if (_selectedCategory != null) {
       filtered = filtered
-          .where((term) => term.category == _selectedCategory)
+          .where((term) => term.category.name == _selectedCategory)
           .toList();
     }
 

@@ -22,6 +22,9 @@ class ProjectEntity extends Equatable {
   final List<String>
       criticalItems; // ar_conditioner, wired_internet, dishwasher, etc
 
+  // Tipo de imóvel para checklist dinâmico
+  final PropertyType propertyType; // house, apartment, commercial
+
   final DateTime createdAt;
 
   const ProjectEntity({
@@ -40,6 +43,7 @@ class ProjectEntity extends Equatable {
     this.plannedMoveInDate,
     this.mainPriority,
     this.criticalItems = const [],
+    this.propertyType = PropertyType.house, // Padrão: casa
     required this.createdAt,
   });
 
@@ -59,6 +63,7 @@ class ProjectEntity extends Equatable {
     Object? plannedMoveInDate = _undefined,
     String? mainPriority,
     List<String>? criticalItems,
+    PropertyType? propertyType,
     DateTime? createdAt,
   }) {
     return ProjectEntity(
@@ -79,6 +84,7 @@ class ProjectEntity extends Equatable {
           : plannedMoveInDate as DateTime?,
       mainPriority: mainPriority ?? this.mainPriority,
       criticalItems: criticalItems ?? this.criticalItems,
+      propertyType: propertyType ?? this.propertyType,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -100,8 +106,45 @@ class ProjectEntity extends Equatable {
         plannedMoveInDate,
         mainPriority,
         criticalItems,
+        propertyType,
         createdAt,
       ];
+}
+
+/// Tipo de imóvel
+enum PropertyType {
+  /// Casa térrea ou sobrado
+  house,
+
+  /// Apartamento
+  apartment,
+
+  /// Imóvel comercial
+  commercial,
+}
+
+extension PropertyTypeExtension on PropertyType {
+  String get displayName {
+    switch (this) {
+      case PropertyType.house:
+        return 'Casa';
+      case PropertyType.apartment:
+        return 'Apartamento';
+      case PropertyType.commercial:
+        return 'Comercial';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case PropertyType.house:
+        return 'Casa térrea ou sobrado';
+      case PropertyType.apartment:
+        return 'Apartamento em condomínio';
+      case PropertyType.commercial:
+        return 'Imóvel comercial';
+    }
+  }
 }
 
 // Sentinel value para copyWith

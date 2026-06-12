@@ -283,29 +283,105 @@ class SupplierRepositoryImpl implements SupplierRepository {
         return const Right(false);
       }
 
-      // Validar via BrasilAPI
-      final response = await _httpClient
-          .get(Uri.parse('https://brasilapi.com.br/api/cnpj/v1/$cleanCNPJ'))
-          .timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {
-              // Se timeout, considera válido para não bloquear o usuário
-              return http.Response('{}', 200);
-            },
-          );
-
-      if (response.statusCode == 200) {
-        return const Right(true);
-      } else if (response.statusCode == 404) {
+      // Validar dígitos verificadores localmente
+      if (!_validateCNPJDigits(cleanCNPJ)) {
         return const Right(false);
-      } else {
-        // Em caso de erro da API, não bloqueia o cadastro
-        return const Right(true);
       }
-    } catch (e) {
-      // Se a API falhar, não bloqueia o cadastro
+
+      // Validar via BrasilAPI (opcional, não bloqueia se falhar)
+      try {
+        final response = await _httpClient
+            .get(Uri.parse('https://brasilapi.com.br/api/cnpj/v1/$cleanCNPJ'))
+            .timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            // Se timeout, considera válido (validação local já passou)
+            return http.Response('{}', 200);
+          },
+        );
+
+        if (response.statusCode == 404) {
+          return const Right(false);
+        }
+      } catch (e) {
+        // Se a API falhar, aceita a validação local
+        print('⚠️ API de validação CNPJ indisponível, usando validação local');
+      }
+
       return const Right(true);
+    } catch (e) {
+      return Left(ServerFailure('Erro ao validar CNPJ: $e'));
     }
+  }
+
+  /// Valida dígitos verificadores do CNPJ usando algoritmo oficial
+  bool _validateCNPJDigits(String cnpj) {
+    // CNPJ com todos dígitos iguais é inválido
+    if (RegExp(r'^(\d)\1{13}$').hasMatch(cnpj)) {
+      return false;
+    }
+
+    // Calcular primeiro dígito verificador
+    int sum = 0;
+    int weight = 5;
+    for (int i = 0; i < 12; i++) {
+      sum += int.parse(cnpj[i]) * weight;
+      weight = weight == 2 ? 9 : weight - 1;
+    }
+    int digit1 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+
+    if (digit1 != int.parse(cnpj[12])) {
+      return false;
+    }
+
+    // Calcular segundo dígito verificador
+    sum = 0;
+    weight = 6;
+    for (int i = 0; i < 13; i++) {
+      sum += int.parse(cnpj[i]) * weight;
+      weight = weight == 2 ? 9 : weight - 1;
+    }
+    int digit2 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+
+    return digit2 == int.parse(cnpj[13]);
+  }
+
+  /// Valida CPF usando algoritmo oficial
+  bool _validateCPFDigits(String cpf) {
+    // Remover formatação
+    final cleanCPF = cpf.replaceAll(RegExp(r'[^\d]'), '');
+
+    // Validar tamanho
+    if (cleanCPF.length != 11) {
+      return false;
+    }
+
+    // CPF com todos dígitos iguais é inválido
+    if (RegExp(r'^(\d)\1{10}$').hasMatch(cleanCPF)) {
+      return false;
+    }
+
+    // Calcular primeiro dígito verificador
+    int sum = 0;
+    for (int i = 0; i < 9; i++) {
+      sum += int.parse(cleanCPF[i]) * (10 - i);
+    }
+    int digit1 = 11 - (sum % 11);
+    digit1 = digit1 >= 10 ? 0 : digit1;
+
+    if (digit1 != int.parse(cleanCPF[9])) {
+      return false;
+    }
+
+    // Calcular segundo dígito verificador
+    sum = 0;
+    for (int i = 0; i < 10; i++) {
+      sum += int.parse(cleanCPF[i]) * (11 - i);
+    }
+    int digit2 = 11 - (sum % 11);
+    digit2 = digit2 >= 10 ? 0 : digit2;
+
+    return digit2 == int.parse(cleanCPF[10]);
   }
 }
 
